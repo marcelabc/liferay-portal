@@ -569,6 +569,12 @@ AUI.add(
 						return formString;
 					},
 
+					_getFormInstanceId: function() {
+						var instance = this;
+
+						return instance.byId('formInstanceId').val();
+					},
+
 					_getLocalizedName: function() {
 						var instance = this;
 
@@ -594,12 +600,6 @@ AUI.add(
 						var instance = this;
 
 						return window[instance.ns('nameEditor')];
-					},
-
-					_getFormInstanceId: function() {
-						var instance = this;
-
-						return instance.byId('formInstanceId').val();
 					},
 
 					_handlePublishAction: function() {
