@@ -15,18 +15,17 @@
 package com.liferay.fragment.entry.processor.portlet;
 
 import com.liferay.fragment.exception.FragmentEntryContentException;
+import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.FragmentEntryProcessor;
 import com.liferay.fragment.processor.PortletRegistry;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ResourceBundle;
-
-import javax.portlet.Portlet;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -46,15 +45,49 @@ import org.osgi.service.component.annotations.Reference;
 public class PortletFragmentEntryProcessor implements FragmentEntryProcessor {
 
 	@Override
-	public String processFragmentEntryHTML(String html, JSONObject jsonObject)
+	public String processFragmentEntryLinkHTML(
+			FragmentEntryLink fragmentEntryLink, String html)
 		throws PortalException {
 
-		return html;
+		Document document = _getDocument(html);
+
+		for (Element element : document.select("*")) {
+			String tagName = element.tagName();
+
+			if (!StringUtil.startsWith(tagName, "lfr-app-")) {
+				continue;
+			}
+
+			String alias = StringUtil.replace(
+				tagName, "lfr-app-", StringPool.BLANK);
+
+			String portletName = _portletRegistry.getPortletName(alias);
+
+			if (Validator.isNull(portletName)) {
+				throw new FragmentEntryContentException(
+					LanguageUtil.format(
+						_resourceBundle,
+						"there-is-no-portlet-available-for-alias-x", alias));
+			}
+
+			Element runtimeTagElement = new Element("@liferay_portlet.runtime");
+
+			runtimeTagElement.attr(
+				"instanceId",
+				String.valueOf(fragmentEntryLink.getFragmentEntryLinkId()));
+			runtimeTagElement.attr("portletName", portletName);
+
+			element.replaceWith(runtimeTagElement);
+		}
+
+		Element bodyElement = document.body();
+
+		return bodyElement.html();
 	}
 
 	@Override
 	public void validateFragmentEntryHTML(String html) throws PortalException {
-		Document document = Jsoup.parseBodyFragment(html);
+		Document document = _getDocument(html);
 
 		for (Element element : document.select("*")) {
 			String htmlTagName = element.tagName();
@@ -66,21 +99,31 @@ public class PortletFragmentEntryProcessor implements FragmentEntryProcessor {
 			String alias = StringUtil.replace(
 				htmlTagName, "lfr-app-", StringPool.BLANK);
 
-			Portlet portlet = _portletRegistry.getPortlet(alias);
-
-			if (portlet == null) {
-				ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-					"content.Language", getClass());
-
+			if (Validator.isNull(_portletRegistry.getPortletName(alias))) {
 				throw new FragmentEntryContentException(
 					LanguageUtil.format(
-						resourceBundle,
+						_resourceBundle,
 						"there-is-no-portlet-available-for-alias-x", alias));
 			}
 		}
 	}
 
+	private Document _getDocument(String html) {
+		Document document = Jsoup.parseBodyFragment(html);
+
+		Document.OutputSettings outputSettings = new Document.OutputSettings();
+
+		outputSettings.prettyPrint(false);
+
+		document.outputSettings(outputSettings);
+
+		return document;
+	}
+
 	@Reference
 	private PortletRegistry _portletRegistry;
+
+	private final ResourceBundle _resourceBundle = ResourceBundleUtil.getBundle(
+		"content.Language", getClass());
 
 }

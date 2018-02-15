@@ -385,11 +385,11 @@
 
 		<execute function="Select" locator1="ReportContent#REASON_SELECT" value1="${flagReason}" />
 
-		<execute macro="Button#clickSave" />
+		<execute function="AssertClick" locator1="Button#REPORT" value1="Report" />
 
 		<execute function="AssertTextEquals#assertPartialText" locator1="ReportContent#SUCCESS_MESSAGE" value1="Although we cannot disclose our final decision, we do review every report and appreciate your effort to make sure ${siteName} is a safe environment for everyone." />
 
-		<execute function="Click" locator1="Icon#CLOSE" />
+		<execute function="Click" locator1="Button#CLOSE" />
 	</command>
 
 	<command name="gotoScheduledEditPG">
@@ -971,6 +971,30 @@
 		<var name="key_entryTitle" value="${entryTitle}" />
 
 		<execute function="AssertElementNotPresent" locator1="BlogsEntry#TITLE" value1="${entryTitle}" />
+	</command>
+
+	<command name="viewNoTag">
+		<var name="key_entryTitle" value="${entryTitle}" />
+
+		<if>
+			<isset var="tagNameList" />
+			<then>
+				<for list="${tagNameList}" param="tagName">
+					<var method="StringUtil#lowerCase('${tagName}')" name="tagName" />
+
+					<var name="key_tagName" value="${tagName}" />
+
+					<execute function="AssertTextNotEquals" locator1="BlogsEntry#TAG" value1="${tagName}" />
+				</for>
+			</then>
+			<else>
+				<var method="StringUtil#lowerCase('${tagName}')" name="tagName" />
+
+				<var name="key_tagName" value="${tagName}" />
+
+				<execute function="AssertTextNotEquals" locator1="BlogsEntry#TAG" value1="${tagName}" />
+			</else>
+		</if>
 	</command>
 
 	<command name="viewPermissionsNoPermission">

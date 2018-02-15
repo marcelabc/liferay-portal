@@ -18,6 +18,14 @@
 
 <%
 String rootMenuItemType = siteNavigationMenuDisplayContext.getRootMenuItemType();
+
+SiteNavigationMenu siteNavigationMenu = siteNavigationMenuDisplayContext.getSiteNavigationMenu();
+
+String siteNavigationMenuName = LanguageUtil.get(request, "default");
+
+if (siteNavigationMenu != null) {
+	siteNavigationMenu.getName();
+}
 %>
 
 <liferay-portlet:actionURL portletConfiguration="<%= true %>" var="configurationActionURL" />
@@ -33,8 +41,34 @@ String rootMenuItemType = siteNavigationMenuDisplayContext.getRootMenuItemType()
 			<aui:row>
 				<aui:col width="<%= 50 %>">
 					<aui:fieldset-group markupView="lexicon">
-						<aui:fieldset cssClass="ml-3">
-							<div class="display-template">
+						<aui:fieldset cssClass="p-3" label="navigation-menu">
+							<aui:input id="siteNavigationMenuId" name="preferences--siteNavigationMenuId--" type="hidden" value="<%= siteNavigationMenuDisplayContext.getSiteNavigationMenuId() %>" />
+
+							<div class="card card-horizontal taglib-horizontal-card">
+								<div class="card-row card-row-padded ">
+									<div class="card-col-field">
+										<div class="sticker sticker-secondary sticker-static">
+											<aui:icon image="blogs" markupView="lexicon" />
+										</div>
+									</div>
+
+									<div class="card-col-content card-col-gutters">
+										<span class="lfr-card-title-text truncate-text" id="<portlet:namespace />siteNavigationMenuName">
+											<%= siteNavigationMenuName %>
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<%
+							int siteNavitaionMenuCount = SiteNavigationMenuLocalServiceUtil.getSiteNavigationMenusCount(scopeGroupId);
+							%>
+
+							<c:if test="<%= siteNavitaionMenuCount > 0 %>">
+								<aui:button name="chooseSiteNavigationMenu" value="choose" />
+							</c:if>
+
+							<div class="display-template mt-4">
 								<liferay-ddm:template-selector
 									className="<%= NavItem.class.getName() %>"
 									displayStyle="<%= siteNavigationMenuDisplayContext.getDisplayStyle() %>"
@@ -77,10 +111,39 @@ String rootMenuItemType = siteNavigationMenuDisplayContext.getRootMenuItemType()
 								<aui:row>
 									<aui:col width="<%= 80 %>">
 										<div class="mb-3 <%= rootMenuItemType.equals("select") ? StringPool.BLANK : "hide" %>" id="<portlet:namespace />rootMenuItemIdPanel">
-											<aui:input label="" name="rootLayoutName" type="resource" value="<%= siteNavigationMenuDisplayContext.getRootLayoutName() %>" />
 											<aui:input id="rootMenuItemId" ignoreRequestValue="<%= true %>" name="preferences--rootMenuItemId--" type="hidden" value="<%= siteNavigationMenuDisplayContext.getRootMenuItemId() %>" />
 
-											<aui:button name="chooseRootPage" value="choose" />
+											<%
+											String rootMenuItemName = siteNavigationMenuName;
+
+											SiteNavigationMenuItem siteNavigationMenuItem = SiteNavigationMenuItemLocalServiceUtil.fetchSiteNavigationMenuItem(GetterUtil.getLong(siteNavigationMenuDisplayContext.getRootMenuItemId()));
+
+											if (siteNavigationMenuItem != null) {
+												SiteNavigationMenuItemTypeRegistry siteNavigationMenuItemTypeRegistry = (SiteNavigationMenuItemTypeRegistry)request.getAttribute(SiteNavigationMenuWebKeys.SITE_NAVIGATION_MENU_ITEM_TYPE_REGISTRY);
+
+												SiteNavigationMenuItemType siteNavigationMenuItemType = siteNavigationMenuItemTypeRegistry.getSiteNavigationMenuItemType(siteNavigationMenuItem.getType());
+
+												rootMenuItemName = siteNavigationMenuItemType.getTitle(siteNavigationMenuItem, locale);
+											}
+											%>
+
+											<div class="card card-horizontal taglib-horizontal-card">
+												<div class="card-row card-row-padded ">
+													<div class="card-col-field">
+														<div class="sticker sticker-secondary sticker-static">
+															<aui:icon image="blogs" markupView="lexicon" />
+														</div>
+													</div>
+
+													<div class="card-col-content card-col-gutters">
+														<span class="lfr-card-title-text truncate-text" id="<portlet:namespace />rootMenuItemName">
+															<%= rootMenuItemName %>
+														</span>
+													</div>
+												</div>
+											</div>
+
+											<aui:button name="chooseRootMenuItem" value="menu-item" />
 										</div>
 									</aui:col>
 								</aui:row>
@@ -130,15 +193,8 @@ String rootMenuItemType = siteNavigationMenuDisplayContext.getRootMenuItemType()
 	</aui:button-row>
 </aui:form>
 
-<aui:script sandbox="<%= true %>">
+<aui:script sandbox="<%= true %>" use="liferay-item-selector-dialog">
 	var form = $('#<portlet:namespace />fm');
-
-	var selectDisplayDepth = form.fm('displayDepth');
-	var selectDisplayStyle = form.fm('displayStyle');
-	var selectExpandedLevels = form.fm('expandedLevels');
-	var selectRootMenuItemLevel = form.fm('rootMenuItemLevel');
-	var selectRootMenuItemType = form.fm('rootMenuItemType');
-	var selectRootMenuItemId = form.fm('rootMenuItemId');
 
 	var curPortletBoundaryId = '#p_p_id_<%= HtmlUtil.escapeJS(portletResource) %>_';
 
@@ -146,53 +202,104 @@ String rootMenuItemType = siteNavigationMenuDisplayContext.getRootMenuItemType()
 		'change',
 		'select',
 		function() {
-			var data = {
-				displayStyle: selectDisplayStyle.val(),
-				preview: true
-			};
-
-			data.displayDepth = selectDisplayDepth.val();
-			data.expandedLevels = selectExpandedLevels.val();
-			data.rootMenuItemLevel = selectRootMenuItemLevel.val();
-			data.rootMenuItemType = selectRootMenuItemType.val();
-			data.rootMenuItemId = selectRootMenuItemId.val();
-
-			data = Liferay.Util.ns('_<%= HtmlUtil.escapeJS(portletResource) %>_', data);
-
-			Liferay.Portlet.refresh(curPortletBoundaryId, data);
+			<portlet:namespace/>resetPreview();
 		}
 	);
-</aui:script>
 
-<aui:script use="liferay-item-selector-dialog">
-	$('#<portlet:namespace />chooseRootPage').on(
+	function <portlet:namespace/>resetPreview() {
+		var selectDisplayDepth = form.fm('displayDepth');
+		var selectDisplayStyle = form.fm('displayStyle');
+		var selectExpandedLevels = form.fm('expandedLevels');
+		var selectRootMenuItemLevel = form.fm('rootMenuItemLevel');
+		var selectRootMenuItemType = form.fm('rootMenuItemType');
+		var selectRootMenuItemId = form.fm('rootMenuItemId');
+		var selectSiteNavigationMenuId = form.fm('siteNavigationMenuId');
+
+		var data = {
+			displayStyle: selectDisplayStyle.val(),
+			preview: true
+		};
+
+		data.displayDepth = selectDisplayDepth.val();
+		data.expandedLevels = selectExpandedLevels.val();
+		data.rootMenuItemLevel = selectRootMenuItemLevel.val();
+		data.rootMenuItemType = selectRootMenuItemType.val();
+		data.rootMenuItemId = selectRootMenuItemId.val();
+		data.siteNavigationMenuId = selectSiteNavigationMenuId.val();
+
+		data = Liferay.Util.ns('_<%= HtmlUtil.escapeJS(portletResource) %>_', data);
+
+		Liferay.Portlet.refresh(curPortletBoundaryId, data);
+	}
+
+	var chooseRootMenuItem = $('#<portlet:namespace />chooseRootMenuItem');
+
+	chooseRootMenuItem.on(
 		'click',
 		function(event) {
 			event.preventDefault();
 
+			var siteNavigationMenuId = $('#<portlet:namespace />siteNavigationMenuId').val();
+
+			var uri = '<%= siteNavigationMenuDisplayContext.getRootMenuItemSelectorURL() %>';
+
+			uri = Liferay.Util.addParams('<%= PortalUtil.getPortletNamespace(ItemSelectorPortletKeys.ITEM_SELECTOR) %>siteNavigationMenuId=' + siteNavigationMenuId, uri);
+
 			var itemSelectorDialog = new A.LiferayItemSelectorDialog(
 				{
-					eventName: '<%= siteNavigationMenuDisplayContext.getEventName() %>',
+					eventName: '<%= siteNavigationMenuDisplayContext.getRootMenuItemEventName() %>',
 					on: {
 						selectedItemChange: function(event) {
 							var selectedItem = event.newVal;
 
-							var rootLayoutName = A.one('#<portlet:namespace />rootLayoutName');
-							var rootMenuItemId = A.one('#<portlet:namespace />rootMenuItemId');
-
 							if (selectedItem) {
-								rootLayoutName.val(selectedItem.name);
-								rootMenuItemId.val(selectedItem.id);
+								$('#<portlet:namespace />rootMenuItemId').val(selectedItem.selectSiteNavigationMenuItemId);
+
+								$('#<portlet:namespace />rootMenuItemName').text(selectedItem.selectSiteNavigationMenuItemName);
+
+								<portlet:namespace/>resetPreview();
 							}
 						}
 					},
 					'strings.add': '<liferay-ui:message key="done" />',
-					title: '<liferay-ui:message key="select-layout" />',
-					url: '<%= siteNavigationMenuDisplayContext.getItemSelectorURL() %>'
+					title: '<liferay-ui:message key="select-site-navigation-menu-item" />',
+					url: uri
 				}
 			);
 
 			itemSelectorDialog.open();
+		}
+	);
+
+	$('#<portlet:namespace />chooseSiteNavigationMenu').on(
+		'click',
+		function(event) {
+			Liferay.Util.selectEntity(
+				{
+					dialog: {
+						constrain: true,
+						destroyOnHide: true,
+						modal: true
+					},
+					eventName: '<%= siteNavigationMenuDisplayContext.getSiteNavigationMenuEventName() %>',
+					id: '<portlet:namespace />selectSiteNavigationMenu',
+					title: '<liferay-ui:message key="select-site-navigation-menu" />',
+					uri: '<%= siteNavigationMenuDisplayContext.getSiteNavigationMenuItemSelectorURL() %>'
+				},
+				function(selectedItem) {
+					if (selectedItem.id) {
+						$('#<portlet:namespace />siteNavigationMenuId').val(selectedItem.id);
+
+						$('#<portlet:namespace />siteNavigationMenuName').text(selectedItem.name);
+
+						$('#<portlet:namespace />rootMenuItemId').val('0');
+
+						$('#<portlet:namespace />rootMenuItemName').text(selectedItem.name);
+
+						<portlet:namespace/>resetPreview();
+					}
+				}
+			);
 		}
 	);
 
