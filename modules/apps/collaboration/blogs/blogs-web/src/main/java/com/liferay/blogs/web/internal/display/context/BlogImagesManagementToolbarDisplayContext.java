@@ -70,12 +70,9 @@ public class BlogImagesManagementToolbarDisplayContext {
 									"javascript:",
 									_liferayPortletResponse.getNamespace(),
 									"deleteImages();"));
-
 							dropdownItem.setIcon("times");
-
 							dropdownItem.setLabel(
 								LanguageUtil.get(_request, "delete"));
-
 							dropdownItem.setQuickAction(true);
 						}));
 			}
@@ -185,9 +182,7 @@ public class BlogImagesManagementToolbarDisplayContext {
 		return new ViewTypeItemList(portletURL, getDisplayStyle()) {
 			{
 				addCardViewTypeItem();
-
 				addListViewTypeItem();
-
 				addTableViewTypeItem();
 			}
 
