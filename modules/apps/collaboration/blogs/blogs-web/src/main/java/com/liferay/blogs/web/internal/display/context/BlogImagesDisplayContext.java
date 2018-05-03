@@ -134,8 +134,8 @@ public class BlogImagesDisplayContext {
 						_log.warn(
 							StringBundler.concat(
 								"Documents and Media search index is stale ",
-								"and contains file entry {",
-								String.valueOf(fileEntryId), "}"));
+								"and contains file entry ",
+								String.valueOf(fileEntryId)));
 					}
 
 					continue;
