@@ -90,9 +90,21 @@ boolean showCSVWarning = StringUtil.equals("enabled-with-warning", csvExport);
 				{
 					dialog: {
 						bodyContent: form,
+						cssClass: 'ddl-record-set-export-modal',
+						resizable: false,
 						toolbars: {
 							footer: [
 								{
+									cssClass: 'btn-secondary',
+									label: '<liferay-ui:message key="cancel" />',
+									on: {
+										click: function() {
+											dialog.hide();
+										}
+									}
+								},
+								{
+									cssClass: 'btn-primary',
 									label: '<liferay-ui:message key="ok" />',
 									on: {
 										click: function() {
@@ -102,28 +114,10 @@ boolean showCSVWarning = StringUtil.equals("enabled-with-warning", csvExport);
 										}
 									},
 									primary: true
-								},
-								{
-									label: '<liferay-ui:message key="cancel" />',
-									on: {
-										click: function() {
-											dialog.hide();
-										}
-									}
-								}
-							],
-							header: [
-								{
-									cssClass: 'close',
-									label: '\u00D7',
-									on: {
-										click: function(event) {
-											dialog.hide();
-										}
-									}
 								}
 							]
-						}
+						},
+						width: 600
 					},
 					title: '<%= UnicodeLanguageUtil.get(request, "export") %>'
 				}
