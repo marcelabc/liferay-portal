@@ -96,12 +96,9 @@ public class KBAdminManagementToolbarDisplayContext {
 								"javascript:",
 								_liferayPortletResponse.getNamespace(),
 								"deleteEntries();"));
-
 						dropdownItem.setIcon("times");
-
 						dropdownItem.setLabel(
 							LanguageUtil.get(_request, "delete"));
-
 						dropdownItem.setQuickAction(true);
 					});
 			}
@@ -252,7 +249,6 @@ public class KBAdminManagementToolbarDisplayContext {
 								"mvcPath", "/admin/import.jsp");
 							importURL.setParameter(
 								"redirect", PortalUtil.getCurrentURL(_request));
-
 							importURL.setParameter(
 								"parentKBFolderId",
 								String.valueOf(parentResourcePrimKey));
@@ -429,10 +425,8 @@ public class KBAdminManagementToolbarDisplayContext {
 							dropdownItem -> {
 								dropdownItem.setActive(
 									orderByCol.equals(_getOrderByCol()));
-
 								dropdownItem.setHref(
 									getSortingURL(), "orderByCol", orderByCol);
-
 								dropdownItem.setLabel(
 									LanguageUtil.get(
 										_request,
