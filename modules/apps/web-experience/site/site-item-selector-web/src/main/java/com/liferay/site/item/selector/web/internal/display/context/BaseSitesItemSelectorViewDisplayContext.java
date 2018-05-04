@@ -252,6 +252,7 @@ public abstract class BaseSitesItemSelectorViewDisplayContext
 							dropdownItem.setLabel(
 								LanguageUtil.get(request, "name"));
 						}));
+
 				add(
 					SafeConsumer.ignore(
 						dropdownItem -> {
