@@ -474,6 +474,7 @@ public class DLAdminManagementToolbarDisplayContext {
 						dropdownItem.setLabel(
 							LanguageUtil.get(_request, "all"));
 					});
+
 				add(
 					dropdownItem -> {
 						dropdownItem.setActive(navigation.equals("recent"));
