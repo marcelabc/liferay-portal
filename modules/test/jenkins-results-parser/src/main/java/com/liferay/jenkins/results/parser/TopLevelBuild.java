@@ -1225,8 +1225,9 @@ public class TopLevelBuild extends BaseBuild {
 	}
 
 	protected String getTestSuiteName() {
-		String ciTestSuite = getParameterValue("CI_TEST_SUITE");
 		String testSuiteName = "ci:test";
+
+		String ciTestSuite = getParameterValue("CI_TEST_SUITE");
 
 		if ((ciTestSuite != null) && !ciTestSuite.isEmpty() &&
 			!ciTestSuite.equals("default")) {
