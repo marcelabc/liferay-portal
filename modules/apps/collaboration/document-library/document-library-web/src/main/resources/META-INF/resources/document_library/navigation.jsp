@@ -17,8 +17,8 @@
 <%@ include file="/document_library/init.jsp" %>
 
 <%
-DLPortletInstanceSettingsHelper dlPortletInstanceSettingsHelper = new DLPortletInstanceSettingsHelper(dlRequestHelper);
 DLAdminNavigationDisplayContext dlAdminNavigationDisplayContext = new DLAdminNavigationDisplayContext(liferayPortletRequest, liferayPortletResponse);
+DLPortletInstanceSettingsHelper dlPortletInstanceSettingsHelper = new DLPortletInstanceSettingsHelper(dlRequestHelper);
 %>
 
 <c:if test="<%= dlPortletInstanceSettingsHelper.isShowTabs() %>">
