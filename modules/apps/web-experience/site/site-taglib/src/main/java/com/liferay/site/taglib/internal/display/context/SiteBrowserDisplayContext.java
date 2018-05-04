@@ -149,6 +149,7 @@ public class SiteBrowserDisplayContext {
 						dropdownItem.setLabel(
 							LanguageUtil.get(_request, "name"));
 					});
+
 				add(
 					dropdownItem -> {
 						dropdownItem.setActive(
