@@ -36,6 +36,7 @@ DLAdminDisplayContext dlAdminDisplayContext = (DLAdminDisplayContext)request.get
 
 if (dlAdminDisplayContext == null) {
 	dlAdminDisplayContext = new DLAdminDisplayContext(liferayPortletRequest, liferayPortletResponse);
+
 	request.setAttribute(DLWebKeys.DOCUMENT_LIBRARY_ADMIN_DISPLAY_CONTEXT, dlAdminDisplayContext);
 }
 
