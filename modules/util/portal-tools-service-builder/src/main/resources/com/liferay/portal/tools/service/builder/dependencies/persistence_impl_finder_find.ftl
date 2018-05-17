@@ -205,7 +205,11 @@ that may or may not be enforced with a unique index at the database level. Case
 				finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_${entityFinder.name?upper_case};
 				finderArgs = new Object[] {
 					<#list entityColumns as entityColumn>
-						${entityColumn.name}
+						<#if stringUtil.equals(entityColumn.type, "Date")>
+							_getTime(${entityColumn.name})
+						<#else>
+							${entityColumn.name}
+						</#if>
 
 						<#if entityColumn_has_next>
 							,
@@ -219,7 +223,11 @@ that may or may not be enforced with a unique index at the database level. Case
 		finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_${entityFinder.name?upper_case};
 		finderArgs = new Object[] {
 			<#list entityColumns as entityColumn>
-				${entityColumn.name},
+				<#if stringUtil.equals(entityColumn.type, "Date")>
+					_getTime(${entityColumn.name}),
+				<#else>
+					${entityColumn.name},
+				</#if>
 			</#list>
 
 			start, end, orderByComparator
@@ -1575,6 +1583,8 @@ that may or may not be enforced with a unique index at the database level. Case
 					<#list entityColumns as entityColumn>
 						<#if entityColumn.hasArrayableOperator()>
 							StringUtil.merge(${entityColumn.names})
+						<#elseif stringUtil.equals(entityColumn.type, "Date")>
+							_getTime(${entityColumn.name})
 						<#else>
 							${entityColumn.name}
 						</#if>
@@ -1590,6 +1600,8 @@ that may or may not be enforced with a unique index at the database level. Case
 					<#list entityColumns as entityColumn>
 						<#if entityColumn.hasArrayableOperator()>
 							StringUtil.merge(${entityColumn.names}),
+						<#elseif stringUtil.equals(entityColumn.type, "Date")>
+							_getTime(${entityColumn.name})
 						<#else>
 							${entityColumn.name},
 						</#if>
@@ -1794,7 +1806,11 @@ that may or may not be enforced with a unique index at the database level. Case
 	boolean retrieveFromCache) {
 		Object[] finderArgs = new Object[] {
 			<#list entityColumns as entityColumn>
-				${entityColumn.name}
+				<#if stringUtil.equals(entityColumn.type, "Date")>
+					_getTime(${entityColumn.name})
+				<#else>
+					${entityColumn.name}
+				</#if>
 
 				<#if entityColumn_has_next>
 					,
@@ -1814,7 +1830,11 @@ that may or may not be enforced with a unique index at the database level. Case
 			if (
 				<#list entityColumns as entityColumn>
 					<#if entityColumn.isPrimitiveType(false)>
-						(${entityColumn.name} != ${entity.varName}.get${entityColumn.methodName}())
+						<#if stringUtil.equals(entityColumn.type, "boolean")>
+							(${entityColumn.name} != ${entity.varName}.is${entityColumn.methodName}())
+						<#else>
+							(${entityColumn.name} != ${entity.varName}.get${entityColumn.methodName}())
+						</#if>
 					<#else>
 						!Objects.equals(${entityColumn.name}, ${entity.varName}.get${entityColumn.methodName}())
 					</#if>
@@ -1873,7 +1893,11 @@ that may or may not be enforced with a unique index at the database level. Case
 					if (
 						<#list entityColumns as entityColumn>
 							<#if entityColumn.isPrimitiveType()>
-								(${entity.varName}.get${entityColumn.methodName}() != ${entityColumn.name})
+								<#if stringUtil.equals(entityColumn.type, "boolean")>
+									(${entity.varName}.is${entityColumn.methodName}() != ${entityColumn.name})
+								<#else>
+									(${entity.varName}.get${entityColumn.methodName}() != ${entityColumn.name})
+								</#if>
 							<#else>
 								(${entity.varName}.get${entityColumn.methodName}() == null) || !${entity.varName}.get${entityColumn.methodName}().equals(${entityColumn.name})
 							</#if>

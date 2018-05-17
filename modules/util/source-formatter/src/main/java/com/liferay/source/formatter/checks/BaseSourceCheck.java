@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.tools.ToolsUtil;
+import com.liferay.source.formatter.BNDSettings;
 import com.liferay.source.formatter.SourceFormatterExcludes;
 import com.liferay.source.formatter.SourceFormatterMessage;
 import com.liferay.source.formatter.checks.util.SourceUtil;
@@ -30,8 +31,6 @@ import com.liferay.source.formatter.util.FileUtil;
 import com.liferay.source.formatter.util.SourceFormatterUtil;
 
 import java.io.File;
-
-import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -179,6 +178,40 @@ public abstract class BaseSourceCheck implements SourceCheck {
 		return _baseDirName;
 	}
 
+	protected BNDSettings getBNDSettings(String fileName) throws Exception {
+		for (Map.Entry<String, BNDSettings> entry :
+				_bndSettingsMap.entrySet()) {
+
+			String bndFileLocation = entry.getKey();
+
+			if (fileName.startsWith(bndFileLocation)) {
+				return entry.getValue();
+			}
+		}
+
+		String bndFileLocation = fileName;
+
+		while (true) {
+			int pos = bndFileLocation.lastIndexOf(StringPool.SLASH);
+
+			if (pos == -1) {
+				return null;
+			}
+
+			bndFileLocation = bndFileLocation.substring(0, pos + 1);
+
+			File file = new File(bndFileLocation + "bnd.bnd");
+
+			if (file.exists()) {
+				return new BNDSettings(
+					bndFileLocation + "bnd.bnd", FileUtil.read(file));
+			}
+
+			bndFileLocation = StringUtil.replaceLast(
+				bndFileLocation, CharPool.SLASH, StringPool.BLANK);
+		}
+	}
+
 	protected Map<String, String> getCompatClassNamesMap() throws Exception {
 		Map<String, String> compatClassNamesMap = new HashMap<>();
 
@@ -231,17 +264,7 @@ public abstract class BaseSourceCheck implements SourceCheck {
 	}
 
 	protected String getContent(String fileName, int level) throws Exception {
-		File file = getFile(fileName, level);
-
-		if (file != null) {
-			String content = FileUtil.read(file);
-
-			if (Validator.isNotNull(content)) {
-				return content;
-			}
-		}
-
-		return StringPool.BLANK;
+		return SourceFormatterUtil.getContent(_baseDirName, fileName, level);
 	}
 
 	protected Document getCustomSQLDocument(
@@ -286,11 +309,11 @@ public abstract class BaseSourceCheck implements SourceCheck {
 	}
 
 	protected List<String> getFileNames(
-			String basedir, String[] excludes, String[] includes)
+			String baseDirName, String[] excludes, String[] includes)
 		throws Exception {
 
 		return SourceFormatterUtil.scanForFiles(
-			basedir, excludes, includes, _sourceFormatterExcludes, true);
+			baseDirName, excludes, includes, _sourceFormatterExcludes, true);
 	}
 
 	protected int getLeadingTabCount(String line) {
@@ -375,29 +398,11 @@ public abstract class BaseSourceCheck implements SourceCheck {
 	}
 
 	protected String getPortalContent(String fileName) throws Exception {
-		String content = getContent(fileName, ToolsUtil.PORTAL_MAX_DIR_LEVEL);
+		String portalBranchName = SourceFormatterUtil.getPropertyValue(
+			SourceFormatterUtil.GIT_LIFERAY_PORTAL_BRANCH, _propertiesMap);
 
-		if (Validator.isNotNull(content)) {
-			return content;
-		}
-
-		String portalBranchName = _getPortalBranchName();
-
-		if (portalBranchName == null) {
-			return null;
-		}
-
-		try {
-			URL url = new URL(
-				StringBundler.concat(
-					_GIT_LIFERAY_PORTAL_URL, portalBranchName, StringPool.SLASH,
-					fileName));
-
-			return StringUtil.read(url.openStream());
-		}
-		catch (Exception e) {
-			return null;
-		}
+		return SourceFormatterUtil.getPortalContent(
+			_baseDirName, portalBranchName, fileName);
 	}
 
 	protected Document getPortalCustomSQLDocument() throws Exception {
@@ -456,6 +461,26 @@ public abstract class BaseSourceCheck implements SourceCheck {
 		}
 
 		return portalImplDir.getParentFile();
+	}
+
+	protected String getProjectName() {
+		if (_projectName != null) {
+			return _projectName;
+		}
+
+		if (Validator.isNull(_projectPathPrefix) ||
+			!_projectPathPrefix.contains(StringPool.COLON)) {
+
+			_projectName = StringPool.BLANK;
+
+			return _projectName;
+		}
+
+		int pos = _projectPathPrefix.lastIndexOf(StringPool.COLON);
+
+		_projectName = _projectPathPrefix.substring(pos + 1);
+
+		return _projectName;
 	}
 
 	protected String getProjectPathPrefix() {
@@ -613,6 +638,10 @@ public abstract class BaseSourceCheck implements SourceCheck {
 		return _subrepository;
 	}
 
+	protected void putBNDSettings(BNDSettings bndSettings) {
+		_bndSettingsMap.put(bndSettings.getFileLocation(), bndSettings);
+	}
+
 	protected String stripQuotes(String s) {
 		return stripQuotes(s, CharPool.APOSTROPHE, CharPool.QUOTE);
 	}
@@ -663,32 +692,14 @@ public abstract class BaseSourceCheck implements SourceCheck {
 	protected static final String RUN_OUTSIDE_PORTAL_EXCLUDES =
 		"run.outside.portal.excludes";
 
-	private String _getPortalBranchName() {
-		for (Map.Entry<String, Properties> entry : _propertiesMap.entrySet()) {
-			Properties properties = entry.getValue();
-
-			String portalBranchName = properties.getProperty(
-				_GIT_LIFERAY_PORTAL_BRANCH);
-
-			if (portalBranchName != null) {
-				return portalBranchName;
-			}
-		}
-
-		return null;
-	}
-
-	private static final String _GIT_LIFERAY_PORTAL_BRANCH =
-		"git.liferay.portal.branch";
-
-	private static final String _GIT_LIFERAY_PORTAL_URL =
-		"https://raw.githubusercontent.com/liferay/liferay-portal/";
-
 	private String _baseDirName;
+	private final Map<String, BNDSettings> _bndSettingsMap =
+		new ConcurrentHashMap<>();
 	private boolean _enabled = true;
 	private int _maxLineLength;
 	private List<String> _pluginsInsideModulesDirectoryNames;
 	private boolean _portalSource;
+	private String _projectName;
 	private String _projectPathPrefix;
 	private Map<String, Properties> _propertiesMap;
 	private SourceFormatterExcludes _sourceFormatterExcludes;
