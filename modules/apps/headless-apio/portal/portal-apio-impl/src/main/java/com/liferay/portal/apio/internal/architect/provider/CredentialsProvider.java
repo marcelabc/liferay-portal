@@ -16,17 +16,23 @@ package com.liferay.portal.apio.internal.architect.provider;
 
 import com.liferay.apio.architect.credentials.Credentials;
 import com.liferay.apio.architect.provider.Provider;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.util.Portal;
 
 import javax.servlet.http.HttpServletRequest;
 
+import javax.ws.rs.ForbiddenException;
+
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * Lets resources provide the requested {@link Credentials} as a parameter in
  * the methods of any of the routes builders.
  *
  * <p>
- * This provider is mandatory for any APIO application.
+ * This provider is mandatory for any Apio application.
  * </p>
  *
  * @author Alejandro Hernández
@@ -36,7 +42,20 @@ public class CredentialsProvider implements Provider<Credentials> {
 
 	@Override
 	public Credentials createContext(HttpServletRequest httpServletRequest) {
-		return () -> httpServletRequest.getHeader("Authorization");
+		return () -> {
+			try {
+				User user = _portal.getUser(httpServletRequest);
+
+				return String.valueOf(user.getUserId());
+			}
+			catch (PortalException pe) {
+				throw new ForbiddenException(
+					"Unable to get authenticated user", pe);
+			}
+		};
 	}
+
+	@Reference
+	private Portal _portal;
 
 }

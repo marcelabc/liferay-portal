@@ -16,9 +16,9 @@
 	<command name="activateCP">
 		<execute function="Click" locator1="Dropdown#FILTER" />
 
-		<var name="key_filterValue" value="Inactive" />
-
-		<execute function="AssertClick" locator1="Dropdown#FILTER_VALUES" value1="Inactive" />
+		<execute function="Click" locator1="MenuItem#ANY_MENU_ITEM" value1="Inactive">
+			<var name="key_menuItem" value="Inactive" />
+		</execute>
 
 		<execute macro="LexiconEntry#gotoEntryMenuItem">
 			<var name="menuItem" value="Activate" />
@@ -964,9 +964,7 @@
 
 				<execute macro="Button#clickSave" />
 
-				<execute macro="Alert#viewRequestFailedToComplete" />
-
-				<execute function="AssertTextEquals#assertPartialText" locator1="Message#ERROR_2" value1="The password cannot be blank. Please enter a password." />
+				<execute macro="Alert#viewRequiredField" />
 
 				<execute macro="User#logoutPG" />
 
@@ -1052,7 +1050,7 @@
 				<then>
 					<var name="key_userScreenName" value="${userScreenName}" />
 
-					<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+					<execute macro="PortletEntry#selectAll" />
 
 					<execute function="AssertClickNoError" locator1="Button#DEACTIVATE" value1="Deactivate" />
 
@@ -1823,7 +1821,16 @@
 			</then>
 		</if>
 
-		<execute function="Pause" locator1="5000" />
+		<execute function="AssertElementPresent" locator1="UserBar#USER_AVATAR_IMAGE" />
+	</command>
+
+	<command name="loginUserWithOpenIDConnectEnabledPG">
+		<execute macro="OpenIDConnect#accountSignIn">
+			<var name="userEmailAddress" value="${userEmailAddress}" />
+			<var name="userPassword" value="${userPassword}" />
+		</execute>
+
+		<execute macro="OpenIDConnect#acceptConditions" />
 
 		<execute function="AssertElementPresent" locator1="UserBar#USER_AVATAR_IMAGE" />
 	</command>
@@ -2116,14 +2123,14 @@
 
 		<execute function="Click" locator1="Dropdown#FILTER" />
 
-		<var name="key_filterValue" value="Active" />
-
-		<execute function="AssertClick" locator1="Dropdown#FILTER_VALUES" value1="Active" />
+		<execute function="Click" locator1="MenuItem#ANY_MENU_ITEM" value1="Active">
+			<var name="key_menuItem" value="Active" />
+		</execute>
 
 		<if>
 			<condition function="IsElementPresent" locator1="ContentRow#ENTRY_CONTENT_ROW_1" />
 			<then>
-				<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+				<execute macro="PortletEntry#selectAll" />
 
 				<execute function="AssertClickNoError" locator1="Button#DEACTIVATE" value1="Deactivate" />
 
@@ -2135,14 +2142,14 @@
 
 		<execute function="Click" locator1="Dropdown#FILTER" />
 
-		<var name="key_filterValue" value="Inactive" />
-
-		<execute function="AssertClick" locator1="Dropdown#FILTER_VALUES" value1="Inactive" />
+		<execute function="Click" locator1="MenuItem#ANY_MENU_ITEM" value1="Inactive">
+			<var name="key_menuItem" value="Inactive" />
+		</execute>
 
 		<if>
 			<condition function="IsElementPresent" locator1="ContentRow#ENTRY_CONTENT_ROW_1" />
 			<then>
-				<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+				<execute macro="PortletEntry#selectAll" />
 
 				<execute function="Click" locator1="Icon#DELETE" />
 
@@ -2162,9 +2169,9 @@
 
 		<execute function="Click" locator1="Dropdown#FILTER" />
 
-		<var name="key_filterValue" value="Active" />
-
-		<execute function="AssertClick" locator1="Dropdown#FILTER_VALUES" value1="Active" />
+		<execute function="Click" locator1="MenuItem#ANY_MENU_ITEM" value1="Active">
+			<var name="key_menuItem" value="Active" />
+		</execute>
 
 		<execute macro="User#searchCP">
 			<var name="searchTerm" value="${userScreenName}" />
@@ -2173,7 +2180,7 @@
 		<if>
 			<condition function="IsElementPresent" locator1="ContentRow#ENTRY_CONTENT_ROW_1" />
 			<then>
-				<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+				<execute macro="PortletEntry#selectAll" />
 
 				<execute function="AssertClickNoError" locator1="Button#DEACTIVATE" value1="Deactivate" />
 
@@ -2185,14 +2192,14 @@
 
 		<execute function="Click" locator1="Dropdown#FILTER" />
 
-		<var name="key_filterValue" value="Inactive" />
-
-		<execute function="AssertClick" locator1="Dropdown#FILTER_VALUES" value1="Inactive" />
+		<execute function="Click" locator1="MenuItem#ANY_MENU_ITEM" value1="Inactive">
+			<var name="key_menuItem" value="Inactive" />
+		</execute>
 
 		<if>
 			<condition function="IsElementPresent" locator1="ContentRow#ENTRY_CONTENT_ROW_1" />
 			<then>
-				<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+				<execute macro="PortletEntry#selectAll" />
 
 				<execute function="AssertClickNoError" locator1="Button#DELETE" value1="Delete" />
 

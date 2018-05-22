@@ -618,6 +618,10 @@ public class UserFinderImpl extends UserFinderBaseImpl implements UserFinder {
 		}
 	}
 
+	/**
+	 * @deprecated As of 7.0.0, with no direct replacement
+	 */
+	@Deprecated
 	@Override
 	public List<User> findByNoContacts() {
 		Session session = null;
@@ -1520,17 +1524,17 @@ public class UserFinderImpl extends UserFinderBaseImpl implements UserFinder {
 		String[] lastNames, String[] screenNames, String[] emailAddresses) {
 
 		sql = CustomSQLUtil.replaceKeywords(
-			sql, "lower(User_.firstName)", StringPool.LIKE, false, firstNames);
+			sql, "LOWER(User_.firstName)", StringPool.LIKE, false, firstNames);
 		sql = CustomSQLUtil.replaceKeywords(
-			sql, "lower(User_.middleName)", StringPool.LIKE, false,
+			sql, "LOWER(User_.middleName)", StringPool.LIKE, false,
 			middleNames);
 		sql = CustomSQLUtil.replaceKeywords(
-			sql, "lower(User_.lastName)", StringPool.LIKE, false, lastNames);
+			sql, "LOWER(User_.lastName)", StringPool.LIKE, false, lastNames);
 		sql = CustomSQLUtil.replaceKeywords(
-			sql, "lower(User_.screenName)", StringPool.LIKE, false,
+			sql, "LOWER(User_.screenName)", StringPool.LIKE, false,
 			screenNames);
 		sql = CustomSQLUtil.replaceKeywords(
-			sql, "lower(User_.emailAddress)", StringPool.LIKE, true,
+			sql, "LOWER(User_.emailAddress)", StringPool.LIKE, true,
 			emailAddresses);
 
 		return sql;
