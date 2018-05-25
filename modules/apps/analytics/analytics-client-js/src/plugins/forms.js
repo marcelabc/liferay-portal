@@ -1,3 +1,5 @@
+import {onReady} from '../utils/events.js';
+
 /**
  * Returns an identifier for a form element.
  * @param {object} form The form DOM element
@@ -6,6 +8,7 @@
 function getFormKey(form) {
 	return (
 		form.dataset.analyticsAssetId ||
+		form.dataset.analyticsFormId ||
 		form.id ||
 		form.getAttribute('name') ||
 		form.action
@@ -39,7 +42,11 @@ function getFormPayload(form) {
  * @return {boolean} True if the form is trackable.
  */
 function isTrackableForm(form) {
-	return 'analyticsAssetId' in form.dataset && !!getFormKey(form);
+	return (
+		('analyticsAssetId' in form.dataset ||
+			'analyticsFormId' in form.dataset) &&
+		!!getFormKey(form)
+	);
 }
 
 /**
@@ -123,7 +130,7 @@ function trackFormSubmitted(analytics) {
  * @param {object} The Analytics client instance
  */
 function trackFormViewed(analytics) {
-	const onLoad = () => {
+	return onReady(() => {
 		Array.prototype.slice
 			.call(document.querySelectorAll('form'))
 			.filter(form => isTrackableForm(form))
@@ -137,19 +144,7 @@ function trackFormViewed(analytics) {
 
 				analytics.send('formViewed', 'forms', payload);
 			});
-	};
-
-	if (
-		document.readyState === 'interactive' ||
-		document.readyState === 'complete' ||
-		document.readyState === 'loaded'
-	) {
-		onLoad();
-	} else {
-		document.addEventListener('DOMContentLoaded', () => onLoad());
-	}
-
-	return () => document.removeEventListener('DOMContentLoaded', onLoad);
+	});
 }
 
 /**

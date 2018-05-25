@@ -71,7 +71,7 @@ public class JSPSourceProcessor extends BaseSourceProcessor {
 
 		if (deletedContentsMap.isEmpty()) {
 			return JSPSourceUtil.addIncludedAndReferencedFileNames(
-				fileNames, new HashSet<String>(), contentsMap, false);
+				fileNames, new HashSet<String>(), contentsMap, true);
 		}
 
 		contentsMap.putAll(deletedContentsMap);
@@ -208,8 +208,7 @@ public class JSPSourceProcessor extends BaseSourceProcessor {
 				sourceFormatterArgs.getBaseDirName());
 			_configuration = CheckstyleUtil.getConfiguration(
 				"checkstyle-alloy-mvc.xml", getPropertiesMap(),
-				sourceFormatterArgs.getMaxLineLength(),
-				sourceFormatterArgs.isShowDebugInformation());
+				sourceFormatterArgs);
 		}
 
 		_sourceFormatterMessages.addAll(

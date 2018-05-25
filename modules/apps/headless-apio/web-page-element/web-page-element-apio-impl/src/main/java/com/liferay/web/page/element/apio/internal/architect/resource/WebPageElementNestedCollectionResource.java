@@ -14,30 +14,26 @@
 
 package com.liferay.web.page.element.apio.internal.architect.resource;
 
-import com.liferay.apio.architect.functional.Try;
+import static com.liferay.portal.apio.idempotent.Idempotent.idempotent;
+
 import com.liferay.apio.architect.pagination.PageItems;
 import com.liferay.apio.architect.pagination.Pagination;
 import com.liferay.apio.architect.representor.Representor;
 import com.liferay.apio.architect.resource.NestedCollectionResource;
 import com.liferay.apio.architect.routes.ItemRoutes;
 import com.liferay.apio.architect.routes.NestedCollectionRoutes;
-import com.liferay.journal.exception.NoSuchArticleException;
 import com.liferay.journal.model.JournalArticle;
-import com.liferay.journal.model.JournalArticleModel;
 import com.liferay.journal.service.JournalArticleService;
 import com.liferay.person.apio.architect.identifier.PersonIdentifier;
-import com.liferay.portal.apio.architect.context.auth.MockPermissions;
+import com.liferay.portal.apio.permission.HasPermission;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.site.apio.architect.identifier.WebSiteIdentifier;
-import com.liferay.web.page.element.apio.architect.identifier.JournalArticleId;
+import com.liferay.web.page.element.apio.architect.identifier.WebPageElementIdentifier;
 import com.liferay.web.page.element.apio.internal.architect.form.WebPageElementCreatorForm;
 import com.liferay.web.page.element.apio.internal.architect.form.WebPageElementUpdaterForm;
 
 import java.util.List;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServerErrorException;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -54,23 +50,24 @@ import org.osgi.service.component.annotations.Reference;
 public class WebPageElementNestedCollectionResource
 	implements
 		NestedCollectionResource<JournalArticle, Long,
-			JournalArticleId, Long, WebSiteIdentifier> {
+			WebPageElementIdentifier, Long, WebSiteIdentifier> {
 
 	@Override
-	public NestedCollectionRoutes<JournalArticle, Long> collectionRoutes(
-		NestedCollectionRoutes.Builder<JournalArticle, Long> builder) {
+	public NestedCollectionRoutes<JournalArticle, Long, Long> collectionRoutes(
+		NestedCollectionRoutes.Builder<JournalArticle, Long, Long> builder) {
 
 		return builder.addGetter(
 			this::_getPageItems
 		).addCreator(
-			this::_addJournalArticle, MockPermissions::validPermission,
+			this::_addJournalArticle,
+			_hasPermission.forAddingIn(WebSiteIdentifier.class),
 			WebPageElementCreatorForm::buildForm
 		).build();
 	}
 
 	@Override
 	public String getName() {
-		return "web-page-elements";
+		return "web-page-element";
 	}
 
 	@Override
@@ -78,26 +75,26 @@ public class WebPageElementNestedCollectionResource
 		ItemRoutes.Builder<JournalArticle, Long> builder) {
 
 		return builder.addGetter(
-			this::_getJournalArticle
+			_journalArticleService::getArticle
 		).addRemover(
-			this::_deleteJournalArticle, MockPermissions::validPermission
+			idempotent(this::_deleteJournalArticle), _hasPermission::forDeleting
 		).addUpdater(
-			this::_updateJournalArticle, MockPermissions::validPermission,
+			this::_updateJournalArticle, _hasPermission::forUpdating,
 			WebPageElementUpdaterForm::buildForm
 		).build();
 	}
 
 	@Override
-	public Representor<JournalArticle, Long> representor(
+	public Representor<JournalArticle> representor(
 		Representor.Builder<JournalArticle, Long> builder) {
 
 		return builder.types(
 			"WebPageElement"
 		).identifier(
-			JournalArticle::getFolderId
+			JournalArticle::getId
 		).addBidirectionalModel(
 			"webSite", "webPageElements", WebSiteIdentifier.class,
-			JournalArticleModel::getGroupId
+			JournalArticle::getGroupId
 		).addDate(
 			"dateCreated", JournalArticle::getCreateDate
 		).addDate(
@@ -107,9 +104,9 @@ public class WebPageElementNestedCollectionResource
 		).addDate(
 			"lastReviewed", JournalArticle::getReviewDate
 		).addLinkedModel(
-			"author", PersonIdentifier.class, this::_getUserOptional
+			"author", PersonIdentifier.class, JournalArticle::getUserId
 		).addLinkedModel(
-			"creator", PersonIdentifier.class, this::_getUserOptional
+			"creator", PersonIdentifier.class, JournalArticle::getUserId
 		).addString(
 			"description", JournalArticle::getDescription
 		).addString(
@@ -120,7 +117,8 @@ public class WebPageElementNestedCollectionResource
 	}
 
 	private JournalArticle _addJournalArticle(
-		Long webSiteId, WebPageElementCreatorForm webPageElementCreatorForm) {
+			long webSiteId, WebPageElementCreatorForm webPageElementCreatorForm)
+		throws PortalException {
 
 		ServiceContext serviceContext = new ServiceContext();
 
@@ -128,55 +126,34 @@ public class WebPageElementNestedCollectionResource
 		serviceContext.setAddGuestPermissions(true);
 		serviceContext.setScopeGroupId(webSiteId);
 
-		Try<JournalArticle> journalArticleTry = Try.fromFallible(
-			() -> _journalArticleService.addArticle(
-				webSiteId, webPageElementCreatorForm.getFolder(), 0, 0, null,
-				true, webPageElementCreatorForm.getTitleMap(),
-				webPageElementCreatorForm.getDescriptionMap(),
-				webPageElementCreatorForm.getText(),
-				webPageElementCreatorForm.getStructure(),
-				webPageElementCreatorForm.getTemplate(), null,
-				webPageElementCreatorForm.getDisplayDateMonth(),
-				webPageElementCreatorForm.getDisplayDateDay(),
-				webPageElementCreatorForm.getDisplayDateYear(),
-				webPageElementCreatorForm.getDisplayDateHour(),
-				webPageElementCreatorForm.getDisplayDateMinute(), 0, 0, 0, 0, 0,
-				true, 0, 0, 0, 0, 0, true, true, null, serviceContext));
-
-		return journalArticleTry.getUnchecked();
+		return _journalArticleService.addArticle(
+			webSiteId, 0, 0, 0, null, true,
+			webPageElementCreatorForm.getTitleMap(),
+			webPageElementCreatorForm.getDescriptionMap(),
+			webPageElementCreatorForm.getText(),
+			webPageElementCreatorForm.getStructure(),
+			webPageElementCreatorForm.getTemplate(), null,
+			webPageElementCreatorForm.getDisplayDateMonth(),
+			webPageElementCreatorForm.getDisplayDateDay(),
+			webPageElementCreatorForm.getDisplayDateYear(),
+			webPageElementCreatorForm.getDisplayDateHour(),
+			webPageElementCreatorForm.getDisplayDateMinute(), 0, 0, 0, 0, 0,
+			true, 0, 0, 0, 0, 0, true, true, null, serviceContext);
 	}
 
-	private void _deleteJournalArticle(Long journalArticleId) {
-		try {
-			JournalArticle article = _journalArticleService.getArticle(
-				journalArticleId);
+	private void _deleteJournalArticle(long journalArticleId)
+		throws PortalException {
 
-			_journalArticleService.deleteArticle(
-				article.getGroupId(), article.getArticleId(),
-				article.getArticleResourceUuid(), new ServiceContext());
-		}
-		catch (NoSuchArticleException nsae) {
-		}
-		catch (PortalException pe) {
-			throw new ServerErrorException(500, pe);
-		}
-	}
+		JournalArticle article = _journalArticleService.getArticle(
+			journalArticleId);
 
-	private JournalArticle _getJournalArticle(Long journalArticleId) {
-		try {
-			return _journalArticleService.getArticle(journalArticleId);
-		}
-		catch (NoSuchArticleException nsae) {
-			throw new NotFoundException(
-				"Unable to get article " + journalArticleId, nsae);
-		}
-		catch (PortalException pe) {
-			throw new ServerErrorException(500, pe);
-		}
+		_journalArticleService.deleteArticle(
+			article.getGroupId(), article.getArticleId(),
+			article.getArticleResourceUuid(), new ServiceContext());
 	}
 
 	private PageItems<JournalArticle> _getPageItems(
-		Pagination pagination, Long webSiteId) {
+		Pagination pagination, long webSiteId) {
 
 		List<JournalArticle> journalArticles =
 			_journalArticleService.getArticles(
@@ -187,13 +164,10 @@ public class WebPageElementNestedCollectionResource
 		return new PageItems<>(journalArticles, count);
 	}
 
-	private Long _getUserOptional(JournalArticle journalArticle) {
-		return journalArticle.getUserId();
-	}
-
 	private JournalArticle _updateJournalArticle(
-		Long journalArticleId,
-		WebPageElementUpdaterForm webPageElementUpdaterForm) {
+			long journalArticleId,
+			WebPageElementUpdaterForm webPageElementUpdaterForm)
+		throws PortalException {
 
 		ServiceContext serviceContext = new ServiceContext();
 
@@ -201,19 +175,20 @@ public class WebPageElementNestedCollectionResource
 		serviceContext.setAddGuestPermissions(true);
 		serviceContext.setScopeGroupId(webPageElementUpdaterForm.getGroup());
 
-		Try<JournalArticle> journalArticleTry = Try.fromFallible(
-			() -> _journalArticleService.updateArticle(
-				webPageElementUpdaterForm.getUser(),
-				webPageElementUpdaterForm.getGroup(),
-				webPageElementUpdaterForm.getFolder(),
-				String.valueOf(journalArticleId),
-				webPageElementUpdaterForm.getVersion(),
-				webPageElementUpdaterForm.getTitleMap(),
-				webPageElementUpdaterForm.getDescriptionMap(),
-				webPageElementUpdaterForm.getText(), null, serviceContext));
-
-		return journalArticleTry.getUnchecked();
+		return _journalArticleService.updateArticle(
+			webPageElementUpdaterForm.getUser(),
+			webPageElementUpdaterForm.getGroup(), 0,
+			String.valueOf(journalArticleId),
+			webPageElementUpdaterForm.getVersion(),
+			webPageElementUpdaterForm.getTitleMap(),
+			webPageElementUpdaterForm.getDescriptionMap(),
+			webPageElementUpdaterForm.getText(), null, serviceContext);
 	}
+
+	@Reference(
+		target = "(model.class.name=com.liferay.journal.model.JournalArticle)"
+	)
+	private HasPermission<Long> _hasPermission;
 
 	@Reference
 	private JournalArticleService _journalArticleService;

@@ -624,6 +624,8 @@
 	</command>
 
 	<command name="AddWebContentWithCategorySpecificDefinition" priority="4">
+		<property name="test.name.skip.portal.instance" value="WorkflowUsecase#AddWebContentWithCategorySpecificDefinition" />
+
 		<execute macro="ProductMenu#gotoPortlet">
 			<var name="category" value="Configuration" />
 			<var name="panel" value="Control Panel" />
@@ -643,7 +645,7 @@
 		<execute macro="Navigator#openURL" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Categorization" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Categories" />
 		</execute>
@@ -660,7 +662,7 @@
 		<execute macro="Navigator#openURL" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Categorization" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Categories" />
 		</execute>
@@ -843,9 +845,9 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -1032,6 +1034,8 @@
 	</command>
 
 	<command name="UnpublishAndDeleteUploadedDefinition" priority="5">
+		<property name="test.name.skip.portal.instance" value="WorkflowUsecase#UnpublishAndDeleteUploadedDefinition" />
+
 		<execute macro="ProductMenu#gotoPortlet">
 			<var name="category" value="Configuration" />
 			<var name="panel" value="Control Panel" />
@@ -1111,9 +1115,9 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -1147,7 +1151,9 @@
 			<var name="user" value="Test Test" />
 		</execute>
 
-		<execute macro="Workflow#clickAssignToMeByDetails" />
+		<execute macro="LexiconEntry#gotoEllipsisMenuItem">
+			<var name="menuItem" value="Assign to Me" />
+		</execute>
 
 		<execute macro="Workflow#confirmWorkflowAction" />
 
@@ -1174,7 +1180,9 @@
 			<var name="workflowTask" value="Review" />
 		</execute>
 
-		<execute macro="Workflow#clickApproveByDetails" />
+		<execute macro="LexiconEntry#gotoEllipsisMenuItem">
+			<var name="menuItem" value="Approve" />
+		</execute>
 
 		<execute macro="Workflow#confirmWorkflowAction" />
 
@@ -1198,6 +1206,8 @@
 	</command>
 
 	<command name="ViewInvalidDefinitionAlert" priority="4">
+		<property name="test.name.skip.portal.instance" value="WorkflowUsecase#ViewInvalidDefinitionAlert" />
+
 		<execute macro="ProductMenu#gotoPortlet">
 			<var name="category" value="Configuration" />
 			<var name="panel" value="Control Panel" />
@@ -1210,11 +1220,26 @@
 			<var name="title" value="Invalid Definition" />
 		</execute>
 
-		<execute function="UploadCommonFile#uploadCommonFileHidden" locator1="WorkflowUpload#FILE_UPLOAD" value1="Document_1.txt" />
+		<if>
+			<condition function="IsElementPresent" locator1="KaleoDesignerEditWorkflow#SOURCE_KALEO_XML_TAB" />
+			<then>
+				<execute macro="KaleoDesigner#viewSourceXMLTab" />
+			</then>
+		</if>
+
+		<execute function="UploadCommonFile#uploadCommonFileHiddenNoMouseOver" locator1="WorkflowUpload#FILE_UPLOAD" value1="Document_1.txt" />
 
 		<execute macro="Button#clickPublish" />
 
-		<execute function="AssertTextEquals" locator1="Message#ERROR_1" value1="Please enter a valid definition before publishing." />
+		<if>
+			<condition function="IsElementPresent" locator1="KaleoDesignerEditWorkflow#SOURCE_KALEO_XML_TAB" />
+			<then>
+				<execute function="AssertTextEquals" locator1="Message#ERROR_1" value1="Please enter valid content." />
+			</then>
+			<else>
+				<execute function="AssertTextEquals" locator1="Message#ERROR_1" value1="Please enter a valid definition before publishing." />
+			</else>
+		</if>
 	</command>
 
 	<command name="ViewTaskCount" priority="3">
@@ -1371,9 +1396,9 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -1802,9 +1827,9 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">

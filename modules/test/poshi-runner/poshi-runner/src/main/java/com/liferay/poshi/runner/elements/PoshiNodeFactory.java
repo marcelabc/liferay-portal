@@ -14,18 +14,19 @@
 
 package com.liferay.poshi.runner.elements;
 
+import com.google.common.reflect.ClassPath;
+
 import com.liferay.poshi.runner.util.Dom4JUtil;
 import com.liferay.poshi.runner.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
 
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.lang.reflect.Modifier;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.dom4j.Comment;
@@ -83,24 +84,55 @@ public abstract class PoshiNodeFactory {
 			return newPoshiNode;
 		}
 
-		throw new RuntimeException("Unknown readble syntax\n" + readableSyntax);
+		throw new RuntimeException(
+			"Unknown readable syntax\n" + readableSyntax);
 	}
 
-	public static PoshiNode<?, ?> newPoshiNodeFromFile(String filePath) {
-		File file = new File(filePath);
+	public static PoshiNode<?, ?> newPoshiNode(
+		String content, String fileType) {
 
 		try {
-			String content = FileUtil.read(file);
+			DefinitionPoshiElement definitionPoshiElement = null;
+
+			for (PoshiElement poshiElement : _poshiElements) {
+				if (poshiElement instanceof DefinitionPoshiElement &&
+					fileType.equals(poshiElement.getFileType())) {
+
+					definitionPoshiElement =
+						(DefinitionPoshiElement)poshiElement;
+				}
+			}
 
 			if (content.contains("<definition")) {
 				Document document = Dom4JUtil.parse(content);
 
 				Element rootElement = document.getRootElement();
 
-				return newPoshiNode(rootElement);
+				return definitionPoshiElement.clone(rootElement);
 			}
 
-			return newPoshiNode(null, content);
+			return definitionPoshiElement.clone(content);
+		}
+		catch (Exception e) {
+			System.out.println("Unable to generate the Poshi element");
+
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	public static PoshiNode<?, ?> newPoshiNodeFromFile(String filePath) {
+		try {
+			File file = new File(filePath);
+
+			String content = FileUtil.read(file);
+
+			int index = filePath.lastIndexOf(".");
+
+			String fileType = filePath.substring(index + 1);
+
+			return newPoshiNode(content, fileType);
 		}
 		catch (Exception e) {
 			System.out.println("Unable to generate the Poshi element");
@@ -167,33 +199,39 @@ public abstract class PoshiNodeFactory {
 
 	static {
 		try {
-			URL url = PoshiNode.class.getResource(
-				PoshiNode.class.getSimpleName() + ".class");
+			ClassPath classPath = ClassPath.from(
+				PoshiNode.class.getClassLoader());
 
-			File poshiNodeClassFile = new File(url.toURI());
+			List<Class<?>> poshiElementClasses = new ArrayList<>();
 
-			File dir = poshiNodeClassFile.getParentFile();
+			for (ClassPath.ClassInfo classInfo :
+					classPath.getTopLevelClasses(
+						"com.liferay.poshi.runner.elements")) {
 
-			List<File> dirFiles = Arrays.asList(dir.listFiles());
+				poshiElementClasses.add(classInfo.load());
+			}
 
-			Collections.sort(dirFiles);
+			Collections.sort(
+				poshiElementClasses,
+				new Comparator<Class<?>>() {
 
-			for (File file : dirFiles) {
-				String fileName = file.getName();
+					@Override
+					public int compare(Class<?> class1, Class<?> class2) {
+						String className1 = class1.getName();
+						String className2 = class2.getName();
 
-				if (fileName.startsWith("Base") ||
-					fileName.startsWith("Poshi")) {
+						return className1.compareTo(className2);
+					}
+
+				});
+
+			for (Class<?> clazz : poshiElementClasses) {
+				if (Modifier.isAbstract(clazz.getModifiers()) ||
+					!(PoshiComment.class.isAssignableFrom(clazz) ||
+					PoshiElement.class.isAssignableFrom(clazz))) {
 
 					continue;
 				}
-
-				Package pkg = PoshiNode.class.getPackage();
-
-				int index = fileName.indexOf(".");
-
-				String className = fileName.substring(0, index);
-
-				Class<?> clazz = Class.forName(pkg.getName() + "." + className);
 
 				PoshiNode<?, ?> poshiNode =
 					(PoshiNode<?, ?>)clazz.newInstance();
@@ -209,8 +247,8 @@ public abstract class PoshiNodeFactory {
 				}
 			}
 		}
-		catch (ClassNotFoundException | IllegalAccessException |
-			   InstantiationException | URISyntaxException e) {
+		catch (IllegalAccessException | InstantiationException |
+			   IOException e) {
 
 			throw new RuntimeException(e);
 		}

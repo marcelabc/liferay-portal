@@ -27,7 +27,21 @@ import ${apiPackagePath}.model.${entity.name}Soap;
 </#list>
 
 <#if entity.localizedEntity??>
-	import ${apiPackagePath}.model.${entity.name}Localization;
+	<#assign localizedEntity = entity.localizedEntity />
+
+	import ${apiPackagePath}.model.${localizedEntity.name};
+</#if>
+
+<#if entity.versionEntity??>
+	<#assign versionEntity = entity.versionEntity />
+
+	import ${apiPackagePath}.model.${versionEntity.name};
+
+<#elseif entity.versionedEntity??>
+	<#assign versionedEntity = entity.versionedEntity />
+
+	import ${apiPackagePath}.model.${versionedEntity.name};
+	import ${apiPackagePath}.model.impl.${versionedEntity.name}Impl;
 </#if>
 
 import ${apiPackagePath}.service.${entity.name}LocalServiceUtil;
@@ -45,9 +59,11 @@ import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.CacheModel;
 import com.liferay.portal.kernel.model.ContainerModel;
+import com.liferay.portal.kernel.model.ModelWrapper;
 import com.liferay.portal.kernel.model.TrashedModel;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.impl.BaseModelImpl;
+import com.liferay.portal.kernel.model.version.VersionedModelInvocationHandler;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.DateUtil;
@@ -62,6 +78,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.io.Serializable;
+
+import java.lang.reflect.Method;
 
 import java.math.BigDecimal;
 
@@ -269,7 +287,11 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 			${entity.name} model = new ${entity.name}Impl();
 
 			<#list entity.regularEntityColumns as entityColumn>
-				model.set${entityColumn.methodName}(soapModel.get${entityColumn.methodName}());
+				<#if stringUtil.equals(entityColumn.type, "boolean")>
+					model.set${entityColumn.methodName}(soapModel.is${entityColumn.methodName}());
+				<#else>
+					model.set${entityColumn.methodName}(soapModel.get${entityColumn.methodName}());
+				</#if>
 			</#list>
 
 			return model;
@@ -414,7 +436,11 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 		Map<String, Object> attributes = new HashMap<String, Object>();
 
 		<#list entity.regularEntityColumns as entityColumn>
-			attributes.put("${entityColumn.name}", get${entityColumn.methodName}());
+			<#if stringUtil.equals(entityColumn.type, "boolean")>
+				attributes.put("${entityColumn.name}", is${entityColumn.methodName}());
+			<#else>
+				attributes.put("${entityColumn.name}", get${entityColumn.methodName}());
+			</#if>
 		</#list>
 
 		attributes.put("entityCacheEnabled", isEntityCacheEnabled());
@@ -523,6 +549,61 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 				return ${localizedEntity.varName}.get${entityColumn.methodName}();
 			}
 		</#list>
+	</#if>
+
+	<#if entity.versionEntity??>
+		<#assign versionEntity = entity.versionEntity />
+
+		@Override
+		public boolean isDraft() {
+			if (getHeadId() > 0) {
+				return true;
+			}
+
+			return false;
+		}
+
+		@Override
+		public void populateVersionModel(${versionEntity.name} ${versionEntity.varName}) {
+			<#list entity.entityColumns as entityColumn>
+				<#if !entityColumn.isPrimary() && !stringUtil.equals(entityColumn.methodName, "HeadId") && !stringUtil.equals(entityColumn.methodName, "MvccVersion")>
+					${versionEntity.varName}.set${entityColumn.methodName}(get${entityColumn.methodName}());
+				</#if>
+			</#list>
+		}
+	<#elseif entity.versionedEntity??>
+		<#assign
+			versionedEntity = entity.versionedEntity
+			pkEntityColumn = versionedEntity.PKEntityColumns?first
+		/>
+
+		@Override
+		public long getVersionedModelId() {
+			return get${pkEntityColumn.methodName}();
+		}
+
+		@Override
+		public void populateVersionedModel(${versionedEntity.name} ${versionedEntity.varName}) {
+			<#list versionedEntity.entityColumns as entityColumn>
+				<#if !entityColumn.isPrimary() && !stringUtil.equals(entityColumn.methodName, "HeadId") && !stringUtil.equals(entityColumn.methodName, "MvccVersion")>
+					${versionedEntity.varName}.set${entityColumn.methodName}(get${entityColumn.methodName}());
+				</#if>
+			</#list>
+		}
+
+		@Override
+		public void setVersionedModelId(long ${versionedEntity.getPKVarName()}) {
+			set${pkEntityColumn.methodName}(${versionedEntity.getPKVarName()});
+		}
+
+		@Override
+		public ${versionedEntity.name} toVersionedModel() {
+			if (_${versionedEntity.varName} == null) {
+				_${versionedEntity.varName} = (${versionedEntity.name})ProxyUtil.newProxyInstance(_classLoader, _versionedModelInterfaces, new VersionedModelInvocationHandler(this, _versionedModelMethodsMap));
+			}
+
+			return _${versionedEntity.varName};
+		}
 	</#if>
 
 	<#list entity.regularEntityColumns as entityColumn>
@@ -1241,6 +1322,8 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 
 				<#if entityColumn.entityName??>
 					(${entityColumn.entityName})get${entityColumn.methodName}().clone()
+				<#elseif stringUtil.equals(entityColumn.type, "boolean")>
+					is${entityColumn.methodName}()
 				<#else>
 					get${entityColumn.methodName}()
 				</#if>
@@ -1262,7 +1345,7 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 			<#list entity.entityOrder.entityColumns as entityColumn>
 				<#if entityColumn.isPrimitiveType()>
 					<#if stringUtil.equals(entityColumn.type, "boolean")>
-						value = Boolean.compare(get${entityColumn.methodName}(), ${entity.varName}.get${entityColumn.methodName}());
+						value = Boolean.compare(is${entityColumn.methodName}(), ${entity.varName}.is${entityColumn.methodName}());
 					<#else>
 						if (get${entityColumn.methodName}() < ${entity.varName}.get${entityColumn.methodName}()) {
 							value = -1;
@@ -1427,7 +1510,11 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 						${entity.varName}CacheModel.${entityColumn.name} = Long.MIN_VALUE;
 					}
 				<#else>
-					${entity.varName}CacheModel.${entityColumn.name} = get${entityColumn.methodName}();
+					<#if stringUtil.equals(entityColumn.type, "boolean")>
+						${entity.varName}CacheModel.${entityColumn.name} = is${entityColumn.methodName}();
+					<#else>
+						${entity.varName}CacheModel.${entityColumn.name} = get${entityColumn.methodName}();
+					</#if>
 
 					<#if stringUtil.equals(entityColumn.type, "String")>
 						String ${entityColumn.name} = ${entity.varName}CacheModel.${entityColumn.name};
@@ -1451,21 +1538,21 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 
 	@Override
 	public String toString() {
-		<#assign initialCapacity = entity.regularEntityColumns?size * 2 + 1 />
-
-		StringBundler sb = new StringBundler(${initialCapacity?c});
+		StringBundler sb = new StringBundler(${entity.regularEntityColumns?size * 2 + 1});
 
 		<#list entity.regularEntityColumns as entityColumn>
 			<#if !stringUtil.equals(entityColumn.type, "Blob") || !entityColumn.lazy>
 				<#if entityColumn_index == 0>
 					sb.append("{${entityColumn.name}=");
-					sb.append(get${entityColumn.methodName}());
-				<#elseif entityColumn_has_next>
-					sb.append(", ${entityColumn.name}=");
-					sb.append(get${entityColumn.methodName}());
 				<#else>
 					sb.append(", ${entityColumn.name}=");
+				</#if>
+				<#if stringUtil.equals(entityColumn.type, "boolean")>
+					sb.append(is${entityColumn.methodName}());
+				<#else>
 					sb.append(get${entityColumn.methodName}());
+				</#if>
+				<#if !entityColumn_has_next>
 					sb.append("}");
 				</#if>
 			</#if>
@@ -1476,9 +1563,7 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 
 	@Override
 	public String toXmlString() {
-		<#assign initialCapacity = entity.regularEntityColumns?size * 3 + 4 />
-
-		StringBundler sb = new StringBundler(${initialCapacity?c});
+		StringBundler sb = new StringBundler(${entity.regularEntityColumns?size * 3 + 4});
 
 		sb.append("<model><model-name>");
 		sb.append("${apiPackagePath}.model.${entity.name}");
@@ -1487,7 +1572,11 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 		<#list entity.regularEntityColumns as entityColumn>
 			<#if !stringUtil.equals(entityColumn.type, "Blob") || !entityColumn.lazy>
 				sb.append("<column><column-name>${entityColumn.name}</column-name><column-value><![CDATA[");
-				sb.append(get${entityColumn.methodName}());
+				<#if stringUtil.equals(entityColumn.type, "boolean")>
+					sb.append(is${entityColumn.methodName}());
+				<#else>
+					sb.append(get${entityColumn.methodName}());
+				</#if>
 				sb.append("]]></column-value></column>");
 			</#if>
 		</#list>
@@ -1499,7 +1588,35 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 
 	private static final ClassLoader _classLoader = ${entity.name}.class.getClassLoader();
 
-	private static final Class<?>[] _escapedModelInterfaces = new Class[] {${entity.name}.class};
+	private static final Class<?>[] _escapedModelInterfaces = new Class[] {${entity.name}.class, ModelWrapper.class};
+
+	<#if entity.versionedEntity??>
+		<#assign versionedEntity = entity.versionedEntity />
+
+		private static final Map<Method, Method> _versionedModelMethodsMap = new HashMap<Method, Method>();
+		private static final Class<?>[] _versionedModelInterfaces = new Class<?>[] {${versionedEntity.name}.class};
+
+		static {
+			try {
+				_versionedModelMethodsMap.put(${versionedEntity.name}.class.getMethod("getPrimaryKey"), ${entity.name}.class.getMethod("getVersionedModelId"));
+
+				<#list versionedEntity.entityColumns as entityColumn>
+					<#if !stringUtil.equals(entityColumn.methodName, "HeadId") && !stringUtil.equals(entityColumn.methodName, "MvccVersion")>
+						<#if stringUtil.equals(entityColumn.type, "boolean")>
+							_versionedModelMethodsMap.put(${versionedEntity.name}.class.getMethod("is${entityColumn.methodName}"), ${entity.name}.class.getMethod("is${entityColumn.methodName}"));
+						</#if>
+
+						_versionedModelMethodsMap.put(${versionedEntity.name}.class.getMethod("get${entityColumn.methodName}"), ${entity.name}.class.getMethod("get${entityColumn.methodName}"));
+					</#if>
+				</#list>
+			}
+			catch (ReflectiveOperationException roe) {
+				throw new ExceptionInInitializerError(roe);
+			}
+		}
+
+		private volatile ${versionedEntity.name} _${versionedEntity.varName};
+	</#if>
 
 	<#list entity.regularEntityColumns as entityColumn>
 		<#if stringUtil.equals(entityColumn.type, "Blob") && entityColumn.lazy>

@@ -47,8 +47,6 @@ public class WebPageElementUpdaterForm {
 			__ -> "This form can be used to update a web page element"
 		).constructor(
 			WebPageElementUpdaterForm::new
-		).addOptionalLong(
-			"folder", WebPageElementUpdaterForm::_setFolder
 		).addRequiredLong(
 			"group", WebPageElementUpdaterForm::_setGroup
 		).addRequiredLong(
@@ -75,27 +73,12 @@ public class WebPageElementUpdaterForm {
 	}
 
 	/**
-	 * Returns the folder ID if added through the form. Returns {@code 0}
-	 * otherwise.
-	 *
-	 * @return the web page element's folder ID if present; {@code 0} otherwise
-	 * @review
-	 */
-	public long getFolder() {
-		if (_folder == null) {
-			return 0;
-		}
-
-		return _folder;
-	}
-
-	/**
 	 * Returns the web page element group's ID.
 	 *
 	 * @return the web page element group's ID
 	 * @review
 	 */
-	public Long getGroup() {
+	public long getGroup() {
 		return _group;
 	}
 
@@ -125,7 +108,7 @@ public class WebPageElementUpdaterForm {
 	 * @return the web page element user's ID
 	 * @review
 	 */
-	public Long getUser() {
+	public long getUser() {
 		return _user;
 	}
 
@@ -135,7 +118,7 @@ public class WebPageElementUpdaterForm {
 	 * @return the web page element version's ID
 	 * @review
 	 */
-	public Long getVersion() {
+	public long getVersion() {
 		return _version;
 	}
 
@@ -143,11 +126,7 @@ public class WebPageElementUpdaterForm {
 		_description = description;
 	}
 
-	private void _setFolder(long folder) {
-		_folder = folder;
-	}
-
-	private void _setGroup(Long group) {
+	private void _setGroup(long group) {
 		_group = group;
 	}
 
@@ -159,20 +138,19 @@ public class WebPageElementUpdaterForm {
 		_title = title;
 	}
 
-	private void _setUser(Long user) {
+	private void _setUser(long user) {
 		_user = user;
 	}
 
-	private void _setVersion(Long version) {
+	private void _setVersion(long version) {
 		_version = version;
 	}
 
 	private String _description;
-	private Long _folder;
-	private Long _group;
+	private long _group;
 	private String _text;
 	private String _title;
-	private Long _user;
-	private Long _version;
+	private long _user;
+	private long _version;
 
 }

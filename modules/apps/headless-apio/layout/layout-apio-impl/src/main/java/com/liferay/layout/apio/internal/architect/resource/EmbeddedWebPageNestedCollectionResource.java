@@ -14,6 +14,8 @@
 
 package com.liferay.layout.apio.internal.architect.resource;
 
+import static com.liferay.portal.apio.idempotent.Idempotent.idempotent;
+
 import com.liferay.apio.architect.pagination.PageItems;
 import com.liferay.apio.architect.pagination.Pagination;
 import com.liferay.apio.architect.representor.Representor;
@@ -22,21 +24,14 @@ import com.liferay.apio.architect.routes.ItemRoutes;
 import com.liferay.apio.architect.routes.NestedCollectionRoutes;
 import com.liferay.layout.apio.architect.identifier.EmbeddedWebPageIdentifier;
 import com.liferay.layout.apio.internal.util.LayoutResourceCollectionUtil;
-import com.liferay.portal.kernel.exception.NoSuchLayoutException;
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.apio.permission.HasPermission;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
-import com.liferay.portal.kernel.security.auth.AuthException;
-import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.site.apio.architect.identifier.WebSiteIdentifier;
 
 import java.util.List;
-
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServerErrorException;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -50,8 +45,8 @@ public class EmbeddedWebPageNestedCollectionResource
 		<Layout, Long, EmbeddedWebPageIdentifier, Long, WebSiteIdentifier> {
 
 	@Override
-	public NestedCollectionRoutes<Layout, Long> collectionRoutes(
-		NestedCollectionRoutes.Builder<Layout, Long> builder) {
+	public NestedCollectionRoutes<Layout, Long, Long> collectionRoutes(
+		NestedCollectionRoutes.Builder<Layout, Long, Long> builder) {
 
 		return builder.addGetter(
 			this::_getLayouts
@@ -60,7 +55,7 @@ public class EmbeddedWebPageNestedCollectionResource
 
 	@Override
 	public String getName() {
-		return "embedded-web-pages";
+		return "embedded-web-page";
 	}
 
 	@Override
@@ -68,14 +63,15 @@ public class EmbeddedWebPageNestedCollectionResource
 		ItemRoutes.Builder<Layout, Long> builder) {
 
 		return builder.addGetter(
-			this::_getLayout
+			_layoutLocalService::getLayout
 		).addRemover(
-			this::_removeLayout, (credentials, plid) -> true
+			idempotent(_layoutLocalService::deleteLayout),
+			_hasPermission::forDeleting
 		).build();
 	}
 
 	@Override
-	public Representor<Layout, Long> representor(
+	public Representor<Layout> representor(
 		Representor.Builder<Layout, Long> builder) {
 
 		return builder.types(
@@ -91,50 +87,27 @@ public class EmbeddedWebPageNestedCollectionResource
 			"dateModified", Layout::getModifiedDate
 		).addDate(
 			"datePublished", Layout::getLastPublishDate
-		).addLocalizedString(
-			"breadcrumb", _layoutResourceCollectionUtil::getBreadcrumb
-		).addLocalizedString(
-			"description",
-			(layout, language) -> layout.getDescription(
-				language.getPreferredLocale())
-		).addLocalizedString(
-			"keywords",
-			(layout, language) -> layout.getKeywords(
-				language.getPreferredLocale())
-		).addLocalizedString(
-			"name",
-			(layout, language) -> layout.getName(language.getPreferredLocale())
-		).addLocalizedString(
-			"title",
-			(layout, language) -> layout.getTitle(language.getPreferredLocale())
-		).addLocalizedString(
-			"url",
-			(layout, language) -> layout.getFriendlyURL(
-				language.getPreferredLocale())
+		).addLocalizedStringByLocale(
+			"breadcrumb", LayoutResourceCollectionUtil::getBreadcrumb
+		).addLocalizedStringByLocale(
+			"description", Layout::getDescription
+		).addLocalizedStringByLocale(
+			"keywords", Layout::getKeywords
+		).addLocalizedStringByLocale(
+			"name", Layout::getName
+		).addLocalizedStringByLocale(
+			"title", Layout::getTitle
+		).addLocalizedStringByLocale(
+			"url", Layout::getFriendlyURL
 		).addString(
 			"embeddedUrl",
 			layout -> layout.getTypeSettingsProperty("embeddedLayoutURL")
 		).addString(
-			"image", _layoutResourceCollectionUtil::getImageURL
+			"image", LayoutResourceCollectionUtil::getImageURL
 		).build();
 	}
 
-	private Layout _getLayout(Long plid) {
-		try {
-			return _layoutLocalService.getLayout(plid);
-		}
-		catch (AuthException | PrincipalException e) {
-			throw new NotAuthorizedException(e);
-		}
-		catch (NoSuchLayoutException nsle) {
-			throw new NotFoundException("Unable to get layout " + plid, nsle);
-		}
-		catch (PortalException pe) {
-			throw new ServerErrorException(500, pe);
-		}
-	}
-
-	private PageItems<Layout> _getLayouts(Pagination pagination, Long groupId) {
+	private PageItems<Layout> _getLayouts(Pagination pagination, long groupId) {
 		List<Layout> layouts = _layoutService.getLayouts(
 			groupId, LayoutConstants.TYPE_EMBEDDED,
 			pagination.getStartPosition(), pagination.getEndPosition());
@@ -145,26 +118,13 @@ public class EmbeddedWebPageNestedCollectionResource
 		return new PageItems<>(layouts, layoutsCount);
 	}
 
-	private Layout _removeLayout(Long plid) {
-		try {
-			return _layoutLocalService.deleteLayout(plid);
-		}
-		catch (AuthException | PrincipalException e) {
-			throw new NotAuthorizedException(e);
-		}
-		catch (NoSuchLayoutException nsle) {
-			throw new NotFoundException("Unable to get layout " + plid, nsle);
-		}
-		catch (PortalException pe) {
-			throw new ServerErrorException(500, pe);
-		}
-	}
+	@Reference(
+		target = "(model.class.name=com.liferay.portal.kernel.model.Layout)"
+	)
+	private HasPermission<Long> _hasPermission;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
-
-	@Reference
-	private LayoutResourceCollectionUtil _layoutResourceCollectionUtil;
 
 	@Reference
 	private LayoutService _layoutService;

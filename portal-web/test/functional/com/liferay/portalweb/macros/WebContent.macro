@@ -807,7 +807,7 @@
 		<execute macro="Navigator#openURL" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Recycle Bin" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Recycle Bin" />
 		</execute>
@@ -838,7 +838,7 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Recycle Bin" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Recycle Bin" />
 		</execute>
@@ -894,8 +894,8 @@
 			<else>
 				<execute macro="PortletEntry#publish" />
 
-				<execute macro="Portlet#changeDisplayStyle">
-					<var name="displayStyle" value="descriptive" />
+				<execute macro="LexiconEntry#changeDisplayStyle">
+					<var name="displayStyle" value="list" />
 				</execute>
 
 				<var name="key_webContentTitle" value="${webContentTitleEdit}" />
@@ -920,6 +920,10 @@
 		<execute function="SelectFrame" locator1="WCSelectDisplayPage#DISPLAY_PAGE_CONFIGURATION_IFRAME" />
 
 		<execute macro="Portlet#expandTree" />
+
+		<execute macro="Navigator#gotoNavItem">
+			<var name="navItem" value="Public Pages" />
+		</execute>
 
 		<execute macro="Portlet#selectTreeNode">
 			<var name="nodeName" value="${pageName}" />
@@ -1042,6 +1046,8 @@
 		</for>
 
 		<execute function="Click" locator1="Icon#EXPIRE" />
+
+		<execute macro="Alert#viewSuccessMessage" />
 	</command>
 
 	<command name="expireSpecificVersionCP">
@@ -1071,23 +1077,32 @@
 		<execute function="Confirm" value1="Are you sure you want to expire the selected version?" />
 	</command>
 
+	<command name="getAssetId" returns="assetId">
+		<if>
+			<isset var="webContentAsset" />
+			<then>
+				<var method="selenium#getAttribute('//li[contains(@data-title,\'${webContentAsset}\')]//input@value')" name="webContentId" />
+
+				<return name="assetId" value="${webContentId}" />
+			</then>
+		</if>
+
+		<if>
+			<isset var="folderAsset" />
+			<then>
+				<var method="selenium#getAttribute('//li[contains(@data-title,\'${folderAsset}\')]@data-folder-id')" name="folderId" />
+
+				<return name="assetId" value="${folderId}" />
+			</then>
+		</if>
+	</command>
+
 	<command name="gotoArticlePermissionsCP">
-		<var name="key_webContentTitle" value="${webContentTitle}" />
-
-		<execute function="Click" locator1="Icon#HEADER_VERTICAL_ELLIPSIS" />
-
-		<execute function="AssertClick" locator1="MenuItem#ANY_MENU_ITEM" value1="Permissions">
-			<var name="key_menuItem" value="Permissions" />
+		<execute macro="LexiconEntry#gotoHeaderMenuItem">
+			<var name="menuItem" value="Permissions" />
 		</execute>
 
 		<execute function="SelectFrame" locator1="IFrame#DIALOG" />
-	</command>
-
-	<command name="gotoViewSpecificVersionHistoryCP">
-		<execute macro="LexiconEntry#gotoEntryMenuItem">
-			<var name="menuItem" value="View History" />
-			<var name="rowEntry" value="${webContentTitle}" />
-		</execute>
 	</command>
 
 	<command name="moveArticlesToFolderCP">
@@ -1121,8 +1136,8 @@
 	</command>
 
 	<command name="moveMultipleToFolderCP">
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="descriptive" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="list" />
 		</execute>
 
 		<for list="${rowEntryCheckList}" param="rowEntry">
@@ -1213,11 +1228,11 @@
 	</command>
 
 	<command name="moveToRecycleBinViaDeleteIconCP">
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="descriptive" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="list" />
 		</execute>
 
-		<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+		<execute macro="PortletEntry#selectAll" />
 
 		<execute function="Click" locator1="Icon#MOVE_TO_RECYCLE_BIN" />
 
@@ -1420,14 +1435,14 @@
 			<var name="portlet" value="Web Content" />
 		</execute>
 
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="descriptive" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="list" />
 		</execute>
 
 		<if>
 			<condition function="IsElementPresent#pauseIsElementPresent" locator1="WC#ENTRY_DESCRIPTIVE_THUMBNAIL_GENERIC" />
 			<then>
-				<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+				<execute macro="PortletEntry#selectAll" />
 
 				<execute function="Click" locator1="Icon#MOVE_TO_RECYCLE_BIN" />
 
@@ -1438,7 +1453,7 @@
 		<execute macro="Navigator#openURL" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Recycle Bin" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Recycle Bin" />
 		</execute>
@@ -1479,8 +1494,8 @@
 	<command name="viewApprovedStatus">
 		<var name="key_webContentTitle" value="${webContentTitle}" />
 
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="list" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="table" />
 		</execute>
 
 		<execute function="AssertTextEquals" locator1="WC#ENTRY_LIST_WORKFLOW_STATUS" value1="Approved" />
@@ -1491,14 +1506,16 @@
 	</command>
 
 	<command name="viewAvailableLanguagesPGViaWCD">
-		<execute function="Click" locator1="Translation#ADD" />
-
-		<execute function="AssertTextEquals" locator1="MenuItem#ANY_MENU_ITEM" value1="${webContentTranslationLanguage1}">
-			<var name="key_menuItem" value="${webContentTranslationLanguage1}" />
+		<execute function="Click" locator1="Button#LOCALIZATION">
+			<var name="key_fieldName" value="${fieldName}" />
 		</execute>
 
-		<execute function="AssertTextNotPresent" locator1="MenuItem#ANY_MENU_ITEM" value1="${webContentTranslationLanguage2}">
-			<var name="key_menuItem" value="${webContentTranslationLanguage2}" />
+		<execute function="AssertElementPresent" locator1="Translation#LOCALIZATION_NAME">
+			<var method="StringUtil#replace('${locale1}', '-', '_')" name="key_locale" />
+		</execute>
+
+		<execute function="AssertElementNotPresent" locator1="Translation#LOCALIZATION_NAME">
+			<var method="StringUtil#replace('${locale2}', '-', '_')" name="key_locale" />
 		</execute>
 	</command>
 
@@ -1541,8 +1558,8 @@
 	</command>
 
 	<command name="viewCategoryDescriptiveCP">
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="descriptive" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="list" />
 		</execute>
 
 		<execute function="AssertElementPresent#pauseAssertVisible" locator1="WC#ENTRY_DESCRIPTIVE_THUMBNAIL">
@@ -1650,8 +1667,8 @@
 	</command>
 
 	<command name="viewDefaultCP">
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="descriptive" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="list" />
 		</execute>
 
 		<execute function="AssertTextEquals" locator1="Message#EMPTY_INFO" value1="No web content was found." />
@@ -1686,24 +1703,24 @@
 	</command>
 
 	<command name="viewDisplayStyleCP">
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="icon" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="cards" />
 		</execute>
 
 		<execute function="AssertElementPresent#pauseAssertVisible" locator1="WC#ENTRY_ICON_THUMBNAIL">
 			<var name="key_webContentTitle" value="${webContentTitle}" />
 		</execute>
 
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="descriptive" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="list" />
 		</execute>
 
 		<execute function="AssertElementPresent#pauseAssertVisible" locator1="WC#ENTRY_DESCRIPTIVE_THUMBNAIL">
 			<var name="key_webContentTitle" value="${webContentTitle}" />
 		</execute>
 
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="list" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="table" />
 		</execute>
 
 		<execute function="AssertElementPresent" locator1="WC#ENTRY_LIST_TITLE">
@@ -2087,8 +2104,8 @@
 	</command>
 
 	<command name="viewWithStructureCP">
-		<execute macro="Portlet#changeDisplayStyle">
-			<var name="displayStyle" value="descriptive" />
+		<execute macro="LexiconEntry#changeDisplayStyle">
+			<var name="displayStyle" value="list" />
 		</execute>
 
 		<execute macro="WebContentNavigator#gotoEditCP">

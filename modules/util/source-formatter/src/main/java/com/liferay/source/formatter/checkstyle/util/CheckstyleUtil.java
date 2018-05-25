@@ -16,6 +16,7 @@ package com.liferay.source.formatter.checkstyle.util;
 
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.source.formatter.SourceFormatterArgs;
 import com.liferay.source.formatter.util.CheckType;
 import com.liferay.source.formatter.util.DebugUtil;
 import com.liferay.source.formatter.util.SourceFormatterUtil;
@@ -40,16 +41,6 @@ public class CheckstyleUtil {
 
 	public static final int BATCH_SIZE = 1000;
 
-	public static String getCheckName(String name) {
-		int pos = name.lastIndexOf(CharPool.PERIOD);
-
-		if (pos != -1) {
-			return name.substring(pos + 1);
-		}
-
-		return name;
-	}
-
 	public static List<String> getCheckNames(Configuration configuration) {
 		List<String> checkNames = new ArrayList<>();
 
@@ -70,7 +61,7 @@ public class CheckstyleUtil {
 
 	public static Configuration getConfiguration(
 			String configurationFileName, Map<String, Properties> propertiesMap,
-			int maxLineLength, boolean showDebugInformation)
+			SourceFormatterArgs sourceFormatterArgs)
 		throws Exception {
 
 		ClassLoader classLoader = CheckstyleUtil.class.getClassLoader();
@@ -80,23 +71,43 @@ public class CheckstyleUtil {
 				classLoader.getResourceAsStream(configurationFileName)),
 			new PropertiesExpander(System.getProperties()), false);
 
+		String checkName = sourceFormatterArgs.getCheckName();
+
+		if (checkName != null) {
+			configuration = _filterCheck(configuration, checkName);
+		}
+
 		configuration = _addAttribute(
-			configuration, "maxLineLength", String.valueOf(maxLineLength),
-			"com.liferay.source.formatter.checkstyle.checks.AppendCheck");
+			configuration, "baseDirName", sourceFormatterArgs.getBaseDirName(),
+			"com.liferay.source.formatter.checkstyle.checks." +
+				"GetterMethodCallCheck");
 		configuration = _addAttribute(
-			configuration, "maxLineLength", String.valueOf(maxLineLength),
-			"com.liferay.source.formatter.checkstyle.checks.ConcatCheck");
-		configuration = _addAttribute(
-			configuration, "maxLineLength", String.valueOf(maxLineLength),
+			configuration, "maxLineLength",
+			String.valueOf(sourceFormatterArgs.getMaxLineLength()),
+			"com.liferay.source.formatter.checkstyle.checks.AppendCheck",
+			"com.liferay.source.formatter.checkstyle.checks.ConcatCheck",
 			"com.liferay.source.formatter.checkstyle.checks." +
 				"PlusStatementCheck");
 		configuration = _addAttribute(
+			configuration, "portalBranchName",
+			SourceFormatterUtil.getPropertyValue(
+				SourceFormatterUtil.GIT_LIFERAY_PORTAL_BRANCH, propertiesMap),
+			"com.liferay.source.formatter.checkstyle.checks." +
+				"GetterMethodCallCheck");
+		configuration = _addAttribute(
+			configuration, "runOutsidePortalExcludes",
+			SourceFormatterUtil.getPropertyValue(
+				"run.outside.portal.excludes", propertiesMap),
+			"com.liferay.source.formatter.checkstyle.checks." +
+				"ParsePrimitiveTypeCheck");
+		configuration = _addAttribute(
 			configuration, "showDebugInformation",
-			String.valueOf(showDebugInformation), "com.liferay.*");
+			String.valueOf(sourceFormatterArgs.isShowDebugInformation()),
+			"com.liferay.*");
 
 		configuration = _addPropertiesAttributes(configuration, propertiesMap);
 
-		if (showDebugInformation) {
+		if (sourceFormatterArgs.isShowDebugInformation()) {
 			DebugUtil.addCheckNames(
 				CheckType.CHECKSTYLE, getCheckNames(configuration));
 		}
@@ -151,7 +162,8 @@ public class CheckstyleUtil {
 				continue;
 			}
 
-			String checkName = getCheckName(checkConfiguration.getName());
+			String checkName = SourceFormatterUtil.getSimpleName(
+				checkConfiguration.getName());
 
 			List<String> attributeNames = SourceFormatterUtil.getAttributeNames(
 				CheckType.CHECKSTYLE, checkName, propertiesMap);
@@ -177,6 +189,38 @@ public class CheckstyleUtil {
 					defaultChildConfiguration.addAttribute(
 						attributeName, value);
 				}
+			}
+		}
+
+		return configuration;
+	}
+
+	private static Configuration _filterCheck(
+		Configuration configuration, String checkName) {
+
+		DefaultConfiguration treeWalkerConfiguration = _getChildConfiguration(
+			configuration, "TreeWalker");
+
+		Configuration[] checkConfigurations =
+			treeWalkerConfiguration.getChildren();
+
+		if (checkConfigurations == null) {
+			return configuration;
+		}
+
+		for (Configuration checkConfiguration : checkConfigurations) {
+			if (!(checkConfiguration instanceof DefaultConfiguration)) {
+				continue;
+			}
+
+			if (!checkName.equals(
+					SourceFormatterUtil.getSimpleName(
+						checkConfiguration.getName()))) {
+
+				DefaultConfiguration defaultChildConfiguration =
+					(DefaultConfiguration)checkConfiguration;
+
+				treeWalkerConfiguration.removeChild(defaultChildConfiguration);
 			}
 		}
 
