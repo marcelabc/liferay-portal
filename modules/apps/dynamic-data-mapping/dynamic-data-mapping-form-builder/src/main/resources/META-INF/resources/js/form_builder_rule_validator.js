@@ -33,13 +33,20 @@ AUI.add(
 					},
 
 					_checkRequiredInputIsFilled: function(inputs, requiredInputs) {
+						var valid = false;
+
 						for (var input in inputs) {
 							if (requiredInputs[input]) {
-								return true;
+								if (inputs[input]) {
+									valid = true;
+								}
+								else {
+									valid = false;
+								}
 							}
 						}
 
-						return false;
+						return valid;
 					},
 
 					_isValidAction: function(action) {
