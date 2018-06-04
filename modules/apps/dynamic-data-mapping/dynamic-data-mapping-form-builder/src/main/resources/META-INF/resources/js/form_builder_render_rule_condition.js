@@ -880,26 +880,54 @@ AUI.add(
 
 				if (dataType === 'string') {
 					for (var i = 0; i < operatorTypes.text.length; i++) {
-						options.push(
-							A.merge(
-								{
-									value: operatorTypes.text[i].name
-								},
-								operatorTypes.text[i]
-							)
-						);
+						if (repeatable) {
+							if (operatorTypes.text[i].name === 'is-empty' || operatorTypes.text[i].name === 'not-is-empty') {
+								options.push(
+										A.merge(
+												{
+													value: operatorTypes.text[i].name
+												},
+												operatorTypes.text[i]
+										)
+								);
+							}
+						}
+						else {
+							options.push(
+									A.merge(
+											{
+												value: operatorTypes.text[i].name
+											},
+											operatorTypes.text[i]
+									)
+							);
+						}
 					}
 				}
 				else if (dataType === 'double' || dataType === 'integer') {
 					for (var j = 0; j < operatorTypes.number.length; j++) {
-						options.push(
-							A.merge(
-								{
-									value: operatorTypes.number[j].name
-								},
-								operatorTypes.number[j]
-							)
-						);
+						if (repeatable) {
+							if (operatorTypes.number[j].name === 'is-empty' || operatorTypes.number[j].name === 'not-is-empty') {
+								options.push(
+										A.merge(
+												{
+													value: operatorTypes.number[j].name
+												},
+												operatorTypes.number[j]
+										)
+								);
+							}
+						}
+						else {
+							options.push(
+									A.merge(
+											{
+												value: operatorTypes.number[j].name
+											},
+											operatorTypes.number[j]
+									)
+							);
+						}
 					}
 				}
 				else if (dataType === 'user') {
