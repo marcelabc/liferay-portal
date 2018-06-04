@@ -298,26 +298,6 @@ AUI.add(
 				return conditions;
 			},
 
-			_getDataType: function(value, options) {
-				var instance = this;
-
-				var option;
-
-				var dataType;
-
-				for (var i = 0; i < options.length; i++) {
-					option = options[i];
-
-					if (value.indexOf(option.value) > -1) {
-						dataType = option.dataType;
-
-						break;
-					}
-				}
-
-				return dataType;
-			},
-
 			_getFieldLabel: function(fieldValue) {
 				var instance = this;
 
@@ -386,6 +366,26 @@ AUI.add(
 				var value = operator.getValue();
 
 				return value[0] || '';
+			},
+
+			_getProperty: function(value, options, property) {
+				var instance = this;
+
+				var option;
+
+				var propertyValue;
+
+				for (var i = 0; i < options.length; i++) {
+					option = options[i];
+
+					if (value.indexOf(option.value) > -1) {
+						propertyValue = option[property];
+
+						break;
+					}
+				}
+
+				return propertyValue;
 			},
 
 			_getSecondOperand: function(index, type) {
@@ -493,9 +493,11 @@ AUI.add(
 					var index = fieldName.split('-')[0];
 
 					if (fieldName.match('-condition-first-operand')) {
-						var dataType = instance._getDataType(field.getValue(), options);
+						var dataType = instance._getProperty(field.getValue(), options, 'dataType');
 
 						var operatorSelected = instance._getOperator(index);
+
+						var repeatable = instance._getProperty(field.getValue(), options, 'repeatable');
 
 						operatorSelected.cleanSelect();
 
