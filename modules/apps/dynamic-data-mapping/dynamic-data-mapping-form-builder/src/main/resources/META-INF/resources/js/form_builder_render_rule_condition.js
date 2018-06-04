@@ -488,7 +488,7 @@ AUI.add(
 
 						instance._clearOperatorField(index);
 
-						instance._updateOperatorList(dataType, index);
+						instance._updateOperatorList(dataType, index, repeatable);
 					}
 					else if (fieldName.match('-condition-operator')) {
 						var operator = event.newVal[0];
@@ -710,7 +710,7 @@ AUI.add(
 				field.render(container);
 
 				if (condition) {
-					instance._updateOperatorList(instance._getFieldDataType(condition.operands[0].value), index);
+					instance._updateOperatorList(instance._getFieldProperty(condition.operands[0].value, 'dataType'), index, condition.operands[0].repeatable);
 				}
 			},
 
@@ -869,7 +869,7 @@ AUI.add(
 				}
 			},
 
-			_updateOperatorList: function(dataType, conditionIndex) {
+			_updateOperatorList: function(dataType, conditionIndex, repeatable) {
 				var instance = this;
 
 				var operator = instance._getOperator(conditionIndex);
