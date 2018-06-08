@@ -43,12 +43,6 @@
 			</label>
 		{/if}
 
-		{if $showLabel}
-			{if $tip}
-				<span class="form-text">{$tip}</span>
-			{/if}
-		{/if}
-
 		<div class="input-group">
 			{if $displayStyle == 'multiline'}
 				<textarea class="field form-control"
@@ -88,5 +82,11 @@
 				</div>
 			{/if}
 		</div>
+		
+		{if $showLabel}
+			{if $tip}
+				<span class="form-text">{$tip}</span>
+			{/if}
+		{/if}
 	</div>
 {/template}

@@ -41,12 +41,6 @@
 			</label>
 		{/if}
 
-		{if $showLabel}
-			{if $tip}
-				<span class="form-text">{$tip}</span>
-			{/if}
-		{/if}
-
 		<div class="input-group input-group-container {if $tooltip}input-group-default{/if}">
 			<div class="input-group-item">
 				<input class="field form-control"
@@ -70,5 +64,11 @@
 				</div>
 			{/if}
 		</div>
+		
+		{if $showLabel}
+			{if $tip}
+				<span class="form-text">{$tip}</span>
+			{/if}
+		{/if}
 	</div>
 {/template}
