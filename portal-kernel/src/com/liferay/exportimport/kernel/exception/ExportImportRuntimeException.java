@@ -31,14 +31,40 @@ public class ExportImportRuntimeException extends NestableRuntimeException {
 		super(msg, cause);
 	}
 
+	public ExportImportRuntimeException(Throwable cause) {
+		super(cause);
+	}
+
 	public String getClassName() {
 		return _className;
+	}
+
+	public String[] getData() {
+		return _data;
+	}
+
+	public String getMessageKey() {
+		return _messageKey;
 	}
 
 	public void setClassName(String className) {
 		_className = className;
 	}
 
+	public void setData(String data) {
+		_data = new String[] {data};
+	}
+
+	public void setData(String[] data) {
+		_data = data;
+	}
+
+	public void setMessageKey(String messageKey) {
+		_messageKey = messageKey;
+	}
+
 	private String _className;
+	private String[] _data;
+	private String _messageKey;
 
 }

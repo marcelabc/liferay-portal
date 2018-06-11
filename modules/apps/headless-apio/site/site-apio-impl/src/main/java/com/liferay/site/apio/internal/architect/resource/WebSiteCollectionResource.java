@@ -20,17 +20,18 @@ import com.liferay.apio.architect.representor.Representor;
 import com.liferay.apio.architect.resource.CollectionResource;
 import com.liferay.apio.architect.routes.CollectionRoutes;
 import com.liferay.apio.architect.routes.ItemRoutes;
-import com.liferay.portal.kernel.exception.NoSuchGroupException;
+import com.liferay.folder.apio.architect.identifier.RootFolderIdentifier;
+import com.liferay.person.apio.architect.identifier.PersonIdentifier;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.GroupService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.site.apio.architect.identifier.WebSiteIdentifier;
+import com.liferay.site.apio.internal.model.GroupWrapper;
 
 import java.util.List;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServerErrorException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -45,74 +46,102 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(immediate = true)
 public class WebSiteCollectionResource
-	implements CollectionResource<Group, Long, WebSiteIdentifier> {
+	implements CollectionResource<GroupWrapper, Long, WebSiteIdentifier> {
 
 	@Override
-	public CollectionRoutes<Group> collectionRoutes(
-		CollectionRoutes.Builder<Group> builder) {
+	public CollectionRoutes<GroupWrapper, Long> collectionRoutes(
+		CollectionRoutes.Builder<GroupWrapper, Long> builder) {
 
 		return builder.addGetter(
-			this::_getPageItems, Company.class
+			this::_getPageItems, ThemeDisplay.class
 		).build();
 	}
 
 	@Override
 	public String getName() {
-		return "web-sites";
+		return "web-site";
 	}
 
 	@Override
-	public ItemRoutes<Group, Long> itemRoutes(
-		ItemRoutes.Builder<Group, Long> builder) {
+	public ItemRoutes<GroupWrapper, Long> itemRoutes(
+		ItemRoutes.Builder<GroupWrapper, Long> builder) {
 
 		return builder.addGetter(
-			this::_getGroup
+			this::_getGroupWrapper, ThemeDisplay.class
 		).build();
 	}
 
 	@Override
-	public Representor<Group, Long> representor(
-		Representor.Builder<Group, Long> builder) {
+	public Representor<GroupWrapper> representor(
+		Representor.Builder<GroupWrapper, Long> builder) {
 
 		return builder.types(
 			"WebSite"
 		).identifier(
 			Group::getGroupId
-		).addLocalizedString(
-			"description",
-			(group, language) -> group.getDescription(
-				language.getPreferredLocale())
-		).addLocalizedString(
-			"name",
-			(group, language) -> group.getName(language.getPreferredLocale())
+		).addBidirectionalModel(
+			"interactionService", "webSites", WebSiteIdentifier.class,
+			this::_getParentGroupId
+		).addBoolean(
+			"active", Group::isActive
+		).addLinkedModel(
+			"author", PersonIdentifier.class, Group::getCreatorUserId
+		).addLinkedModel(
+			"creator", PersonIdentifier.class, Group::getCreatorUserId
+		).addLinkedModel(
+			"folder", RootFolderIdentifier.class, Group::getGroupId
+		).addLocalizedStringByLocale(
+			"description", Group::getDescription
+		).addLocalizedStringByLocale(
+			"name", Group::getName
+		).addRelatedCollection(
+			"members", PersonIdentifier.class
+		).addString(
+			"membershipType", Group::getTypeLabel
+		).addString(
+			"privateUrl", GroupWrapper::getPrivateURL
+		).addString(
+			"publicUrl", GroupWrapper::getPublicURL
 		).build();
 	}
 
-	private Group _getGroup(Long groupId) {
-		try {
-			return _groupLocalService.getGroup(groupId);
-		}
-		catch (NoSuchGroupException nsge) {
-			throw new NotFoundException("Unable to get group " + groupId, nsge);
-		}
-		catch (PortalException pe) {
-			throw new ServerErrorException(500, pe);
-		}
+	private GroupWrapper _getGroupWrapper(
+			long groupId, ThemeDisplay themeDisplay)
+		throws PortalException {
+
+		return new GroupWrapper(_groupService.getGroup(groupId), themeDisplay);
 	}
 
-	private PageItems<Group> _getPageItems(
-		Pagination pagination, Company company) {
+	private PageItems<GroupWrapper> _getPageItems(
+			Pagination pagination, ThemeDisplay themeDisplay)
+		throws PortalException {
 
-		List<Group> groups = _groupLocalService.getGroups(
-			company.getCompanyId(), 0, true, pagination.getStartPosition(),
-			pagination.getEndPosition());
-		int count = _groupLocalService.getGroupsCount(
-			company.getCompanyId(), 0, true);
+		List<GroupWrapper> groupWrappers = Stream.of(
+			_groupService.getGroups(
+				themeDisplay.getCompanyId(), 0, true,
+				pagination.getStartPosition(), pagination.getEndPosition())
+		).flatMap(
+			List::stream
+		).map(
+			group -> new GroupWrapper(group, themeDisplay)
+		).collect(
+			Collectors.toList()
+		);
+		int count = _groupService.getGroupsCount(
+			themeDisplay.getCompanyId(), 0, true);
 
-		return new PageItems<>(groups, count);
+		return new PageItems<>(groupWrappers, count);
+	}
+
+	private Long _getParentGroupId(Group group) {
+		if (group.getParentGroupId() != 0L) {
+			return group.getParentGroupId();
+		}
+
+		return null;
 	}
 
 	@Reference
-	private GroupLocalService _groupLocalService;
+	private GroupService _groupService;
 
 }

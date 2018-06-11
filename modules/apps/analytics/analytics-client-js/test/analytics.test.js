@@ -1,7 +1,7 @@
 import AnalyticsClient from '../src/analytics';
 import {assert, expect} from 'chai';
 
-let Analytics = AnalyticsClient.create();
+let Analytics;
 let EVENT_ID = 0;
 
 const ANALYTICS_IDENTITY = {email: 'foo@bar.com'};
@@ -10,8 +10,11 @@ const FLUSH_INTERVAL = 100;
 const LOCAL_USER_ID = 'LOCAL_USER_ID';
 const MOCKED_REQUEST_DURATION = 5000;
 const SERVICE_USER_ID = 'SERVICE_USER_ID';
+
+// Local Storage keys
 const STORAGE_KEY_EVENTS = 'lcs_client_batch';
 const STORAGE_KEY_USER_ID = 'lcs_client_user_id';
+const STORAGE_KEY_IDENTITY = 'lcs_client_identity';
 
 const fetchMock = window.fetchMock;
 
@@ -19,7 +22,7 @@ const fetchMock = window.fetchMock;
  * Sends dummy events to test the Analytics API
  * @param {number} eventsNumber Number of events to send
  */
-function sendDummyEvents(eventsNumber = 5) {
+function sendDummyEvents(client, eventsNumber = 5) {
 	for (let i = 0; i < eventsNumber; i++) {
 		const applicationId = 'test';
 		const eventId = EVENT_ID++;
@@ -29,18 +32,20 @@ function sendDummyEvents(eventsNumber = 5) {
 			c: 3,
 		};
 
-		Analytics.send(eventId, applicationId, properties);
+		client.send(eventId, applicationId, properties);
 	}
 }
 
 describe('Analytics Client', () => {
 	afterEach(() => {
+		Analytics.reset();
+		Analytics.dispose();
 		fetchMock.restore();
 	});
 
 	beforeEach(
 		() => {
-			Analytics.reset();
+			Analytics = AnalyticsClient.create();
 
 			localStorage.removeItem(STORAGE_KEY_EVENTS);
 			localStorage.removeItem(STORAGE_KEY_USER_ID);
@@ -58,9 +63,11 @@ describe('Analytics Client', () => {
 	it('should accept a configuration object', () => {
 		const config = {a: 1, b: 2, c: 3};
 
-		const client = Analytics.create(config);
-		client.config.should.deep.equal(config);
-		client.dispose();
+		Analytics.reset();
+		Analytics.dispose();
+
+		Analytics = Analytics.create(config);
+		Analytics.config.should.deep.equal(config);
 	});
 
 	describe('.flush', () => {
@@ -68,7 +75,7 @@ describe('Analytics Client', () => {
 			Analytics.flush.should.be.a('function');
 		});
 
-		it('should prevent overlapping requests', function(done) {
+		it('should prevent overlapping requests', (done) => {
 			let fetchCalled = 0;
 
 			fetchMock.mock(
@@ -84,7 +91,10 @@ describe('Analytics Client', () => {
 				}
 			);
 
-			Analytics.create(
+			Analytics.reset();
+			Analytics.dispose();
+
+			Analytics = AnalyticsClient.create(
 				{
 					flushInterval: FLUSH_INTERVAL,
 				}
@@ -92,7 +102,7 @@ describe('Analytics Client', () => {
 
 			const spy = sinon.spy(Analytics, 'flush');
 
-			sendDummyEvents(10);
+			sendDummyEvents(Analytics, 10);
 
 			setTimeout(
 				() => {
@@ -106,189 +116,105 @@ describe('Analytics Client', () => {
 
 					Analytics.flush.restore();
 
-					Analytics.dispose();
-
 					done();
 				},
 				FLUSH_INTERVAL * 3
 			);
 		});
 
-		it('should fetch the userId from the identity Service when it is not found on storage', function(done) {
-			let identityCalled = 0;
-			let identityReceived = '';
-			let identityUrl = '';
+		it('should regenerate the stored identity if the identity changed' , () => {
+			Analytics.reset();
+			Analytics.dispose();
 
-			fetchMock.mock(
-				/identity/,
-				function(url) {
-					identityCalled += 1;
-					identityUrl = url;
-
-					return SERVICE_USER_ID;
-				}
-			);
-
-			fetchMock.mock(
-				'*',
-				function(url, opts) {
-					identityReceived = JSON.parse(opts.body).userId;
-
-					return 200;
-				}
-			);
-
-			Analytics.create(
-				{
-					analyticsKey: ANALYTICS_KEY
-				}
-			);
-
-			sendDummyEvents();
-
-			Analytics.flush()
-				.then(
-					() => {
-						// Identity Service was called
-
-						expect(identityCalled).to.equal(1);
-						expect(identityUrl.indexOf(ANALYTICS_KEY) >= 0);
-
-						// Analytics Service was called and passed the Service User Id
-
-						expect(identityReceived).to.equal(SERVICE_USER_ID);
-
-						Analytics.dispose();
-
-						done();
-					}
-				);
-		});
-
-		it('should use previously stored userIds from the Identity Service', function(done) {
-			localStorage.setItem(STORAGE_KEY_USER_ID, `"${LOCAL_USER_ID}"`);
-
-			let identityCalled = 0;
-			let identityReceived = '';
-			let identityUrl = '';
-
-			fetchMock.mock(
-				/identity/,
-				function(url) {
-					identityCalled += 1;
-					identityUrl = url;
-
-					return SERVICE_USER_ID;
-				}
-			);
-
-			fetchMock.mock(
-				'*',
-				function(url, opts) {
-					identityReceived = JSON.parse(opts.body).userId;
-
-					return 200;
-				}
-			);
-
-			Analytics.create(
-				{
-					analyticsKey: ANALYTICS_KEY,
-					flushInterval: FLUSH_INTERVAL,
-				}
-			);
-
-			sendDummyEvents();
-
-			Analytics.flush()
-				.then(
-					() => {
-						// Identity Service was NOT called
-
-						expect(identityCalled).to.equal(0);
-
-						// Analytics Service was NOT called and passed the Local User Id
-
-						expect(identityReceived).to.equal(LOCAL_USER_ID);
-
-						Analytics.dispose();
-
-						done();
-					}
-				);
-		});
-
-		it('should get a new userId from the Identity Service if the user identity changed', function(done) {
-			localStorage.setItem(STORAGE_KEY_USER_ID, `"${LOCAL_USER_ID}"`);
-
-			let identityCalled = 0;
-			let identityReceived = '';
-			let identitySent = null;
-			let identityUrl = '';
-
-			fetchMock.mock(
-				/identity/,
-				function(url, opts) {
-					identityCalled += 1;
-					identityUrl = url;
-					identitySent = JSON.parse(opts.body).identity;
-
-					return SERVICE_USER_ID;
-				}
-			);
-
-			fetchMock.mock(
-				'*',
-				function(url, opts) {
-					identityReceived = JSON.parse(opts.body).userId;
-
-					return 200;
-				}
-			);
-
-			Analytics.create(
+			Analytics = AnalyticsClient.create(
 				{
 					analyticsKey: ANALYTICS_KEY,
 				}
 			);
-
-			sendDummyEvents();
 
 			Analytics.setIdentity(ANALYTICS_IDENTITY);
 
-			Analytics.flush()
-				.then(
-					() => {
-						// Identity Service WAS called with the user identity
+			const previousIdentityHash = localStorage.getItem(STORAGE_KEY_IDENTITY);
 
-						expect(identityCalled).to.equal(1);
-						ANALYTICS_IDENTITY.should.deep.equal(identitySent)
+			Analytics.setIdentity({
+				email: 'john@liferay.com',
+				name: 'John'
+			});
 
-						// Analytics Service was called and passed the Service User Id
+			const currentIdentityHash = localStorage.getItem(STORAGE_KEY_IDENTITY);
 
-						expect(identityReceived).to.equal(SERVICE_USER_ID);
-
-						Analytics.dispose();
-
-						done();
-					}
-				);
+			expect(currentIdentityHash).not.to.equal(previousIdentityHash);
 		});
 
-		it('should only clear the persisted events when done', function() {
-			const analytics = Analytics.create(
+		it('should report identity changes to the Identity Service', () => {
+			Analytics.reset();
+			Analytics.dispose();
+
+			Analytics = AnalyticsClient.create(
+				{
+					analyticsKey: ANALYTICS_KEY,
+				}
+			);
+
+			let identityCalled = 0;
+
+			Analytics.setIdentity(ANALYTICS_IDENTITY)
+			.then(() => {
+				fetchMock.mock(
+					/send-identity-context/,
+					function(url) {
+						identityCalled += 1;
+						return '';
+					}
+				)
+			})
+			.then(() => Analytics.setIdentity({email: 'john@liferay.com'}))
+			.then(() => expect(identityCalled).to.equal(1))
+		});
+
+		it('should not request the Identity Service when identity hasn\'t changed', () => {
+			Analytics.reset();
+			Analytics.dispose();
+
+			Analytics = AnalyticsClient.create(
+				{
+					analyticsKey: ANALYTICS_KEY,
+				}
+			);
+
+			let identityCalled = 0;
+
+			Analytics.setIdentity(ANALYTICS_IDENTITY)
+			.then(() => {
+				fetchMock.mock(
+					/send-identity-context/,
+					function(url) {
+						identityCalled += 1;
+						return '';
+					}
+				)
+			})
+			.then(() => Analytics.setIdentity(ANALYTICS_IDENTITY))
+			.then(() => expect(identityCalled).to.equal(1))
+		});
+
+		it('should only clear the persisted events when done', () => {
+			Analytics.reset();
+			Analytics.dispose();
+
+			Analytics = AnalyticsClient.create(
 				{
 					flushInterval: FLUSH_INTERVAL * 10
 				}
 			);
 
-			fetchMock.mock(/identity$/, () => Promise.resolve({}));
+			fetchMock.mock(/send-identity-context$/, () => Promise.resolve({}));
 
 			fetchMock.mock(
 				/send\-analytics\-events$/,
 				function() {
 					// Send events while flush is in progress
-					sendDummyEvents(7);
+					sendDummyEvents(Analytics, 7);
 
 					return new Promise(
 						resolve => {
@@ -298,14 +224,12 @@ describe('Analytics Client', () => {
 				}
 			);
 
-			sendDummyEvents(5);
+			sendDummyEvents(Analytics, 5);
 
-			return analytics.flush().then(() => {
-				const events = analytics.events;
+			return Analytics.flush().then(() => {
+				const events = Analytics.events;
 
-				events.should.have.lengthOf(7);
-
-				Analytics.dispose();
+				events.should.have.lengthOf(5); // 7 for each gateway
 			});
 		});
 	});
@@ -320,7 +244,6 @@ describe('Analytics Client', () => {
 			const applicationId = 'applicationId';
 			const properties = {a: 1, b: 2, c: 3};
 
-			Analytics.create();
 			Analytics.send(eventId, applicationId, properties);
 
 			const events = Analytics.events;
@@ -332,22 +255,16 @@ describe('Analytics Client', () => {
 				applicationId,
 				properties,
 			});
-
-			Analytics.dispose();
 		});
 
 		it('should persist the given events to the LocalStorage', () => {
 			const eventsNumber = 5;
 
-			Analytics.create();
-
-			sendDummyEvents(eventsNumber);
+			sendDummyEvents(Analytics, eventsNumber);
 
 			const events = JSON.parse(localStorage.getItem(STORAGE_KEY_EVENTS));
 
 			events.should.have.lengthOf.at.least(eventsNumber);
-
-			Analytics.dispose();
 		});
 	});
 });

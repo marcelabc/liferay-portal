@@ -2,7 +2,9 @@
 	<command name="addCP">
 		<execute macro="LexiconEntry#gotoAdd" />
 
-		<execute function="Type#clickAtType" locator1="TextInput#NAME" value1="${templateName}" />
+		<execute macro="PortletEntry#inputName">
+			<var name="name" value="${templateName}" />
+		</execute>
 
 		<execute macro="Panel#expandPanel">
 			<var name="panel" value="Details" />
@@ -142,41 +144,6 @@
 		</if>
 	</command>
 
-	<command name="advancedSearchCP">
-		<execute macro="Navigator#gotoNavItem">
-			<var name="navItem" value="Templates" />
-		</execute>
-
-		<var name="key_ddlTemplateName" value="${templateName}" />
-
-		<execute function="AssertTextEquals" locator1="DDMSelectTemplate#TEMPLATE_TABLE_NAME" value1="${templateName}" />
-
-		<execute function="Click" locator1="Icon#ADVANCED_SEARCH" />
-
-		<if>
-			<isset var="templateName" />
-			<then>
-				<execute macro="PortletEntry#inputName">
-					<var name="name" value="${templateName}" />
-				</execute>
-			</then>
-		</if>
-
-		<if>
-			<isset var="templateDescription" />
-			<then>
-				<execute macro="PortletEntry#inputDescriptionTextInput">
-					<var name="description" value="${templateDescription}" />
-				</execute>
-			</then>
-		</if>
-
-		<execute function="Click" locator1="Icon#BASIC_SEARCH" />
-
-		<execute function="AssertTextEquals" locator1="DDMSelectTemplate#TEMPLATE_TABLE_NAME" value1="${templateName}" />
-		<execute function="AssertTextEquals" locator1="DDMSelectTemplate#TEMPLATE_TABLE_DESCRIPTION" value1="${templateDescription}" />
-	</command>
-
 	<command name="deleteCP">
 		<execute macro="Navigator#gotoNavItem">
 			<var name="navItem" value="Templates" />
@@ -268,7 +235,7 @@
 		<while>
 			<condition function="IsElementNotPresent" locator1="Message#EMPTY_INFO" />
 			<then>
-				<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+				<execute macro="PortletEntry#selectAll" />
 
 				<execute function="ClickNoError" locator1="Icon#DELETE" />
 
@@ -285,7 +252,7 @@
 		<while>
 			<condition function="IsElementNotPresent" locator1="Message#EMPTY_INFO" />
 			<then>
-				<execute function="Check#checkAll" locator1="Checkbox#SELECT_ALL" />
+				<execute macro="PortletEntry#selectAll" />
 
 				<execute function="ClickNoError" locator1="Icon#DELETE" />
 

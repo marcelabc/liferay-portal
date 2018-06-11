@@ -14,13 +14,12 @@
 
 package com.liferay.portlet.exportimport.service.impl;
 
-import static com.liferay.exportimport.kernel.configuration.ExportImportConfigurationConstants.TYPE_PUBLISH_PORTLET_REMOTE;
-
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.util.comparator.RepositoryModelTitleComparator;
-import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationParameterMapFactory;
+import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationConstants;
+import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationParameterMapFactoryUtil;
 import com.liferay.exportimport.kernel.exception.ExportImportIOException;
 import com.liferay.exportimport.kernel.exception.RemoteExportException;
 import com.liferay.exportimport.kernel.lar.ExportImportDateUtil;
@@ -331,13 +330,17 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			Group stagingGroup = liveGroup.getStagingGroup();
 
 			Map<String, String[]> parameterMap =
-				ExportImportConfigurationParameterMapFactory.
-					buildParameterMap();
+				ExportImportConfigurationParameterMapFactoryUtil.
+					buildFullPublishParameterMap();
 
 			if (liveGroup.hasPrivateLayouts()) {
 				StagingUtil.publishLayouts(
 					userId, liveGroup.getGroupId(), stagingGroup.getGroupId(),
 					true, parameterMap);
+
+				parameterMap =
+					ExportImportConfigurationParameterMapFactoryUtil.
+						buildParameterMap();
 			}
 
 			if (liveGroup.hasPublicLayouts() ||
@@ -358,7 +361,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			long remoteGroupId, ServiceContext serviceContext)
 		throws PortalException {
 
-		StagingUtil.validateRemote(
+		groupLocalService.validateRemote(
 			stagingGroup.getGroupId(), remoteAddress, remotePort,
 			remotePathContext, secureConnection, remoteGroupId);
 
@@ -399,7 +402,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		HttpPrincipal httpPrincipal = new HttpPrincipal(
 			remoteURL, user.getLogin(), user.getPassword(),
-			user.getPasswordEncrypted());
+			user.isPasswordEncrypted());
 
 		if (!stagedRemotely) {
 			enableRemoteStaging(httpPrincipal, remoteGroupId);
@@ -467,7 +470,8 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		try {
 			if (exportImportConfiguration.getType() ==
-					TYPE_PUBLISH_PORTLET_REMOTE) {
+					ExportImportConfigurationConstants.
+						TYPE_PUBLISH_PORTLET_REMOTE) {
 
 				ExportImportThreadLocal.setPortletImportInProcess(true);
 				ExportImportThreadLocal.setPortletStagingInProcess(true);
@@ -500,7 +504,8 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 			MissingReferences missingReferences = null;
 
 			if (exportImportConfiguration.getType() ==
-					TYPE_PUBLISH_PORTLET_REMOTE) {
+					ExportImportConfigurationConstants.
+						TYPE_PUBLISH_PORTLET_REMOTE) {
 
 				exportImportLocalService.importPortletDataDeletions(
 					exportImportConfiguration, file);
@@ -537,7 +542,8 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		}
 		finally {
 			if (exportImportConfiguration.getType() ==
-					TYPE_PUBLISH_PORTLET_REMOTE) {
+					ExportImportConfigurationConstants.
+						TYPE_PUBLISH_PORTLET_REMOTE) {
 
 				ExportImportThreadLocal.setPortletImportInProcess(false);
 				ExportImportThreadLocal.setPortletStagingInProcess(false);
@@ -765,7 +771,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		HttpPrincipal httpPrincipal = new HttpPrincipal(
 			remoteURL, user.getLogin(), user.getPassword(),
-			user.getPasswordEncrypted());
+			user.isPasswordEncrypted());
 
 		try {
 			GroupServiceHttp.disableStaging(httpPrincipal, remoteGroupId);
@@ -1053,7 +1059,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 		layout.setUserName(layoutRevision.getUserName());
 		layout.setCreateDate(layoutRevision.getCreateDate());
 		layout.setModifiedDate(layoutRevision.getModifiedDate());
-		layout.setPrivateLayout(layoutRevision.getPrivateLayout());
+		layout.setPrivateLayout(layoutRevision.isPrivateLayout());
 		layout.setName(layoutRevision.getName());
 		layout.setTitle(layoutRevision.getTitle());
 		layout.setDescription(layoutRevision.getDescription());
@@ -1099,7 +1105,7 @@ public class StagingLocalServiceImpl extends StagingLocalServiceBaseImpl {
 
 		HttpPrincipal httpPrincipal = new HttpPrincipal(
 			remoteURL, user.getLogin(), user.getPassword(),
-			user.getPasswordEncrypted());
+			user.isPasswordEncrypted());
 
 		Map<String, String> stagedPortletIds = new HashMap<>();
 

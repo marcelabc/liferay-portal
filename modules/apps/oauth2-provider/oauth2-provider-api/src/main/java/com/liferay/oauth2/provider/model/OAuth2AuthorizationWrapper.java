@@ -67,11 +67,13 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 		attributes.put("oAuth2ApplicationScopeAliasesId",
 			getOAuth2ApplicationScopeAliasesId());
 		attributes.put("accessTokenContent", getAccessTokenContent());
+		attributes.put("accessTokenContentHash", getAccessTokenContentHash());
 		attributes.put("accessTokenCreateDate", getAccessTokenCreateDate());
 		attributes.put("accessTokenExpirationDate",
 			getAccessTokenExpirationDate());
 		attributes.put("remoteIPInfo", getRemoteIPInfo());
 		attributes.put("refreshTokenContent", getRefreshTokenContent());
+		attributes.put("refreshTokenContentHash", getRefreshTokenContentHash());
 		attributes.put("refreshTokenCreateDate", getRefreshTokenCreateDate());
 		attributes.put("refreshTokenExpirationDate",
 			getRefreshTokenExpirationDate());
@@ -131,6 +133,13 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 			setAccessTokenContent(accessTokenContent);
 		}
 
+		Long accessTokenContentHash = (Long)attributes.get(
+				"accessTokenContentHash");
+
+		if (accessTokenContentHash != null) {
+			setAccessTokenContentHash(accessTokenContentHash);
+		}
+
 		Date accessTokenCreateDate = (Date)attributes.get(
 				"accessTokenCreateDate");
 
@@ -158,6 +167,13 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 			setRefreshTokenContent(refreshTokenContent);
 		}
 
+		Long refreshTokenContentHash = (Long)attributes.get(
+				"refreshTokenContentHash");
+
+		if (refreshTokenContentHash != null) {
+			setRefreshTokenContentHash(refreshTokenContentHash);
+		}
+
 		Date refreshTokenCreateDate = (Date)attributes.get(
 				"refreshTokenCreateDate");
 
@@ -174,7 +190,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	}
 
 	@Override
-	public java.lang.Object clone() {
+	public Object clone() {
 		return new OAuth2AuthorizationWrapper((OAuth2Authorization)_oAuth2Authorization.clone());
 	}
 
@@ -189,8 +205,18 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @return the access token content of this o auth2 authorization
 	*/
 	@Override
-	public java.lang.String getAccessTokenContent() {
+	public String getAccessTokenContent() {
 		return _oAuth2Authorization.getAccessTokenContent();
+	}
+
+	/**
+	* Returns the access token content hash of this o auth2 authorization.
+	*
+	* @return the access token content hash of this o auth2 authorization
+	*/
+	@Override
+	public long getAccessTokenContentHash() {
+		return _oAuth2Authorization.getAccessTokenContentHash();
 	}
 
 	/**
@@ -289,8 +315,18 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @return the refresh token content of this o auth2 authorization
 	*/
 	@Override
-	public java.lang.String getRefreshTokenContent() {
+	public String getRefreshTokenContent() {
 		return _oAuth2Authorization.getRefreshTokenContent();
+	}
+
+	/**
+	* Returns the refresh token content hash of this o auth2 authorization.
+	*
+	* @return the refresh token content hash of this o auth2 authorization
+	*/
+	@Override
+	public long getRefreshTokenContentHash() {
+		return _oAuth2Authorization.getRefreshTokenContentHash();
 	}
 
 	/**
@@ -319,7 +355,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @return the remote ip info of this o auth2 authorization
 	*/
 	@Override
-	public java.lang.String getRemoteIPInfo() {
+	public String getRemoteIPInfo() {
 		return _oAuth2Authorization.getRemoteIPInfo();
 	}
 
@@ -339,7 +375,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @return the user name of this o auth2 authorization
 	*/
 	@Override
-	public java.lang.String getUserName() {
+	public String getUserName() {
 		return _oAuth2Authorization.getUserName();
 	}
 
@@ -349,7 +385,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @return the user uuid of this o auth2 authorization
 	*/
 	@Override
-	public java.lang.String getUserUuid() {
+	public String getUserUuid() {
 		return _oAuth2Authorization.getUserUuid();
 	}
 
@@ -384,8 +420,18 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @param accessTokenContent the access token content of this o auth2 authorization
 	*/
 	@Override
-	public void setAccessTokenContent(java.lang.String accessTokenContent) {
+	public void setAccessTokenContent(String accessTokenContent) {
 		_oAuth2Authorization.setAccessTokenContent(accessTokenContent);
+	}
+
+	/**
+	* Sets the access token content hash of this o auth2 authorization.
+	*
+	* @param accessTokenContentHash the access token content hash of this o auth2 authorization
+	*/
+	@Override
+	public void setAccessTokenContentHash(long accessTokenContentHash) {
+		_oAuth2Authorization.setAccessTokenContentHash(accessTokenContentHash);
 	}
 
 	/**
@@ -506,8 +552,18 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @param refreshTokenContent the refresh token content of this o auth2 authorization
 	*/
 	@Override
-	public void setRefreshTokenContent(java.lang.String refreshTokenContent) {
+	public void setRefreshTokenContent(String refreshTokenContent) {
 		_oAuth2Authorization.setRefreshTokenContent(refreshTokenContent);
+	}
+
+	/**
+	* Sets the refresh token content hash of this o auth2 authorization.
+	*
+	* @param refreshTokenContentHash the refresh token content hash of this o auth2 authorization
+	*/
+	@Override
+	public void setRefreshTokenContentHash(long refreshTokenContentHash) {
+		_oAuth2Authorization.setRefreshTokenContentHash(refreshTokenContentHash);
 	}
 
 	/**
@@ -536,7 +592,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @param remoteIPInfo the remote ip info of this o auth2 authorization
 	*/
 	@Override
-	public void setRemoteIPInfo(java.lang.String remoteIPInfo) {
+	public void setRemoteIPInfo(String remoteIPInfo) {
 		_oAuth2Authorization.setRemoteIPInfo(remoteIPInfo);
 	}
 
@@ -556,7 +612,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @param userName the user name of this o auth2 authorization
 	*/
 	@Override
-	public void setUserName(java.lang.String userName) {
+	public void setUserName(String userName) {
 		_oAuth2Authorization.setUserName(userName);
 	}
 
@@ -566,7 +622,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	* @param userUuid the user uuid of this o auth2 authorization
 	*/
 	@Override
-	public void setUserUuid(java.lang.String userUuid) {
+	public void setUserUuid(String userUuid) {
 		_oAuth2Authorization.setUserUuid(userUuid);
 	}
 
@@ -581,7 +637,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	}
 
 	@Override
-	public java.lang.String toString() {
+	public String toString() {
 		return _oAuth2Authorization.toString();
 	}
 
@@ -591,7 +647,7 @@ public class OAuth2AuthorizationWrapper implements OAuth2Authorization,
 	}
 
 	@Override
-	public java.lang.String toXmlString() {
+	public String toXmlString() {
 		return _oAuth2Authorization.toXmlString();
 	}
 

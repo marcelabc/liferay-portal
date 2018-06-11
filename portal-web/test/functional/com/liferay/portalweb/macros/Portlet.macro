@@ -1,6 +1,16 @@
 <definition>
 	<command name="_clickAddPortlet">
-		<execute function="MouseOver" locator1="ControlMenuAddPanel#ADD_PORTLET_DRAG_LINK" />
+		<var method="TestPropsUtil#get('browser.type')" name="browserType" />
+
+		<if>
+			<equals arg1="${browserType}" arg2="safari" />
+			<then>
+				<execute function="Click" locator1="ControlMenuAddPanel#ADD_PORTLET_DRAG_LINK" />
+			</then>
+			<else>
+				<execute function="MouseOver" locator1="ControlMenuAddPanel#ADD_PORTLET_DRAG_LINK" />
+			</else>
+		</if>
 
 		<execute function="MouseOver" locator1="ControlMenuAddPanel#ADD_PORTLET_LINK" />
 
@@ -111,24 +121,12 @@
 		<if>
 			<condition function="IsNotVisible" locator1="ControlMenuAddPanel#CLOSE_ADD_PANEL" />
 			<then>
-				<var method="TestPropsUtil#get('browser.type')" name="browserType" />
-
-				<if>
-					<equals arg1="${browserType}" arg2="safari" />
-					<then>
-						<execute function="Pause" locator1="10000" />
-
-						<execute function="Click#clickAt" locator1="ControlMenu#ADD" />
-					</then>
-					<else>
-						<execute function="Click#clickAt" locator1="ControlMenu#ADD" />
-					</else>
-				</if>
+				<execute function="Click#clickAt" locator1="ControlMenu#ADD" />
 			</then>
 		</if>
 
 		<execute function="AssertElementPresent" locator1="ControlMenuAddPanel#APPLICATIONS_ACCORDION_PANEL_TITLE" />
-		<execute function="AssertVisible" locator1="ControlMenuAddPanel#APPLICATIONS_ACCORDION_PANEL_TITLE" value1="Applications" />
+		<execute function="AssertVisible" locator1="ControlMenuAddPanel#APPLICATIONS_ACCORDION_PANEL_TITLE" value1="Widgets" />
 
 		<execute function="Pause" locator1="5000" />
 

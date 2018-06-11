@@ -19,9 +19,9 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -63,7 +63,7 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Categorization" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Tags" />
 		</execute>
@@ -71,7 +71,7 @@
 		<execute macro="Staging#viewAddButtonDoesNotExist" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Categorization" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Categories" />
 		</execute>
@@ -113,9 +113,9 @@
 		<execute macro="Navigator#gotoStagedView" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -137,9 +137,9 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#deletePage">
@@ -178,9 +178,9 @@
 		<execute macro="Navigator#gotoStagedView" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -336,7 +336,7 @@
 	</command>
 
 	<command name="ImportLARsOnStagedSite" priority="5">
-		<property name="portal.acceptance" value="pending" />
+		<property name="portal.acceptance" value="false" />
 		<property name="testray.component.names" value="Training" />
 
 		<execute macro="Navigator#gotoStagedSitePage">
@@ -575,7 +575,7 @@
 		<execute macro="Navigator#gotoStagedView" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Content" />
+			<var name="category" value="Recycle Bin" />
 			<var name="panel" value="Site Administration" />
 			<var name="portlet" value="Recycle Bin" />
 		</execute>
@@ -609,7 +609,7 @@
 	</command>
 
 	<command name="PublishPortlet" priority="5">
-		<property name="portal.acceptance" value="pending" />
+		<property name="portal.acceptance" value="false" />
 		<property name="testray.component.names" value="Training" />
 
 		<execute macro="ProductMenu#gotoSite">
@@ -863,9 +863,9 @@
 		</execute>
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -905,9 +905,9 @@
 		<execute macro="Navigator#gotoStagedView" />
 
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -1022,7 +1022,7 @@
 	</command>
 
 	<command name="TrashEntryReferencePublishing" priority="5">
-		<property name="portal.acceptance" value="pending" />
+		<property name="portal.acceptance" value="false" />
 		<property name="testray.component.names" value="Training" />
 
 		<execute macro="Navigator#gotoStagedSitePage">

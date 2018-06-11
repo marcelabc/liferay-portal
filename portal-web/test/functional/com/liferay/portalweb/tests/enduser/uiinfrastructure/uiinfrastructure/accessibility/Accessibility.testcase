@@ -23,9 +23,9 @@
 
 	<command name="Smoke" priority="3">
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -56,9 +56,9 @@
 
 	<command name="ViewCollaborationPortlets" priority="4">
 		<execute macro="ProductMenu#gotoPortlet">
-			<var name="category" value="Navigation" />
+			<var name="category" value="Build" />
 			<var name="panel" value="Site Administration" />
-			<var name="portlet" value="Site Pages" />
+			<var name="portlet" value="Pages" />
 		</execute>
 
 		<execute macro="SitePages#addPublicPage">
@@ -191,14 +191,6 @@
 
 		<execute macro="Portlet#addPG">
 			<var name="portletName" value="Friends Directory" />
-		</execute>
-
-		<execute macro="Navigator#gotoPage">
-			<var name="pageName" value="Collaboration Page" />
-		</execute>
-
-		<execute macro="Portlet#addPG">
-			<var name="portletName" value="Invitation" />
 		</execute>
 
 		<execute macro="Navigator#gotoPage">

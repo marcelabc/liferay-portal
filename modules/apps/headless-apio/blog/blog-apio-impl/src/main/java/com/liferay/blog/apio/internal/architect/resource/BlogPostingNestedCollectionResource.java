@@ -14,32 +14,39 @@
 
 package com.liferay.blog.apio.internal.architect.resource;
 
+import static com.liferay.portal.apio.idempotent.Idempotent.idempotent;
+
 import com.liferay.aggregate.rating.apio.architect.identifier.AggregateRatingIdentifier;
-import com.liferay.apio.architect.functional.Try;
 import com.liferay.apio.architect.pagination.PageItems;
 import com.liferay.apio.architect.pagination.Pagination;
 import com.liferay.apio.architect.representor.Representor;
 import com.liferay.apio.architect.resource.NestedCollectionResource;
 import com.liferay.apio.architect.routes.ItemRoutes;
 import com.liferay.apio.architect.routes.NestedCollectionRoutes;
-import com.liferay.blog.apio.architect.identifier.BlogsEntryIdentifier;
+import com.liferay.asset.kernel.model.AssetTag;
+import com.liferay.asset.kernel.model.AssetTagModel;
+import com.liferay.asset.kernel.service.AssetTagLocalService;
+import com.liferay.blog.apio.architect.identifier.BlogPostingIdentifier;
 import com.liferay.blog.apio.internal.architect.form.BlogPostingForm;
-import com.liferay.blogs.kernel.exception.NoSuchEntryException;
-import com.liferay.blogs.kernel.model.BlogsEntry;
-import com.liferay.blogs.kernel.model.BlogsEntryModel;
-import com.liferay.blogs.kernel.service.BlogsEntryService;
+import com.liferay.blogs.model.BlogsEntry;
+import com.liferay.blogs.service.BlogsEntryLocalService;
+import com.liferay.blogs.service.BlogsEntryService;
+import com.liferay.category.apio.architect.identifier.CategoryIdentifier;
+import com.liferay.comment.apio.architect.identifier.CommentIdentifier;
+import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.media.object.apio.architect.identifier.MediaObjectIdentifier;
 import com.liferay.person.apio.architect.identifier.PersonIdentifier;
-import com.liferay.portal.apio.architect.context.auth.MockPermissions;
-import com.liferay.portal.apio.architect.context.identifier.ClassNameClassPK;
+import com.liferay.portal.apio.identifier.ClassNameClassPK;
+import com.liferay.portal.apio.permission.HasPermission;
+import com.liferay.portal.apio.user.CurrentUser;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.servlet.taglib.ui.ImageSelector;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.site.apio.architect.identifier.WebSiteIdentifier;
 
 import java.util.List;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServerErrorException;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -55,24 +62,25 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(immediate = true)
 public class BlogPostingNestedCollectionResource
-	implements NestedCollectionResource<BlogsEntry, Long, BlogsEntryIdentifier,
+	implements NestedCollectionResource<BlogsEntry, Long, BlogPostingIdentifier,
 		Long, WebSiteIdentifier> {
 
 	@Override
-	public NestedCollectionRoutes<BlogsEntry, Long> collectionRoutes(
-		NestedCollectionRoutes.Builder<BlogsEntry, Long> builder) {
+	public NestedCollectionRoutes<BlogsEntry, Long, Long> collectionRoutes(
+		NestedCollectionRoutes.Builder<BlogsEntry, Long, Long> builder) {
 
 		return builder.addGetter(
 			this::_getPageItems
 		).addCreator(
-			this::_addBlogsEntry, MockPermissions::validPermission,
+			this::_addBlogsEntry, CurrentUser.class,
+			_hasPermission.forAddingIn(WebSiteIdentifier.class),
 			BlogPostingForm::buildForm
 		).build();
 	}
 
 	@Override
 	public String getName() {
-		return "blog-postings";
+		return "blog-posting";
 	}
 
 	@Override
@@ -80,17 +88,18 @@ public class BlogPostingNestedCollectionResource
 		ItemRoutes.Builder<BlogsEntry, Long> builder) {
 
 		return builder.addGetter(
-			this::_getBlogsEntry
+			_blogsEntryService::getEntry
 		).addRemover(
-			this::_deleteBlogsEntry, MockPermissions::validPermission
+			idempotent(_blogsEntryService::deleteEntry),
+			_hasPermission::forDeleting
 		).addUpdater(
-			this::_updateBlogsEntry, MockPermissions::validPermission,
-			BlogPostingForm::buildForm
+			this::_updateBlogsEntry, CurrentUser.class,
+			_hasPermission::forUpdating, BlogPostingForm::buildForm
 		).build();
 	}
 
 	@Override
-	public Representor<BlogsEntry, Long> representor(
+	public Representor<BlogsEntry> representor(
 		Representor.Builder<BlogsEntry, Long> builder) {
 
 		return builder.types(
@@ -98,25 +107,30 @@ public class BlogPostingNestedCollectionResource
 		).identifier(
 			BlogsEntry::getEntryId
 		).addBidirectionalModel(
-			"webSite", "blogs", WebSiteIdentifier.class,
-			BlogsEntryModel::getGroupId
+			"interactionService", "blogPosts", WebSiteIdentifier.class,
+			BlogsEntry::getGroupId
 		).addDate(
-			"createDate", BlogsEntry::getCreateDate
+			"dateCreated", BlogsEntry::getCreateDate
 		).addDate(
-			"displayDate", BlogsEntry::getDisplayDate
+			"dateDisplayed", BlogsEntry::getDisplayDate
 		).addDate(
-			"modifiedDate", BlogsEntry::getModifiedDate
+			"dateModified", BlogsEntry::getModifiedDate
 		).addDate(
-			"publishedDate", BlogsEntry::getLastPublishDate
-		).addLink(
-			"license", "https://creativecommons.org/licenses/by/4.0"
+			"datePublished", BlogsEntry::getLastPublishDate
 		).addLinkedModel(
 			"aggregateRating", AggregateRatingIdentifier.class,
 			ClassNameClassPK::create
 		).addLinkedModel(
-			"author", PersonIdentifier.class, this::_getUserOptional
+			"author", PersonIdentifier.class, BlogsEntry::getUserId
 		).addLinkedModel(
-			"creator", PersonIdentifier.class, this::_getUserOptional
+			"creator", PersonIdentifier.class, BlogsEntry::getUserId
+		).addLinkedModel(
+			"image", MediaObjectIdentifier.class,
+			BlogsEntry::getCoverImageFileEntryId
+		).addRelatedCollection(
+			"comments", CommentIdentifier.class
+		).addRelatedCollection(
+			"categories", CategoryIdentifier.class
 		).addString(
 			"alternativeHeadline", BlogsEntry::getSubtitle
 		).addString(
@@ -127,100 +141,89 @@ public class BlogPostingNestedCollectionResource
 			"fileFormat", blogsEntry -> "text/html"
 		).addString(
 			"headline", BlogsEntry::getTitle
+		).addStringList(
+			"keywords", this::_getBlogsEntryTags
 		).build();
 	}
 
 	private BlogsEntry _addBlogsEntry(
-		Long groupId, BlogPostingForm blogPostingForm) {
+			long groupId, BlogPostingForm blogPostingForm,
+			CurrentUser currentUser)
+		throws PortalException {
 
-		ServiceContext serviceContext = new ServiceContext();
+		long userId = blogPostingForm.getAuthorId(currentUser.getUserId());
 
-		serviceContext.setAddGroupPermissions(true);
-		serviceContext.setAddGuestPermissions(true);
-		serviceContext.setScopeGroupId(groupId);
+		ImageSelector imageSelector = blogPostingForm.getImageSelector(
+			_dlAppLocalService::getFileEntry);
 
-		Try<BlogsEntry> blogsEntryTry = Try.fromFallible(
-			() -> _blogsService.addEntry(
-				blogPostingForm.getHeadline(),
-				blogPostingForm.getAlternativeHeadline(),
-				blogPostingForm.getDescription(),
-				blogPostingForm.getArticleBody(),
-				blogPostingForm.getDisplayDateMonth(),
-				blogPostingForm.getDisplayDateDay(),
-				blogPostingForm.getDisplayDateYear(),
-				blogPostingForm.getDisplayDateHour(),
-				blogPostingForm.getDisplayDateMinute(), false, false, null,
-				null, null, null, serviceContext));
+		ServiceContext serviceContext = blogPostingForm.getServiceContext(
+			groupId);
 
-		return blogsEntryTry.getUnchecked();
+		return _blogsEntryLocalService.addEntry(
+			userId, blogPostingForm.getHeadline(),
+			blogPostingForm.getAlternativeHeadline(),
+			blogPostingForm.getSemanticUrl(), blogPostingForm.getDescription(),
+			blogPostingForm.getArticleBody(), blogPostingForm.getDisplayDate(),
+			true, true, new String[0], blogPostingForm.getImageCaption(),
+			imageSelector, null, serviceContext);
 	}
 
-	private void _deleteBlogsEntry(Long blogsEntryId) {
-		try {
-			_blogsService.deleteEntry(blogsEntryId);
-		}
-		catch (PortalException pe) {
-			throw new ServerErrorException(500, pe);
-		}
-	}
+	private List<String> _getBlogsEntryTags(BlogsEntry blogsEntry) {
+		List<AssetTag> tags = _assetTagLocalService.getTags(
+			BlogsEntry.class.getName(), blogsEntry.getEntryId());
 
-	private BlogsEntry _getBlogsEntry(Long blogsEntryId) {
-		try {
-			return _blogsService.getEntry(blogsEntryId);
-		}
-		catch (NoSuchEntryException | PrincipalException e) {
-			throw new NotFoundException(
-				"Unable to get blogs entry " + blogsEntryId, e);
-		}
-		catch (PortalException pe) {
-			throw new ServerErrorException(500, pe);
-		}
+		return ListUtil.toList(tags, AssetTagModel::getName);
 	}
 
 	private PageItems<BlogsEntry> _getPageItems(
-		Pagination pagination, Long groupId) {
+		Pagination pagination, long groupId) {
 
-		List<BlogsEntry> blogsEntries = _blogsService.getGroupEntries(
-			groupId, 0, pagination.getStartPosition(),
-			pagination.getEndPosition());
-		int count = _blogsService.getGroupEntriesCount(groupId, 0);
+		List<BlogsEntry> blogsEntries = _blogsEntryService.getGroupEntries(
+			groupId, WorkflowConstants.STATUS_APPROVED,
+			pagination.getStartPosition(), pagination.getEndPosition());
+		int count = _blogsEntryService.getGroupEntriesCount(
+			groupId, WorkflowConstants.STATUS_APPROVED);
 
 		return new PageItems<>(blogsEntries, count);
 	}
 
-	private Long _getUserOptional(BlogsEntry blogsEntry) {
-		return blogsEntry.getUserId();
-	}
-
 	private BlogsEntry _updateBlogsEntry(
-		Long blogsEntryId, BlogPostingForm blogPostingForm) {
+			long blogsEntryId, BlogPostingForm blogPostingForm,
+			CurrentUser currentUser)
+		throws PortalException {
 
-		ServiceContext serviceContext = new ServiceContext();
+		long userId = blogPostingForm.getAuthorId(currentUser.getUserId());
 
-		serviceContext.setAddGroupPermissions(true);
-		serviceContext.setAddGuestPermissions(true);
+		ImageSelector imageSelector = blogPostingForm.getImageSelector(
+			_dlAppLocalService::getFileEntry);
 
-		BlogsEntry blogsEntry = _getBlogsEntry(blogsEntryId);
+		BlogsEntry blogsEntry = _blogsEntryService.getEntry(blogsEntryId);
 
-		serviceContext.setScopeGroupId(blogsEntry.getGroupId());
+		ServiceContext serviceContext = blogPostingForm.getServiceContext(
+			blogsEntry.getGroupId());
 
-		Try<BlogsEntry> blogsEntryTry = Try.fromFallible(
-			() -> _blogsService.updateEntry(
-				blogsEntryId, blogPostingForm.getHeadline(),
-				blogPostingForm.getAlternativeHeadline(),
-				blogPostingForm.getDescription(),
-				blogPostingForm.getArticleBody(),
-				blogPostingForm.getDisplayDateMonth(),
-				blogPostingForm.getDisplayDateDay(),
-				blogPostingForm.getDisplayDateYear(),
-				blogPostingForm.getDisplayDateHour(),
-				blogPostingForm.getDisplayDateMinute(), false, false, null,
-				null, null, null, serviceContext));
-
-		return blogsEntryTry.getUnchecked();
+		return _blogsEntryLocalService.updateEntry(
+			userId, blogsEntryId, blogPostingForm.getHeadline(),
+			blogPostingForm.getAlternativeHeadline(),
+			blogPostingForm.getSemanticUrl(), blogPostingForm.getDescription(),
+			blogPostingForm.getArticleBody(), blogPostingForm.getDisplayDate(),
+			true, true, new String[0], blogPostingForm.getImageCaption(),
+			imageSelector, null, serviceContext);
 	}
 
 	@Reference
-	private BlogsEntryService _blogsService;
+	private AssetTagLocalService _assetTagLocalService;
+
+	@Reference
+	private BlogsEntryLocalService _blogsEntryLocalService;
+
+	@Reference
+	private BlogsEntryService _blogsEntryService;
+
+	@Reference
+	private DLAppLocalService _dlAppLocalService;
+
+	@Reference(target = "(model.class.name=com.liferay.blogs.model.BlogsEntry)")
+	private HasPermission<Long> _hasPermission;
 
 }

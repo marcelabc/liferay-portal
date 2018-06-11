@@ -85,6 +85,7 @@ import com.liferay.portal.kernel.service.persistence.UserGroupRolePersistence;
 import com.liferay.portal.kernel.service.persistence.UserIdMapperPersistence;
 import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.service.persistence.WorkflowInstanceLinkPersistence;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalUtil;
 
@@ -144,6 +145,7 @@ public abstract class UserLocalServiceBaseImpl extends BaseLocalServiceImpl
 	 * @return the new user
 	 */
 	@Override
+	@Transactional(enabled = false)
 	public User createUser(long userId) {
 		return userPersistence.create(userId);
 	}
@@ -270,6 +272,19 @@ public abstract class UserLocalServiceBaseImpl extends BaseLocalServiceImpl
 	@Override
 	public User fetchUserByUuidAndCompanyId(String uuid, long companyId) {
 		return userPersistence.fetchByUuid_C_First(uuid, companyId, null);
+	}
+
+	/**
+	 * Returns the user with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the user's external reference code
+	 * @return the matching user, or <code>null</code> if a matching user could not be found
+	 */
+	@Override
+	public User fetchUserByReferenceCode(long companyId,
+		String externalReferenceCode) {
+		return userPersistence.fetchByC_ERC(companyId, null);
 	}
 
 	/**
@@ -522,9 +537,11 @@ public abstract class UserLocalServiceBaseImpl extends BaseLocalServiceImpl
 	}
 
 	/**
+	 * @throws PortalException
 	 */
 	@Override
-	public List<User> getGroupUsers(long groupId, int start, int end) {
+	public List<User> getGroupUsers(long groupId, int start, int end)
+		throws PortalException {
 		return groupPersistence.getUsers(groupId, start, end);
 	}
 
@@ -650,10 +667,11 @@ public abstract class UserLocalServiceBaseImpl extends BaseLocalServiceImpl
 	}
 
 	/**
+	 * @throws PortalException
 	 */
 	@Override
 	public List<User> getOrganizationUsers(long organizationId, int start,
-		int end) {
+		int end) throws PortalException {
 		return organizationPersistence.getUsers(organizationId, start, end);
 	}
 

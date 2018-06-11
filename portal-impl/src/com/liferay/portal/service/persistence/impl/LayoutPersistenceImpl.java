@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.service.persistence.LayoutPersistence;
 import com.liferay.portal.kernel.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -51,7 +52,9 @@ import com.liferay.portal.model.impl.LayoutModelImpl;
 import java.io.Serializable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -738,7 +741,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 			if (!Objects.equals(uuid, layout.getUuid()) ||
 					(groupId != layout.getGroupId()) ||
-					(privateLayout != layout.getPrivateLayout())) {
+					(privateLayout != layout.isPrivateLayout())) {
 				result = null;
 			}
 		}
@@ -797,14 +800,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 					result = layout;
 
 					cacheResult(layout);
-
-					if ((layout.getUuid() == null) ||
-							!layout.getUuid().equals(uuid) ||
-							(layout.getGroupId() != groupId) ||
-							(layout.getPrivateLayout() != privateLayout)) {
-						finderCache.putResult(FINDER_PATH_FETCH_BY_UUID_G_P,
-							finderArgs, layout);
-					}
 				}
 			}
 			catch (Exception e) {
@@ -2989,11 +2984,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 					result = layout;
 
 					cacheResult(layout);
-
-					if ((layout.getIconImageId() != iconImageId)) {
-						finderCache.putResult(FINDER_PATH_FETCH_BY_ICONIMAGEID,
-							finderArgs, layout);
-					}
 				}
 			}
 			catch (Exception e) {
@@ -4343,7 +4333,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			if ((list != null) && !list.isEmpty()) {
 				for (Layout layout : list) {
 					if ((groupId != layout.getGroupId()) ||
-							(privateLayout != layout.getPrivateLayout())) {
+							(privateLayout != layout.isPrivateLayout())) {
 						list = null;
 
 						break;
@@ -6811,7 +6801,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (result instanceof Layout) {
 			Layout layout = (Layout)result;
 
-			if ((privateLayout != layout.getPrivateLayout()) ||
+			if ((privateLayout != layout.isPrivateLayout()) ||
 					(iconImageId != layout.getIconImageId())) {
 				result = null;
 			}
@@ -6864,12 +6854,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 					result = layout;
 
 					cacheResult(layout);
-
-					if ((layout.getPrivateLayout() != privateLayout) ||
-							(layout.getIconImageId() != iconImageId)) {
-						finderCache.putResult(FINDER_PATH_FETCH_BY_P_I,
-							finderArgs, layout);
-					}
 				}
 			}
 			catch (Exception e) {
@@ -7060,7 +7044,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			Layout layout = (Layout)result;
 
 			if ((groupId != layout.getGroupId()) ||
-					(privateLayout != layout.getPrivateLayout()) ||
+					(privateLayout != layout.isPrivateLayout()) ||
 					(layoutId != layout.getLayoutId())) {
 				result = null;
 			}
@@ -7106,13 +7090,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 					result = layout;
 
 					cacheResult(layout);
-
-					if ((layout.getGroupId() != groupId) ||
-							(layout.getPrivateLayout() != privateLayout) ||
-							(layout.getLayoutId() != layoutId)) {
-						finderCache.putResult(FINDER_PATH_FETCH_BY_G_P_L,
-							finderArgs, layout);
-					}
 				}
 			}
 			catch (Exception e) {
@@ -7356,7 +7333,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			if ((list != null) && !list.isEmpty()) {
 				for (Layout layout : list) {
 					if ((groupId != layout.getGroupId()) ||
-							(privateLayout != layout.getPrivateLayout()) ||
+							(privateLayout != layout.isPrivateLayout()) ||
 							(parentLayoutId != layout.getParentLayoutId())) {
 						list = null;
 
@@ -8344,7 +8321,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			if ((list != null) && !list.isEmpty()) {
 				for (Layout layout : list) {
 					if ((groupId != layout.getGroupId()) ||
-							(privateLayout != layout.getPrivateLayout()) ||
+							(privateLayout != layout.isPrivateLayout()) ||
 							!ArrayUtil.contains(parentLayoutIds,
 								layout.getParentLayoutId())) {
 						list = null;
@@ -8356,64 +8333,29 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		}
 
 		if (list == null) {
-			StringBundler query = new StringBundler();
-
-			query.append(_SQL_SELECT_LAYOUT_WHERE);
-
-			query.append(_FINDER_COLUMN_G_P_P_GROUPID_2);
-
-			query.append(_FINDER_COLUMN_G_P_P_PRIVATELAYOUT_2);
-
-			if (parentLayoutIds.length > 0) {
-				query.append("(");
-
-				query.append(_FINDER_COLUMN_G_P_P_PARENTLAYOUTID_7);
-
-				query.append(StringUtil.merge(parentLayoutIds));
-
-				query.append(")");
-
-				query.append(")");
-			}
-
-			query.setStringAt(removeConjunction(query.stringAt(query.index() -
-						1)), query.index() - 1);
-
-			if (orderByComparator != null) {
-				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
-			}
-			else
-			 if (pagination) {
-				query.append(LayoutModelImpl.ORDER_BY_JPQL);
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
 			try {
-				session = openSession();
+				if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+						(databaseInMaxParameters > 0) &&
+						(parentLayoutIds.length > databaseInMaxParameters)) {
+					list = new ArrayList<Layout>();
 
-				Query q = session.createQuery(sql);
+					long[][] parentLayoutIdsPages = (long[][])ArrayUtil.split(parentLayoutIds,
+							databaseInMaxParameters);
 
-				QueryPos qPos = QueryPos.getInstance(q);
+					for (long[] parentLayoutIdsPage : parentLayoutIdsPages) {
+						list.addAll(_findByG_P_P(groupId, privateLayout,
+								parentLayoutIdsPage, start, end,
+								orderByComparator, pagination));
+					}
 
-				qPos.add(groupId);
-
-				qPos.add(privateLayout);
-
-				if (!pagination) {
-					list = (List<Layout>)QueryUtil.list(q, getDialect(), start,
-							end, false);
-
-					Collections.sort(list);
+					Collections.sort(list, orderByComparator);
 
 					list = Collections.unmodifiableList(list);
 				}
 				else {
-					list = (List<Layout>)QueryUtil.list(q, getDialect(), start,
-							end);
+					list = _findByG_P_P(groupId, privateLayout,
+							parentLayoutIds, start, end, orderByComparator,
+							pagination);
 				}
 
 				cacheResult(list);
@@ -8427,9 +8369,80 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 				throw processException(e);
 			}
-			finally {
-				closeSession(session);
+		}
+
+		return list;
+	}
+
+	private List<Layout> _findByG_P_P(long groupId, boolean privateLayout,
+		long[] parentLayoutIds, int start, int end,
+		OrderByComparator<Layout> orderByComparator, boolean pagination) {
+		List<Layout> list = null;
+
+		StringBundler query = new StringBundler();
+
+		query.append(_SQL_SELECT_LAYOUT_WHERE);
+
+		query.append(_FINDER_COLUMN_G_P_P_GROUPID_2);
+
+		query.append(_FINDER_COLUMN_G_P_P_PRIVATELAYOUT_2);
+
+		if (parentLayoutIds.length > 0) {
+			query.append("(");
+
+			query.append(_FINDER_COLUMN_G_P_P_PARENTLAYOUTID_7);
+
+			query.append(StringUtil.merge(parentLayoutIds));
+
+			query.append(")");
+
+			query.append(")");
+		}
+
+		query.setStringAt(removeConjunction(query.stringAt(query.index() - 1)),
+			query.index() - 1);
+
+		if (orderByComparator != null) {
+			appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
+				orderByComparator);
+		}
+		else
+		 if (pagination) {
+			query.append(LayoutModelImpl.ORDER_BY_JPQL);
+		}
+
+		String sql = query.toString();
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			Query q = session.createQuery(sql);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(groupId);
+
+			qPos.add(privateLayout);
+
+			if (!pagination) {
+				list = (List<Layout>)QueryUtil.list(q, getDialect(), start,
+						end, false);
+
+				Collections.sort(list);
+
+				list = Collections.unmodifiableList(list);
 			}
+			else {
+				list = (List<Layout>)QueryUtil.list(q, getDialect(), start, end);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
 		}
 
 		return list;
@@ -8543,45 +8556,23 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 				finderArgs, this);
 
 		if (count == null) {
-			StringBundler query = new StringBundler();
-
-			query.append(_SQL_COUNT_LAYOUT_WHERE);
-
-			query.append(_FINDER_COLUMN_G_P_P_GROUPID_2);
-
-			query.append(_FINDER_COLUMN_G_P_P_PRIVATELAYOUT_2);
-
-			if (parentLayoutIds.length > 0) {
-				query.append("(");
-
-				query.append(_FINDER_COLUMN_G_P_P_PARENTLAYOUTID_7);
-
-				query.append(StringUtil.merge(parentLayoutIds));
-
-				query.append(")");
-
-				query.append(")");
-			}
-
-			query.setStringAt(removeConjunction(query.stringAt(query.index() -
-						1)), query.index() - 1);
-
-			String sql = query.toString();
-
-			Session session = null;
-
 			try {
-				session = openSession();
+				if ((databaseInMaxParameters > 0) &&
+						(parentLayoutIds.length > databaseInMaxParameters)) {
+					count = Long.valueOf(0);
 
-				Query q = session.createQuery(sql);
+					long[][] parentLayoutIdsPages = (long[][])ArrayUtil.split(parentLayoutIds,
+							databaseInMaxParameters);
 
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(groupId);
-
-				qPos.add(privateLayout);
-
-				count = (Long)q.uniqueResult();
+					for (long[] parentLayoutIdsPage : parentLayoutIdsPages) {
+						count += Long.valueOf(_countByG_P_P(groupId,
+								privateLayout, parentLayoutIdsPage));
+					}
+				}
+				else {
+					count = Long.valueOf(_countByG_P_P(groupId, privateLayout,
+								parentLayoutIds));
+				}
 
 				finderCache.putResult(FINDER_PATH_WITH_PAGINATION_COUNT_BY_G_P_P,
 					finderArgs, count);
@@ -8592,9 +8583,60 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 				throw processException(e);
 			}
-			finally {
-				closeSession(session);
-			}
+		}
+
+		return count.intValue();
+	}
+
+	private int _countByG_P_P(long groupId, boolean privateLayout,
+		long[] parentLayoutIds) {
+		Long count = null;
+
+		StringBundler query = new StringBundler();
+
+		query.append(_SQL_COUNT_LAYOUT_WHERE);
+
+		query.append(_FINDER_COLUMN_G_P_P_GROUPID_2);
+
+		query.append(_FINDER_COLUMN_G_P_P_PRIVATELAYOUT_2);
+
+		if (parentLayoutIds.length > 0) {
+			query.append("(");
+
+			query.append(_FINDER_COLUMN_G_P_P_PARENTLAYOUTID_7);
+
+			query.append(StringUtil.merge(parentLayoutIds));
+
+			query.append(")");
+
+			query.append(")");
+		}
+
+		query.setStringAt(removeConjunction(query.stringAt(query.index() - 1)),
+			query.index() - 1);
+
+		String sql = query.toString();
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			Query q = session.createQuery(sql);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(groupId);
+
+			qPos.add(privateLayout);
+
+			count = (Long)q.uniqueResult();
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
 		}
 
 		return count.intValue();
@@ -8878,7 +8920,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			if ((list != null) && !list.isEmpty()) {
 				for (Layout layout : list) {
 					if ((groupId != layout.getGroupId()) ||
-							(privateLayout != layout.getPrivateLayout()) ||
+							(privateLayout != layout.isPrivateLayout()) ||
 							!Objects.equals(type, layout.getType())) {
 						list = null;
 
@@ -9910,7 +9952,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			Layout layout = (Layout)result;
 
 			if ((groupId != layout.getGroupId()) ||
-					(privateLayout != layout.getPrivateLayout()) ||
+					(privateLayout != layout.isPrivateLayout()) ||
 					!Objects.equals(friendlyURL, layout.getFriendlyURL())) {
 				result = null;
 			}
@@ -9970,14 +10012,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 					result = layout;
 
 					cacheResult(layout);
-
-					if ((layout.getGroupId() != groupId) ||
-							(layout.getPrivateLayout() != privateLayout) ||
-							(layout.getFriendlyURL() == null) ||
-							!layout.getFriendlyURL().equals(friendlyURL)) {
-						finderCache.putResult(FINDER_PATH_FETCH_BY_G_P_F,
-							finderArgs, layout);
-					}
 				}
 			}
 			catch (Exception e) {
@@ -10196,7 +10230,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			Layout layout = (Layout)result;
 
 			if ((groupId != layout.getGroupId()) ||
-					(privateLayout != layout.getPrivateLayout()) ||
+					(privateLayout != layout.isPrivateLayout()) ||
 					!Objects.equals(sourcePrototypeLayoutUuid,
 						layout.getSourcePrototypeLayoutUuid())) {
 				result = null;
@@ -10268,15 +10302,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 					result = layout;
 
 					cacheResult(layout);
-
-					if ((layout.getGroupId() != groupId) ||
-							(layout.getPrivateLayout() != privateLayout) ||
-							(layout.getSourcePrototypeLayoutUuid() == null) ||
-							!layout.getSourcePrototypeLayoutUuid()
-									   .equals(sourcePrototypeLayoutUuid)) {
-						finderCache.putResult(FINDER_PATH_FETCH_BY_G_P_SPLU,
-							finderArgs, layout);
-					}
 				}
 			}
 			catch (Exception e) {
@@ -10524,7 +10549,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			if ((list != null) && !list.isEmpty()) {
 				for (Layout layout : list) {
 					if ((groupId != layout.getGroupId()) ||
-							(privateLayout != layout.getPrivateLayout()) ||
+							(privateLayout != layout.isPrivateLayout()) ||
 							(parentLayoutId != layout.getParentLayoutId()) ||
 							(priority < layout.getPriority())) {
 						list = null;
@@ -11469,31 +11494,31 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 		finderCache.putResult(FINDER_PATH_FETCH_BY_UUID_G_P,
 			new Object[] {
-				layout.getUuid(), layout.getGroupId(), layout.getPrivateLayout()
+				layout.getUuid(), layout.getGroupId(), layout.isPrivateLayout()
 			}, layout);
 
 		finderCache.putResult(FINDER_PATH_FETCH_BY_ICONIMAGEID,
 			new Object[] { layout.getIconImageId() }, layout);
 
 		finderCache.putResult(FINDER_PATH_FETCH_BY_P_I,
-			new Object[] { layout.getPrivateLayout(), layout.getIconImageId() },
+			new Object[] { layout.isPrivateLayout(), layout.getIconImageId() },
 			layout);
 
 		finderCache.putResult(FINDER_PATH_FETCH_BY_G_P_L,
 			new Object[] {
-				layout.getGroupId(), layout.getPrivateLayout(),
+				layout.getGroupId(), layout.isPrivateLayout(),
 				layout.getLayoutId()
 			}, layout);
 
 		finderCache.putResult(FINDER_PATH_FETCH_BY_G_P_F,
 			new Object[] {
-				layout.getGroupId(), layout.getPrivateLayout(),
+				layout.getGroupId(), layout.isPrivateLayout(),
 				layout.getFriendlyURL()
 			}, layout);
 
 		finderCache.putResult(FINDER_PATH_FETCH_BY_G_P_SPLU,
 			new Object[] {
-				layout.getGroupId(), layout.getPrivateLayout(),
+				layout.getGroupId(), layout.isPrivateLayout(),
 				layout.getSourcePrototypeLayoutUuid()
 			}, layout);
 
@@ -11568,7 +11593,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 	protected void cacheUniqueFindersCache(LayoutModelImpl layoutModelImpl) {
 		Object[] args = new Object[] {
 				layoutModelImpl.getUuid(), layoutModelImpl.getGroupId(),
-				layoutModelImpl.getPrivateLayout()
+				layoutModelImpl.isPrivateLayout()
 			};
 
 		finderCache.putResult(FINDER_PATH_COUNT_BY_UUID_G_P, args,
@@ -11584,7 +11609,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			layoutModelImpl, false);
 
 		args = new Object[] {
-				layoutModelImpl.getPrivateLayout(),
+				layoutModelImpl.isPrivateLayout(),
 				layoutModelImpl.getIconImageId()
 			};
 
@@ -11594,7 +11619,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			false);
 
 		args = new Object[] {
-				layoutModelImpl.getGroupId(), layoutModelImpl.getPrivateLayout(),
+				layoutModelImpl.getGroupId(), layoutModelImpl.isPrivateLayout(),
 				layoutModelImpl.getLayoutId()
 			};
 
@@ -11604,7 +11629,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			layoutModelImpl, false);
 
 		args = new Object[] {
-				layoutModelImpl.getGroupId(), layoutModelImpl.getPrivateLayout(),
+				layoutModelImpl.getGroupId(), layoutModelImpl.isPrivateLayout(),
 				layoutModelImpl.getFriendlyURL()
 			};
 
@@ -11614,7 +11639,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 			layoutModelImpl, false);
 
 		args = new Object[] {
-				layoutModelImpl.getGroupId(), layoutModelImpl.getPrivateLayout(),
+				layoutModelImpl.getGroupId(), layoutModelImpl.isPrivateLayout(),
 				layoutModelImpl.getSourcePrototypeLayoutUuid()
 			};
 
@@ -11629,7 +11654,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (clearCurrent) {
 			Object[] args = new Object[] {
 					layoutModelImpl.getUuid(), layoutModelImpl.getGroupId(),
-					layoutModelImpl.getPrivateLayout()
+					layoutModelImpl.isPrivateLayout()
 				};
 
 			finderCache.removeResult(FINDER_PATH_COUNT_BY_UUID_G_P, args);
@@ -11667,7 +11692,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 		if (clearCurrent) {
 			Object[] args = new Object[] {
-					layoutModelImpl.getPrivateLayout(),
+					layoutModelImpl.isPrivateLayout(),
 					layoutModelImpl.getIconImageId()
 				};
 
@@ -11689,7 +11714,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (clearCurrent) {
 			Object[] args = new Object[] {
 					layoutModelImpl.getGroupId(),
-					layoutModelImpl.getPrivateLayout(),
+					layoutModelImpl.isPrivateLayout(),
 					layoutModelImpl.getLayoutId()
 				};
 
@@ -11712,7 +11737,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (clearCurrent) {
 			Object[] args = new Object[] {
 					layoutModelImpl.getGroupId(),
-					layoutModelImpl.getPrivateLayout(),
+					layoutModelImpl.isPrivateLayout(),
 					layoutModelImpl.getFriendlyURL()
 				};
 
@@ -11735,7 +11760,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		if (clearCurrent) {
 			Object[] args = new Object[] {
 					layoutModelImpl.getGroupId(),
-					layoutModelImpl.getPrivateLayout(),
+					layoutModelImpl.isPrivateLayout(),
 					layoutModelImpl.getSourcePrototypeLayoutUuid()
 				};
 
@@ -11830,8 +11855,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 	@Override
 	protected Layout removeImpl(Layout layout) {
-		layout = toUnwrappedModel(layout);
-
 		Session session = null;
 
 		try {
@@ -11862,9 +11885,23 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 	@Override
 	public Layout updateImpl(Layout layout) {
-		layout = toUnwrappedModel(layout);
-
 		boolean isNew = layout.isNew();
+
+		if (!(layout instanceof LayoutModelImpl)) {
+			InvocationHandler invocationHandler = null;
+
+			if (ProxyUtil.isProxyClass(layout.getClass())) {
+				invocationHandler = ProxyUtil.getInvocationHandler(layout);
+
+				throw new IllegalArgumentException(
+					"Implement ModelWrapper in layout proxy " +
+					invocationHandler.getClass());
+			}
+
+			throw new IllegalArgumentException(
+				"Implement ModelWrapper in custom Layout implementation " +
+				layout.getClass());
+		}
 
 		LayoutModelImpl layoutModelImpl = (LayoutModelImpl)layout;
 
@@ -11966,7 +12003,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 			args = new Object[] {
 					layoutModelImpl.getGroupId(),
-					layoutModelImpl.getPrivateLayout()
+					layoutModelImpl.isPrivateLayout()
 				};
 
 			finderCache.removeResult(FINDER_PATH_COUNT_BY_G_P, args);
@@ -11992,7 +12029,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 			args = new Object[] {
 					layoutModelImpl.getGroupId(),
-					layoutModelImpl.getPrivateLayout(),
+					layoutModelImpl.isPrivateLayout(),
 					layoutModelImpl.getParentLayoutId()
 				};
 
@@ -12002,8 +12039,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 			args = new Object[] {
 					layoutModelImpl.getGroupId(),
-					layoutModelImpl.getPrivateLayout(),
-					layoutModelImpl.getType()
+					layoutModelImpl.isPrivateLayout(), layoutModelImpl.getType()
 				};
 
 			finderCache.removeResult(FINDER_PATH_COUNT_BY_G_P_T, args);
@@ -12139,7 +12175,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 				args = new Object[] {
 						layoutModelImpl.getGroupId(),
-						layoutModelImpl.getPrivateLayout()
+						layoutModelImpl.isPrivateLayout()
 					};
 
 				finderCache.removeResult(FINDER_PATH_COUNT_BY_G_P, args);
@@ -12202,7 +12238,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 				args = new Object[] {
 						layoutModelImpl.getGroupId(),
-						layoutModelImpl.getPrivateLayout(),
+						layoutModelImpl.isPrivateLayout(),
 						layoutModelImpl.getParentLayoutId()
 					};
 
@@ -12225,7 +12261,7 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 
 				args = new Object[] {
 						layoutModelImpl.getGroupId(),
-						layoutModelImpl.getPrivateLayout(),
+						layoutModelImpl.isPrivateLayout(),
 						layoutModelImpl.getType()
 					};
 
@@ -12244,50 +12280,6 @@ public class LayoutPersistenceImpl extends BasePersistenceImpl<Layout>
 		layout.resetOriginalValues();
 
 		return layout;
-	}
-
-	protected Layout toUnwrappedModel(Layout layout) {
-		if (layout instanceof LayoutImpl) {
-			return layout;
-		}
-
-		LayoutImpl layoutImpl = new LayoutImpl();
-
-		layoutImpl.setNew(layout.isNew());
-		layoutImpl.setPrimaryKey(layout.getPrimaryKey());
-
-		layoutImpl.setMvccVersion(layout.getMvccVersion());
-		layoutImpl.setUuid(layout.getUuid());
-		layoutImpl.setPlid(layout.getPlid());
-		layoutImpl.setGroupId(layout.getGroupId());
-		layoutImpl.setCompanyId(layout.getCompanyId());
-		layoutImpl.setUserId(layout.getUserId());
-		layoutImpl.setUserName(layout.getUserName());
-		layoutImpl.setCreateDate(layout.getCreateDate());
-		layoutImpl.setModifiedDate(layout.getModifiedDate());
-		layoutImpl.setPrivateLayout(layout.isPrivateLayout());
-		layoutImpl.setLayoutId(layout.getLayoutId());
-		layoutImpl.setParentLayoutId(layout.getParentLayoutId());
-		layoutImpl.setName(layout.getName());
-		layoutImpl.setTitle(layout.getTitle());
-		layoutImpl.setDescription(layout.getDescription());
-		layoutImpl.setKeywords(layout.getKeywords());
-		layoutImpl.setRobots(layout.getRobots());
-		layoutImpl.setType(layout.getType());
-		layoutImpl.setTypeSettings(layout.getTypeSettings());
-		layoutImpl.setHidden(layout.isHidden());
-		layoutImpl.setFriendlyURL(layout.getFriendlyURL());
-		layoutImpl.setIconImageId(layout.getIconImageId());
-		layoutImpl.setThemeId(layout.getThemeId());
-		layoutImpl.setColorSchemeId(layout.getColorSchemeId());
-		layoutImpl.setCss(layout.getCss());
-		layoutImpl.setPriority(layout.getPriority());
-		layoutImpl.setLayoutPrototypeUuid(layout.getLayoutPrototypeUuid());
-		layoutImpl.setLayoutPrototypeLinkEnabled(layout.isLayoutPrototypeLinkEnabled());
-		layoutImpl.setSourcePrototypeLayoutUuid(layout.getSourcePrototypeLayoutUuid());
-		layoutImpl.setLastPublishDate(layout.getLastPublishDate());
-
-		return layoutImpl;
 	}
 
 	/**

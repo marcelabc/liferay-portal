@@ -56,6 +56,7 @@ import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
 import com.liferay.portal.kernel.service.persistence.ClassNamePersistence;
 import com.liferay.portal.kernel.service.persistence.UserFinder;
 import com.liferay.portal.kernel.service.persistence.UserPersistence;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalUtil;
 
@@ -108,6 +109,7 @@ public abstract class AssetCategoryLocalServiceBaseImpl
 	 * @return the new asset category
 	 */
 	@Override
+	@Transactional(enabled = false)
 	public AssetCategory createAssetCategory(long categoryId) {
 		return assetCategoryPersistence.create(categoryId);
 	}
@@ -237,6 +239,19 @@ public abstract class AssetCategoryLocalServiceBaseImpl
 	public AssetCategory fetchAssetCategoryByUuidAndGroupId(String uuid,
 		long groupId) {
 		return assetCategoryPersistence.fetchByUUID_G(uuid, groupId);
+	}
+
+	/**
+	 * Returns the asset category with the matching external reference code and company.
+	 *
+	 * @param companyId the primary key of the company
+	 * @param externalReferenceCode the asset category's external reference code
+	 * @return the matching asset category, or <code>null</code> if a matching asset category could not be found
+	 */
+	@Override
+	public AssetCategory fetchAssetCategoryByReferenceCode(long companyId,
+		String externalReferenceCode) {
+		return assetCategoryPersistence.fetchByC_ERC(companyId, null);
 	}
 
 	/**
