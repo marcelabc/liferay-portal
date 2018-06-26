@@ -130,15 +130,20 @@ public class CalculateDDMFormRuleActionSerializer
 	}
 
 	protected String replace(
-		String expression, String newExpression, int start, int end) {
+		int countReplacedFields, String expression, String newExpression,
+		int start, int end) {
 
 		String matchFound = expression.substring(start, end);
 
 		String matchReplacement = String.format(
 			_FUNCTION_CALL_UNARY_EXPRESSION_FORMAT, "getValue", matchFound);
 
+		int lengthNewChars = matchReplacement.length() - matchFound.length();
+
+		int startNewExpression = start + (countReplacedFields * lengthNewChars);
+
 		return StringUtil.replaceFirst(
-			newExpression, matchFound, matchReplacement, start);
+			newExpression, matchFound, matchReplacement, startNewExpression);
 	}
 
 	private static final String _FUNCTION_CALL_BINARY_EXPRESSION_FORMAT =
