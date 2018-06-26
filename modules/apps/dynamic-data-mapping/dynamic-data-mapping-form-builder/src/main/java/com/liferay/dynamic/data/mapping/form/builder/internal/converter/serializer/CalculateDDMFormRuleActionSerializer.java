@@ -66,6 +66,8 @@ public class CalculateDDMFormRuleActionSerializer
 
 		StringBuffer sb = new StringBuffer();
 
+		int countReplacedFields = 0;
+
 		for (int i = 0; i < expression.length(); i++) {
 			char token = expression.charAt(i);
 
@@ -90,7 +92,9 @@ public class CalculateDDMFormRuleActionSerializer
 
 				if (end > start) {
 					newExpression = replace(
-						expression, newExpression, start, end);
+						countReplacedFields, expression, newExpression, start,
+						end);
+					countReplacedFields++;
 				}
 
 				start = Integer.MAX_VALUE;
@@ -99,7 +103,8 @@ public class CalculateDDMFormRuleActionSerializer
 		}
 
 		if (end > start) {
-			newExpression = replace(expression, newExpression, start, end);
+			newExpression = replace(
+				countReplacedFields, expression, newExpression, start, end);
 		}
 
 		return String.format(
