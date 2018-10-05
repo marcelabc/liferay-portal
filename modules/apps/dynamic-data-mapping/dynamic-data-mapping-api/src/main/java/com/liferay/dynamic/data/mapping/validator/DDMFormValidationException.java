@@ -314,7 +314,7 @@ public class DDMFormValidationException extends PortalException {
 		}
 
 		private static final Pattern _containsValidationPattern =
-			Pattern.compile("NOT\\(contains\\((.+), \"(.+)\"\\)\\)");
+			Pattern.compile("(NOT)?\\((contains|match)\\((.+), \"(.+)\"\\)\\)");
 
 	}
 
