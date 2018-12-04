@@ -104,13 +104,16 @@ public class ParagraphDDMFormFieldTypeSettingsTest
 
 		List<String> actions = ddmFormRule.getActions();
 
-		Assert.assertEquals(actions.toString(), 8, actions.size());
+		Assert.assertEquals(actions.toString(), 9, actions.size());
 
 		Assert.assertTrue(
 			actions.toString(), actions.contains("setRequired('text', true)"));
 		Assert.assertTrue(
 			actions.toString(),
 			actions.contains("setVisible('dataType', false)"));
+		Assert.assertTrue(
+			actions.toString(),
+			actions.contains("setVisible('indexType', false)"));
 		Assert.assertTrue(
 			actions.toString(),
 			actions.contains("setVisible('predefinedValue', false)"));
