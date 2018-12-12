@@ -40,7 +40,6 @@ import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.Mus
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidValidationExpression;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidVisibilityExpression;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidator;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanPropertiesUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -363,7 +362,7 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 	}
 
 	private static final String[] _DDM_FORM_FIELD_INDEX_TYPES = {
-		StringPool.BLANK, "keyword", "text"
+		"none", "keyword", "text"
 	};
 
 	private static final Pattern _ddmFormFieldNamePattern = Pattern.compile(
