@@ -131,6 +131,17 @@ public interface TextDDMFormFieldTypeSettings
 	public String displayStyle();
 
 	@DDMFormField(
+		label = "%indexable",
+		optionLabels = {
+			"%not-indexable", "%indexable-keyword", "%indexable-text"
+		},
+		optionValues = {"none", "keyword", "text"}, predefinedValue = "keyword",
+		type = "radio"
+	)
+	@Override
+	public String indexType();
+
+	@DDMFormField(
 		dataType = "ddm-options", label = "%options",
 		properties = {"showLabel=false", "allowEmptyOptions=true"},
 		required = false, type = "options"
