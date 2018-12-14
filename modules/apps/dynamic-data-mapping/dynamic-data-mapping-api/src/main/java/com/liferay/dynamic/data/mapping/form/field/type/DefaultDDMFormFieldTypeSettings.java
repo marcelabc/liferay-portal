@@ -69,8 +69,8 @@ public interface DefaultDDMFormFieldTypeSettings
 	public String fieldNamespace();
 
 	@DDMFormField(
-		label = "%indexable",
-		optionLabels = {"%not-indexable", "%indexable-keyword"},
+		label = "%searchable",
+		optionLabels = {"%disable", "%keyword"},
 		optionValues = {"none", "keyword"}, predefinedValue = "keyword",
 		type = "radio"
 	)

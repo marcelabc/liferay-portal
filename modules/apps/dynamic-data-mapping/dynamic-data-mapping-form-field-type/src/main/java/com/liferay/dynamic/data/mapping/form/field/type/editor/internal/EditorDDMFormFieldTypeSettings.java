@@ -67,9 +67,9 @@ public interface EditorDDMFormFieldTypeSettings
 	extends DefaultDDMFormFieldTypeSettings {
 
 	@DDMFormField(
-		label = "%indexable",
+		label = "%searchable",
 		optionLabels = {
-			"%not-indexable", "%indexable-keyword", "%indexable-text"
+			"%disable", "%keyword", "%text"
 		},
 		optionValues = {"none", "keyword", "text"}, predefinedValue = "keyword",
 		type = "radio"
