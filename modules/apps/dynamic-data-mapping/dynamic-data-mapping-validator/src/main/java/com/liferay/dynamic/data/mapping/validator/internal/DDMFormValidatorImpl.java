@@ -123,6 +123,12 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 	protected void validateDDMFormFieldIndexType(DDMFormField ddmFormField)
 		throws DDMFormValidationException {
 
+		if (ddmFormField.getIndexType() == null ||
+			ddmFormField.getIndexType().isEmpty()) {
+
+			ddmFormField.setIndexType(_INDEX_TYPE_DEFAULT_VALUE);
+		}
+
 		if (!ArrayUtil.contains(
 				_DDM_FORM_FIELD_INDEX_TYPES, ddmFormField.getIndexType())) {
 
@@ -364,6 +370,8 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 	private static final String[] _DDM_FORM_FIELD_INDEX_TYPES = {
 		"none", "keyword", "text"
 	};
+
+	private static final String _INDEX_TYPE_DEFAULT_VALUE = "keyword";
 
 	private static final Pattern _ddmFormFieldNamePattern = Pattern.compile(
 		"([^\\p{Punct}|\\p{Space}$]|_)+");
