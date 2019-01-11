@@ -57,11 +57,12 @@ public class DESaveDataDefinitionDataFetcher
 			Map<String, Object> dataDefinitionAttributes =
 				environment.getArgument("dataDefinition");
 
-			DEDataDefinition deDataDefinition = new DEDataDefinition(
+			DEDataDefinition deDataDefinition = new DEDataDefinition();
+
+			deDataDefinition.setDEDataDefinitionFields(
 				createDEDataDefinitionFields(
 					(List<Map<String, Object>>)dataDefinitionAttributes.get(
 						"fields")));
-
 			deDataDefinition.setDEDataDefinitionId(
 				GetterUtil.getLong(
 					dataDefinitionAttributes.get("dataDefinitionId")));
@@ -95,7 +96,7 @@ public class DESaveDataDefinitionDataFetcher
 		}
 		catch (DEDataDefinitionException.MustHavePermission mhp) {
 			errorMessage = getMessage(
-				languageId, "the-user-must-have-data-definition-permission",
+				languageId, "the-user-must-have-permission",
 				getActionMessage(languageId, mhp.getActionId()));
 		}
 		catch (DEDataDefinitionException.NoSuchDataDefinition nsdd) {
@@ -130,21 +131,6 @@ public class DESaveDataDefinitionDataFetcher
 		).collect(
 			Collectors.toList()
 		);
-	}
-
-	protected Map<String, String> getLocalizedValues(
-		List<Map<String, Object>> values) {
-
-		if (values == null) {
-			return null;
-		}
-
-		Stream<Map<String, Object>> stream = values.stream();
-
-		return stream.collect(
-			Collectors.toMap(
-				entry -> MapUtil.getString(entry, "key"),
-				entry -> MapUtil.getString(entry, "value")));
 	}
 
 	protected DEDataDefinitionField map(Map<String, Object> fieldProperties) {
