@@ -413,11 +413,11 @@ public class PortletConfigurationPermissionsDisplayContext {
 			teamGroupId = _group.getParentGroupId();
 		}
 
+		int count = 0;
+
 		RoleVisibilityConfiguration stricterRoleVisibilityConfiguration =
 			ConfigurationProviderUtil.getCompanyConfiguration(
 				RoleVisibilityConfiguration.class, themeDisplay.getCompanyId());
-
-		int count = 0;
 
 		if (stricterRoleVisibilityConfiguration.
 				restrictPermissionSelectorRoleVisibility()) {
