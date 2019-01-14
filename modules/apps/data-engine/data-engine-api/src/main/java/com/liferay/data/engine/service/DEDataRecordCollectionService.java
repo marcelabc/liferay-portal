@@ -21,6 +21,26 @@ import com.liferay.data.engine.exception.DEDataRecordCollectionException;
  */
 public interface DEDataRecordCollectionService {
 
+	public DEDataRecordCollectionDeleteModelPermissionsResponse execute(
+			DEDataRecordCollectionDeleteModelPermissionsRequest
+				deDataRecordCollectionDeleteModelPermissionsRequest)
+		throws DEDataRecordCollectionException;
+
+	public DEDataRecordCollectionDeletePermissionsResponse execute(
+			DEDataRecordCollectionDeletePermissionsRequest
+				deDataRecordCollectionDeletePermissionsRequest)
+		throws DEDataRecordCollectionException;
+
+	public DEDataRecordCollectionSaveModelPermissionsResponse execute(
+			DEDataRecordCollectionSaveModelPermissionsRequest
+				deDataRecordCollectionSaveModelPermissionsRequest)
+		throws DEDataRecordCollectionException;
+
+	public DEDataRecordCollectionSavePermissionsResponse execute(
+			DEDataRecordCollectionSavePermissionsRequest
+				deDataRecordCollectionSavePermissionsRequest)
+		throws DEDataRecordCollectionException;
+
 	public DEDataRecordCollectionSaveResponse execute(
 			DEDataRecordCollectionSaveRequest deDataRecordCollectionSaveRequest)
 		throws DEDataRecordCollectionException;
