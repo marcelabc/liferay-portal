@@ -14,13 +14,7 @@
 
 package com.liferay.data.engine.internal.executor;
 
-import com.liferay.data.engine.exception.DEDataDefinitionFieldsDeserializerException;
-import com.liferay.data.engine.internal.io.DEDataDefinitionFieldsDeserializerTracker;
-import com.liferay.data.engine.io.DEDataDefinitionFieldsDeserializer;
-import com.liferay.data.engine.io.DEDataDefinitionFieldsDeserializerApplyRequest;
-import com.liferay.data.engine.io.DEDataDefinitionFieldsDeserializerApplyResponse;
 import com.liferay.data.engine.model.DEDataDefinition;
-import com.liferay.data.engine.model.DEDataDefinitionField;
 import com.liferay.data.engine.service.DEDataDefinitionListRequest;
 import com.liferay.data.engine.service.DEDataDefinitionListResponse;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
@@ -36,15 +30,12 @@ import java.util.List;
 public class DEDataDefinitionListRequestExecutor {
 
 	public DEDataDefinitionListRequestExecutor(
-		DDMStructureService ddmStructureService,
-		DEDataDefinitionFieldsDeserializerTracker
-			deDataDefinitionFieldsDeserializerTracker,
-		Portal portal) {
+		DEDataEngineRequestExecutor deDataEngineRequestExecutor,
+		DDMStructureService ddmStructureService, Portal portal) {
 
-		this.ddmStructureService = ddmStructureService;
-		this.deDataDefinitionFieldsDeserializerTracker =
-			deDataDefinitionFieldsDeserializerTracker;
-		this.portal = portal;
+		_deDataEngineRequestExecutor = deDataEngineRequestExecutor;
+		_ddmStructureService = ddmStructureService;
+		_portal = portal;
 	}
 
 	public DEDataDefinitionListResponse execute(
@@ -53,15 +44,16 @@ public class DEDataDefinitionListRequestExecutor {
 
 		List<DEDataDefinition> deDataDefinitions = new ArrayList<>();
 
-		List<DDMStructure> ddmStructures = ddmStructureService.getStructures(
+		List<DDMStructure> ddmStructures = _ddmStructureService.getStructures(
 			deDataDefinitionListRequest.getCompanyId(),
 			new long[] {deDataDefinitionListRequest.getGroupId()},
-			portal.getClassNameId(DEDataDefinition.class),
+			_portal.getClassNameId(DEDataDefinition.class),
 			deDataDefinitionListRequest.getStart(),
 			deDataDefinitionListRequest.getEnd(), null);
 
 		for (DDMStructure ddmStructure : ddmStructures) {
-			deDataDefinitions.add(map(ddmStructure));
+			deDataDefinitions.add(
+				_deDataEngineRequestExecutor.map(ddmStructure));
 		}
 
 		return DEDataDefinitionListResponse.Builder.of(deDataDefinitions);
@@ -113,6 +105,8 @@ public class DEDataDefinitionListRequestExecutor {
 	protected DDMStructureService ddmStructureService;
 	protected DEDataDefinitionFieldsDeserializerTracker
 		deDataDefinitionFieldsDeserializerTracker;
-	protected Portal portal;
+	private final DDMStructureService _ddmStructureService;
+	private final DEDataEngineRequestExecutor _deDataEngineRequestExecutor;
+	private final Portal _portal;
 
 }
