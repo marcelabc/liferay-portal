@@ -17,12 +17,14 @@ package com.liferay.data.engine.service.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.data.engine.exception.DEDataRecordCollectionException;
 import com.liferay.data.engine.model.DEDataDefinition;
+import com.liferay.data.engine.model.DEDataRecord;
 import com.liferay.data.engine.model.DEDataRecordCollection;
 import com.liferay.data.engine.service.DEDataDefinitionService;
 import com.liferay.data.engine.service.DEDataRecordCollectionDeleteRequest;
 import com.liferay.data.engine.service.DEDataRecordCollectionRequestBuilder;
 import com.liferay.data.engine.service.DEDataRecordCollectionSaveModelPermissionsRequest;
 import com.liferay.data.engine.service.DEDataRecordCollectionSavePermissionsRequest;
+import com.liferay.data.engine.service.DEDataRecordCollectionSaveRecordRequest;
 import com.liferay.data.engine.service.DEDataRecordCollectionSaveRequest;
 import com.liferay.data.engine.service.DEDataRecordCollectionSaveResponse;
 import com.liferay.data.engine.service.DEDataRecordCollectionService;
@@ -48,6 +50,9 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -1107,6 +1112,223 @@ public class DEDataRecordCollectionServiceTest {
 			_deDataRecordCollectionService);
 	}
 
+	@Test
+	public void testInsertRecord() throws Exception {
+		DEDataRecord deDataRecord = DEDataEngineTestUtil.insertDEDataRecord(
+			_adminUser, _group, _deDataDefinitionService,
+			_deDataRecordCollectionService);
+
+		Assert.assertTrue(deDataRecord.getDEDataRecordId() > 0);
+	}
+
+	@Test(expected = DEDataRecordCollectionException.MustHavePermission.class)
+	public void testInsertRecordByGuest() throws Exception {
+		DEDataRecordCollection deDataRecordCollection =
+			DEDataEngineTestUtil.insertDEDataRecordCollection(
+				_adminUser, _group, _deDataDefinitionService,
+				_deDataRecordCollectionService);
+
+		User user = UserTestUtil.addGroupUser(_group, RoleConstants.GUEST);
+
+		DEDataEngineTestUtil.insertDEDataRecord(
+			user, _group, deDataRecordCollection,
+			_deDataRecordCollectionService);
+	}
+
+	@Test(
+		expected =
+			DEDataRecordCollectionException.NoSuchDataRecordCollection.class
+	)
+	public void testInsertRecordWithNoDataCollection() throws Exception {
+		DEDataEngineTestUtil.insertDEDataRecord(
+			_adminUser, _group, (DEDataRecordCollection)null,
+			_deDataRecordCollectionService);
+	}
+
+	@Test(expected = DEDataRecordCollectionException.AddDataRecord.class)
+	public void testInsertRecordWithNoGroup() throws Exception {
+		DEDataRecordCollection deDataRecordCollection =
+			DEDataEngineTestUtil.insertDEDataRecordCollection(
+				_adminUser, _group, _deDataDefinitionService,
+				_deDataRecordCollectionService);
+
+		DEDataRecord deDataRecord = new DEDataRecord();
+
+		deDataRecord.setDEDataRecordCollection(deDataRecordCollection);
+
+		Map<String, Object> values = new HashMap() {
+			{
+				put("name", "Liferay");
+				put("email", "test@liferay.com");
+			}
+		};
+
+		deDataRecord.setValues(values);
+
+		DEDataRecordCollectionSaveRecordRequest
+			deDataRecordCollectionSaveRecordRequest =
+				DEDataRecordCollectionRequestBuilder.saveRecordBuilder(
+					deDataRecord
+				).onBehalfOf(
+					_adminUser.getUserId()
+				).build();
+
+		DEDataEngineTestUtil.saveDataRecordCollection(
+			_adminUser, _group, _deDataRecordCollectionService,
+			deDataRecordCollectionSaveRecordRequest);
+	}
+
+	@Test
+	public void testInsertRecordWithNonexistingField() throws Exception {
+		DEDataRecordCollection deDataRecordCollection =
+			DEDataEngineTestUtil.insertDEDataRecordCollection(
+				_adminUser, _group, _deDataDefinitionService,
+				_deDataRecordCollectionService);
+
+		DEDataRecord deDataRecord = new DEDataRecord();
+
+		deDataRecord.setDEDataRecordCollection(deDataRecordCollection);
+
+		Map<String, Object> values = new HashMap() {
+			{
+				put("name", "Liferay");
+				put("email", "test@liferay.com");
+				put("phone", "333-333-333");
+			}
+		};
+
+		deDataRecord.setValues(values);
+
+		DEDataRecordCollectionSaveRecordRequest
+			deDataRecordCollectionSaveRecordRequest =
+				DEDataRecordCollectionRequestBuilder.saveRecordBuilder(
+					deDataRecord
+				).inGroup(
+					_group.getGroupId()
+				).onBehalfOf(
+					_adminUser.getUserId()
+				).build();
+
+		DEDataEngineTestUtil.saveDataRecordCollection(
+			_adminUser, _group, _deDataRecordCollectionService,
+			deDataRecordCollectionSaveRecordRequest);
+	}
+
+	@Test(expected = DEDataRecordCollectionException.AddDataRecord.class)
+	public void testInsertRecordWithNonexistingGroup() throws Exception {
+		DEDataRecordCollection deDataRecordCollection =
+			DEDataEngineTestUtil.insertDEDataRecordCollection(
+				_adminUser, _group, _deDataDefinitionService,
+				_deDataRecordCollectionService);
+
+		DEDataRecord deDataRecord = new DEDataRecord();
+
+		deDataRecord.setDEDataRecordCollection(deDataRecordCollection);
+
+		Map<String, Object> values = new HashMap() {
+			{
+				put("name", "Liferay");
+				put("email", "test@liferay.com");
+			}
+		};
+
+		deDataRecord.setValues(values);
+
+		DEDataRecordCollectionSaveRecordRequest
+			deDataRecordCollectionSaveRecordRequest =
+				DEDataRecordCollectionRequestBuilder.saveRecordBuilder(
+					deDataRecord
+				).inGroup(
+					1
+				).onBehalfOf(
+					_adminUser.getUserId()
+				).build();
+
+		DEDataEngineTestUtil.saveDataRecordCollection(
+			_adminUser, _group, _deDataRecordCollectionService,
+			deDataRecordCollectionSaveRecordRequest);
+	}
+
+	@Test(expected = DEDataRecordCollectionException.AddDataRecord.class)
+	public void testInsertRecordWithNonexistingUser() throws Exception {
+		DEDataRecordCollection deDataRecordCollection =
+			DEDataEngineTestUtil.insertDEDataRecordCollection(
+				_adminUser, _group, _deDataDefinitionService,
+				_deDataRecordCollectionService);
+
+		DEDataRecord deDataRecord = new DEDataRecord();
+
+		deDataRecord.setDEDataRecordCollection(deDataRecordCollection);
+
+		Map<String, Object> values = new HashMap() {
+			{
+				put("name", "Liferay");
+				put("email", "test@liferay.com");
+			}
+		};
+
+		deDataRecord.setValues(values);
+
+		DEDataRecordCollectionSaveRecordRequest
+			deDataRecordCollectionSaveRecordRequest =
+				DEDataRecordCollectionRequestBuilder.saveRecordBuilder(
+					deDataRecord
+				).inGroup(
+					_group.getGroupId()
+				).onBehalfOf(
+					1
+				).build();
+
+		DEDataEngineTestUtil.saveDataRecordCollection(
+			_adminUser, _group, _deDataRecordCollectionService,
+			deDataRecordCollectionSaveRecordRequest);
+	}
+
+	@Test(expected = DEDataRecordCollectionException.AddDataRecord.class)
+	public void testInsertRecordWithNoUser() throws Exception {
+		DEDataRecordCollection deDataRecordCollection =
+			DEDataEngineTestUtil.insertDEDataRecordCollection(
+				_adminUser, _group, _deDataDefinitionService,
+				_deDataRecordCollectionService);
+
+		DEDataRecord deDataRecord = new DEDataRecord();
+
+		deDataRecord.setDEDataRecordCollection(deDataRecordCollection);
+
+		Map<String, Object> values = new HashMap() {
+			{
+				put("name", "Liferay");
+				put("email", "test@liferay.com");
+			}
+		};
+
+		deDataRecord.setValues(values);
+
+		DEDataRecordCollectionSaveRecordRequest
+			deDataRecordCollectionSaveRecordRequest =
+				DEDataRecordCollectionRequestBuilder.saveRecordBuilder(
+					deDataRecord
+				).inGroup(
+					_group.getGroupId()
+				).build();
+
+		DEDataEngineTestUtil.saveDataRecordCollection(
+			_adminUser, _group, _deDataRecordCollectionService,
+			deDataRecordCollectionSaveRecordRequest);
+	}
+
+	@Test(expected = DEDataRecordCollectionException.MustHavePermission.class)
+	public void testInsertRecordWithoutPermission() throws Exception {
+		DEDataRecordCollection deDataRecordCollection =
+			DEDataEngineTestUtil.insertDEDataRecordCollection(
+				_adminUser, _group, _deDataDefinitionService,
+				_deDataRecordCollectionService);
+
+		DEDataEngineTestUtil.insertDEDataRecord(
+			_siteMember, _group, deDataRecordCollection,
+			_deDataRecordCollectionService);
+	}
+
 	@Test(expected = DEDataRecordCollectionException.class)
 	public void testInsertWithBadRequest() throws Exception {
 		PermissionThreadLocal.setPermissionChecker(
@@ -1142,7 +1364,7 @@ public class DEDataRecordCollectionServiceTest {
 		}
 	}
 
-	@Test(expected = DEDataRecordCollectionException.class)
+	@Test
 	public void testInsertWithBadRequest2() throws Exception {
 		PermissionThreadLocal.setPermissionChecker(
 			PermissionCheckerFactoryUtil.create(_adminUser));

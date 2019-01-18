@@ -788,8 +788,8 @@ public class DEDataDefinitionServiceTest {
 			DEDataDefinitionSaveResponse deDataDefinitionSaveResponse =
 				_deDataDefinitionService.execute(deDataDefinitionSaveRequest);
 
-			expectedDEDataDefinition.setDEDataDefinitionId(
-				deDataDefinitionSaveResponse.getDEDataDefinitionId());
+			expectedDEDataDefinition =
+				deDataDefinitionSaveResponse.getDEDataDefinition();
 		}
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
@@ -881,8 +881,8 @@ public class DEDataDefinitionServiceTest {
 			DEDataDefinitionSaveResponse deDataDefinitionSaveResponse =
 				_deDataDefinitionService.execute(deDataDefinitionSaveRequest);
 
-			expectedDEDataDefinition.setDEDataDefinitionId(
-				deDataDefinitionSaveResponse.getDEDataDefinitionId());
+			expectedDEDataDefinition =
+				deDataDefinitionSaveResponse.getDEDataDefinition();
 		}
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
@@ -931,8 +931,7 @@ public class DEDataDefinitionServiceTest {
 			DEDataEngineTestUtil.insertDEDataDefinition(
 				_adminUser, _group, _deDataDefinitionService);
 
-		User user = _userLocalService.getDefaultUser(
-			TestPropsValues.getCompanyId());
+		user = _userLocalService.getDefaultUser(TestPropsValues.getCompanyId());
 
 		DEDataEngineTestUtil.getDEDataDefinition(
 			user, deDataDefinition.getDEDataDefinitionId(),
@@ -1115,8 +1114,10 @@ public class DEDataDefinitionServiceTest {
 			ServiceContextThreadLocal.popServiceContext();
 		}
 
-		DEDataDefinition deDataDefinition = getDEDataDefinition(
-			user, _group, expectedDEDataDefinition.getDEDataDefinitionId());
+		DEDataDefinition deDataDefinition =
+			DEDataEngineTestUtil.getDEDataDefinition(
+				user, expectedDEDataDefinition.getDEDataDefinitionId(),
+				_deDataDefinitionService);
 
 		Assert.assertEquals(expectedDEDataDefinition, deDataDefinition);
 	}
@@ -1153,9 +1154,10 @@ public class DEDataDefinitionServiceTest {
 			ServiceContextThreadLocal.popServiceContext();
 		}
 
-		DEDataDefinition deDataDefinition = getDEDataDefinition(
-			_siteMember, _group,
-			expectedDEDataDefinition.getDEDataDefinitionId());
+		DEDataDefinition deDataDefinition =
+			DEDataEngineTestUtil.getDEDataDefinition(
+				_siteMember, expectedDEDataDefinition.getDEDataDefinitionId(),
+				_deDataDefinitionService);
 
 		Assert.assertEquals(expectedDEDataDefinition, deDataDefinition);
 	}
