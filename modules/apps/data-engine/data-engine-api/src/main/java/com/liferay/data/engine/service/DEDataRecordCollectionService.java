@@ -95,6 +95,11 @@ public interface DEDataRecordCollectionService {
 				deDataRecordCollectionSavePermissionsRequest)
 		throws DEDataRecordCollectionException;
 
+	public DEDataRecordCollectionSaveRecordResponse execute(
+			DEDataRecordCollectionSaveRecordRequest
+				deDataRecordCollectionSaveRecordRequest)
+		throws DEDataRecordCollectionException;
+
 	public DEDataRecordCollectionSaveResponse execute(
 			DEDataRecordCollectionSaveRequest deDataRecordCollectionSaveRequest)
 		throws DEDataRecordCollectionException;
