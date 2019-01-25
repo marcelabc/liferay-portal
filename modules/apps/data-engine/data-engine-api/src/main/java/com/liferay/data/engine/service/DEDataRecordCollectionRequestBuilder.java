@@ -47,10 +47,12 @@ public class DEDataRecordCollectionRequestBuilder {
 
 	public static DEDataRecordCollectionSaveModelPermissionsRequest.Builder
 		saveModelPermissionsBuilder(
-			long companyId, long scopedGroupId, long deDataRecordCollectionId) {
+			long companyId, long groupId, long scopedUserId, long scopedGroupId,
+			long deDataRecordCollectionId, String[] roleNames) {
 
 		return new DEDataRecordCollectionSaveModelPermissionsRequest.Builder(
-			companyId, scopedGroupId, deDataRecordCollectionId);
+			companyId, groupId, scopedUserId, scopedGroupId,
+			deDataRecordCollectionId, roleNames);
 	}
 
 	public static DEDataRecordCollectionSavePermissionsRequest.Builder
