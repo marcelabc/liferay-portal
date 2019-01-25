@@ -25,9 +25,14 @@ import com.liferay.data.engine.storage.DEDataStorageRequestBuilder;
 import com.liferay.data.engine.storage.DEDataStorageSaveRequest;
 import com.liferay.data.engine.storage.DEDataStorageSaveResponse;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
+import com.liferay.dynamic.data.lists.model.DDLRecordSet;
+import com.liferay.dynamic.data.lists.model.DDLRecordSetVersion;
 import com.liferay.dynamic.data.lists.service.DDLRecordLocalService;
+import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
+import com.liferay.dynamic.data.mapping.service.DDMStorageLinkLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.util.Portal;
 
 /**
  * @author Leonardo Barros
@@ -36,10 +41,13 @@ public class DEDataRecordCollectionSaveRecordRequestExecutor {
 
 	public DEDataRecordCollectionSaveRecordRequestExecutor(
 		DEDataStorageTracker deDataStorageTracker,
-		DDLRecordLocalService ddlRecordLocalService) {
+		DDLRecordLocalService ddlRecordLocalService,
+		DDMStorageLinkLocalService ddmStorageLinkLocalService, Portal portal) {
 
 		_deDataStorageTracker = deDataStorageTracker;
 		_ddlRecordLocalService = ddlRecordLocalService;
+		_ddmStorageLinkLocalService = ddmStorageLinkLocalService;
+		_portal = portal;
 	}
 
 	public DEDataRecordCollectionSaveRecordResponse execute(
@@ -71,6 +79,10 @@ public class DEDataRecordCollectionSaveRecordRequestExecutor {
 		DEDataStorageSaveRequest deDataStorageSaveRequest =
 			DEDataStorageRequestBuilder.saveBuilder(
 				deDataRecord
+			).inGroup(
+				deDataRecordCollectionSaveRecordRequest.getGroupId()
+			).onBehalfOf(
+				deDataRecordCollectionSaveRecordRequest.getUserId()
 			).build();
 
 		DEDataStorageSaveResponse deDataStorageSaveResponse =
@@ -97,6 +109,10 @@ public class DEDataRecordCollectionSaveRecordRequestExecutor {
 				deDataStorageSaveResponse.getDEDataStorageId(), serviceContext);
 		}
 
+		addStorageLink(
+			deDataStorageSaveResponse.getDEDataStorageId(), ddlRecord,
+			serviceContext);
+
 		deDataRecord.setDEDataRecordId(ddlRecord.getRecordId());
 
 		return DEDataRecordCollectionSaveRecordResponse.Builder.of(
@@ -104,7 +120,28 @@ public class DEDataRecordCollectionSaveRecordRequestExecutor {
 		);
 	}
 
+	protected void addStorageLink(
+			long deDataStorageId, DDLRecord ddlRecord,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		DDLRecordSet ddlRecordSet = ddlRecord.getRecordSet();
+
+		DDLRecordSetVersion ddlRecordSetVersion =
+			ddlRecordSet.getRecordSetVersion();
+
+		DDMStructureVersion ddmStructureVersion =
+			ddlRecordSetVersion.getDDMStructureVersion();
+
+		_ddmStorageLinkLocalService.addStorageLink(
+			_portal.getClassNameId(DEDataRecord.class.getName()),
+			deDataStorageId, ddmStructureVersion.getStructureVersionId(),
+			serviceContext);
+	}
+
 	private final DDLRecordLocalService _ddlRecordLocalService;
+	private final DDMStorageLinkLocalService _ddmStorageLinkLocalService;
 	private final DEDataStorageTracker _deDataStorageTracker;
+	private final Portal _portal;
 
 }
