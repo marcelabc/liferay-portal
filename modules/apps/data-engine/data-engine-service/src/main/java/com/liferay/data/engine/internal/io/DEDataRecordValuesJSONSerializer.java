@@ -39,7 +39,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true, property = "de.data.record.values.deserializer.type=json",
+	immediate = true, property = "de.data.record.values.serializer.type=json",
 	service = DEDataRecordValuesSerializer.class
 )
 public class DEDataRecordValuesJSONSerializer
