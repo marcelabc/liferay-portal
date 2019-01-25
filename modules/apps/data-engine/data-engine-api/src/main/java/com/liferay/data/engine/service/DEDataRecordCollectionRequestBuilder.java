@@ -55,7 +55,7 @@ public class DEDataRecordCollectionRequestBuilder {
 
 	public static DEDataRecordCollectionSavePermissionsRequest.Builder
 		savePermissionsBuilder(
-			long companyId, long scopedGroupId, String... roleNames) {
+			long companyId, long scopedGroupId, String[] roleNames) {
 
 		return new DEDataRecordCollectionSavePermissionsRequest.Builder(
 			companyId, scopedGroupId, roleNames);
