@@ -142,6 +142,10 @@ public class DDMStructureLayoutPersistenceTest {
 
 		newDDMStructureLayout.setDefinition(RandomTestUtil.randomString());
 
+		newDDMStructureLayout.setDescription(RandomTestUtil.randomString());
+
+		newDDMStructureLayout.setName(RandomTestUtil.randomString());
+
 		_ddmStructureLayouts.add(_persistence.update(newDDMStructureLayout));
 
 		DDMStructureLayout existingDDMStructureLayout = _persistence.findByPrimaryKey(newDDMStructureLayout.getPrimaryKey());
@@ -168,6 +172,10 @@ public class DDMStructureLayoutPersistenceTest {
 			newDDMStructureLayout.getStructureVersionId());
 		Assert.assertEquals(existingDDMStructureLayout.getDefinition(),
 			newDDMStructureLayout.getDefinition());
+		Assert.assertEquals(existingDDMStructureLayout.getDescription(),
+			newDDMStructureLayout.getDescription());
+		Assert.assertEquals(existingDDMStructureLayout.getName(),
+			newDDMStructureLayout.getName());
 	}
 
 	@Test
@@ -472,6 +480,10 @@ public class DDMStructureLayoutPersistenceTest {
 		ddmStructureLayout.setStructureVersionId(RandomTestUtil.nextLong());
 
 		ddmStructureLayout.setDefinition(RandomTestUtil.randomString());
+
+		ddmStructureLayout.setDescription(RandomTestUtil.randomString());
+
+		ddmStructureLayout.setName(RandomTestUtil.randomString());
 
 		_ddmStructureLayouts.add(_persistence.update(ddmStructureLayout));
 
