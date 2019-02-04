@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.dynamic.data.mapping.internal.upgrade.v3_0_2.util;
+package com.liferay.dynamic.data.mapping.internal.upgrade.v3_1_0.util;
 
 import java.sql.Types;
 
@@ -38,8 +38,8 @@ public class DDMStructureLayoutTable {
 		{"modifiedDate", Types.TIMESTAMP},
 		{"structureVersionId", Types.BIGINT},
 		{"definition", Types.CLOB},
-		{"description", Types.VARCHAR},
-		{"name", Types.VARCHAR}
+		{"description", Types.CLOB},
+		{"name", Types.CLOB}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP = new HashMap<String, Integer>();
@@ -65,17 +65,17 @@ TABLE_COLUMNS_MAP.put("structureVersionId", Types.BIGINT);
 
 TABLE_COLUMNS_MAP.put("definition", Types.CLOB);
 
-TABLE_COLUMNS_MAP.put("description", Types.VARCHAR);
+TABLE_COLUMNS_MAP.put("description", Types.CLOB);
 
-TABLE_COLUMNS_MAP.put("name", Types.VARCHAR);
+TABLE_COLUMNS_MAP.put("name", Types.CLOB);
 
 }
-	public static final String TABLE_SQL_CREATE = "create table DDMStructureLayout (uuid_ VARCHAR(75) null,structureLayoutId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,structureVersionId LONG,definition TEXT null,description VARCHAR(75) null,name VARCHAR(75) null)";
+	public static final String TABLE_SQL_CREATE = "create table DDMStructureLayout (uuid_ VARCHAR(75) null,structureLayoutId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,structureVersionId LONG,definition TEXT null,description TEXT null,name TEXT null)";
 
 	public static final String TABLE_SQL_DROP = "drop table DDMStructureLayout";
 
 	public static final String[] TABLE_SQL_ADD_INDEXES = {
-		"create unique index IX_B7158C0A on DDMStructureLayout (structureVersionId)",
+		"create index IX_B7158C0A on DDMStructureLayout (structureVersionId)",
 		"create index IX_A90FF72A on DDMStructureLayout (uuid_[$COLUMN_LENGTH:75$], companyId)",
 		"create unique index IX_C9A0402C on DDMStructureLayout (uuid_[$COLUMN_LENGTH:75$], groupId)"
 	};
