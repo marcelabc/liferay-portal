@@ -12,25 +12,25 @@
  * details.
  */
 
-package com.liferay.dynamic.data.mapping.internal.upgrade.v3_0_2;
+package com.liferay.dynamic.data.mapping.internal.upgrade.v3_1_0;
 
-import com.liferay.dynamic.data.mapping.internal.upgrade.v3_0_2.util.DDMStructureLayoutTable;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.StringUtil;
 
 /**
  * @author Jeyvison Nascimento
  */
 public class UpgradeDDMStructureLayout extends UpgradeProcess {
+
 	@Override
 	protected void doUpgrade() throws Exception {
+		runSQL("drop index IX_B7158C0A on DDMStructureLayout");
 
-		alter(DDMStructureLayoutTable.class,
-			new AlterTableAddColumn("name longtext NULL"));
+		String template = StringUtil.read(
+			UpgradeDDMStructureLayout.class.getResourceAsStream(
+				"dependencies/update.sql"));
 
-		alter(DDMStructureLayoutTable.class,
-			new AlterTableAddColumn("description longtext NULL"));
-
-		drop and recreate index IX_B7158C0A
-
+		runSQLTemplateString(template, false, true);
 	}
+
 }
