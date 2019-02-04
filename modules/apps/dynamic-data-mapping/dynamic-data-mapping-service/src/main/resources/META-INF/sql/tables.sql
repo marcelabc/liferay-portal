@@ -151,7 +151,9 @@ create table DDMStructureLayout (
 	createDate DATE null,
 	modifiedDate DATE null,
 	structureVersionId LONG,
-	definition_ TEXT null
+	definition_ TEXT null,
+	description TEXT null,
+	name TEXT null
 );
 
 create table DDMStructureLink (
