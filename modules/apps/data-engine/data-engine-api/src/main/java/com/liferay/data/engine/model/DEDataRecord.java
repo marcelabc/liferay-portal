@@ -24,7 +24,10 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * This class represents a record belonging to a data record collection.
+ * 
  * @author Leonardo Barros
+ * @review
  */
 public class DEDataRecord implements Serializable {
 
@@ -55,6 +58,12 @@ public class DEDataRecord implements Serializable {
 		return false;
 	}
 
+	/**
+	 * Returns the data definition related to the data record
+	 * 
+	 * @return the data definition
+	 * @review
+	 */
 	public DEDataDefinition getDEDataDefinition() {
 		DEDataRecordCollection deDataRecordCollection =
 			getDEDataRecordCollection();
@@ -66,10 +75,22 @@ public class DEDataRecord implements Serializable {
 		return deDataRecordCollection.getDEDataDefinition();
 	}
 
+	/**
+	 * Returns the data record collection related to the data record
+	 * 
+	 * @return the data record collection
+	 * @review
+	 */
 	public DEDataRecordCollection getDEDataRecordCollection() {
 		return _deDataRecordCollection;
 	}
 
+	/**
+	 * Returns the id from the data record collection related to the data record
+	 * 
+	 * @return the data record collection id
+	 * @review
+	 */
 	public long getDEDataRecordCollectionId() {
 		DEDataRecordCollection deDataRecordCollection =
 			getDEDataRecordCollection();
@@ -81,10 +102,22 @@ public class DEDataRecord implements Serializable {
 		return deDataRecordCollection.getDEDataRecordCollectionId();
 	}
 
+	/**
+	 * Returns the id from the data record
+	 * 
+	 * @return the data record id
+	 * @review
+	 */
 	public long getDEDataRecordId() {
 		return _deDataRecordId;
 	}
 
+	/**
+	 * Returns the field values related to the data record
+	 * 
+	 * @return field values
+	 * @review
+	 */
 	public Map<String, Object> getValues() {
 		return Collections.unmodifiableMap(_values);
 	}
@@ -98,12 +131,24 @@ public class DEDataRecord implements Serializable {
 		return HashUtil.hash(hash, _values.hashCode());
 	}
 
+	/**
+	 * Sets the data record collection related to the data record
+	 * 
+	 * @param deDataRecordCollection the data record collection
+	 * @review
+	 */
 	public void setDEDataRecordCollection(
 		DEDataRecordCollection deDataRecordCollection) {
 
 		_deDataRecordCollection = deDataRecordCollection;
 	}
 
+	/**
+	 * Sets the id from the data record
+	 * 
+	 * @param deDataRecordId the data record id
+	 * @review
+	 */
 	public void setDEDataRecordId(long deDataRecordId) {
 		_deDataRecordId = deDataRecordId;
 	}
