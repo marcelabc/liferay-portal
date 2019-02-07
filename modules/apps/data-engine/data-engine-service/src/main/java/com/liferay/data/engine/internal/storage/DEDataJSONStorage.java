@@ -14,6 +14,12 @@
 
 package com.liferay.data.engine.internal.storage;
 
+import java.util.Date;
+import java.util.Map;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 import com.liferay.data.engine.internal.io.DEDataRecordValuesDeserializerTracker;
 import com.liferay.data.engine.internal.io.DEDataRecordValuesSerializerTracker;
 import com.liferay.data.engine.io.DEDataRecordValuesDeserializer;
@@ -38,12 +44,6 @@ import com.liferay.dynamic.data.mapping.service.DDMContentLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 
-import java.util.Date;
-import java.util.Map;
-
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-
 /**
  * @author Leonardo Barros
  */
@@ -60,7 +60,7 @@ public class DEDataJSONStorage implements DEDataStorage {
 
 		DDMContent ddmContent = ddmContentLocalService.fetchDDMContent(
 			deDataStorageDeleteRequest.getDEDataStorageId());
-
+				
 		if (ddmContent != null) {
 			ddmContentLocalService.deleteDDMContent(ddmContent);
 		}

@@ -14,7 +14,13 @@
 
 package com.liferay.data.engine.internal.executor;
 
+import com.liferay.data.engine.exception.DEDataDefinitionFieldsDeserializerException;
+import com.liferay.data.engine.internal.io.DEDataDefinitionFieldsDeserializerTracker;
+import com.liferay.data.engine.io.DEDataDefinitionFieldsDeserializer;
+import com.liferay.data.engine.io.DEDataDefinitionFieldsDeserializerApplyRequest;
+import com.liferay.data.engine.io.DEDataDefinitionFieldsDeserializerApplyResponse;
 import com.liferay.data.engine.model.DEDataDefinition;
+import com.liferay.data.engine.model.DEDataDefinitionField;
 import com.liferay.data.engine.service.DEDataDefinitionListRequest;
 import com.liferay.data.engine.service.DEDataDefinitionListResponse;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
@@ -105,6 +111,7 @@ public class DEDataDefinitionListRequestExecutor {
 	protected DDMStructureService ddmStructureService;
 	protected DEDataDefinitionFieldsDeserializerTracker
 		deDataDefinitionFieldsDeserializerTracker;
+
 	private final DDMStructureService _ddmStructureService;
 	private final DEDataEngineRequestExecutor _deDataEngineRequestExecutor;
 	private final Portal _portal;

@@ -22,6 +22,7 @@ import com.liferay.data.engine.io.DEDataDefinitionFieldsSerializerApplyResponse;
 import com.liferay.data.engine.model.DEDataDefinition;
 import com.liferay.data.engine.service.DEDataDefinitionSaveRequest;
 import com.liferay.data.engine.service.DEDataDefinitionSaveResponse;
+import com.liferay.dynamic.data.lists.service.DDLRecordSetLocalService;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
@@ -162,6 +163,7 @@ public class DEDataDefinitionSaveRequestExecutor {
 			descriptionMap, serialize(deDataDefinition), serviceContext);
 	}
 
+	private final DDLRecordSetLocalService _ddlRecordSetLocalService;
 	private final DDMStructureLocalService _ddmStructureLocalService;
 	private final DEDataDefinitionFieldsSerializerTracker
 		_deDataDefinitionFieldsSerializerTracker;

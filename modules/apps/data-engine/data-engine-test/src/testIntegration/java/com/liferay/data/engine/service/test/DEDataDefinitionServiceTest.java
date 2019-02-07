@@ -789,8 +789,8 @@ public class DEDataDefinitionServiceTest {
 			DEDataDefinitionSaveResponse deDataDefinitionSaveResponse =
 				_deDataDefinitionService.execute(deDataDefinitionSaveRequest);
 
-			expectedDEDataDefinition.setDEDataDefinitionId(
-				deDataDefinitionSaveResponse.getDEDataDefinitionId());
+			expectedDEDataDefinition =
+				deDataDefinitionSaveResponse.getDEDataDefinition();
 		}
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
@@ -880,14 +880,14 @@ public class DEDataDefinitionServiceTest {
 			DEDataDefinitionSaveResponse deDataDefinitionSaveResponse =
 				_deDataDefinitionService.execute(deDataDefinitionSaveRequest);
 
-			expectedDEDataDefinition.setDEDataDefinitionId(
-				deDataDefinitionSaveResponse.getDEDataDefinitionId());
+			expectedDEDataDefinition =
+				deDataDefinitionSaveResponse.getDEDataDefinition();
 		}
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
 		}
 
-		User user = UserTestUtil.addGroupUser(_group, RoleConstants.GUEST);
+		User user = UserTestUtil.addGroupUser(_group, RoleConstants.SITE_MEMBER);
 
 		PermissionThreadLocal.setPermissionChecker(
 			PermissionCheckerFactoryUtil.create(user));
@@ -2187,7 +2187,7 @@ public class DEDataDefinitionServiceTest {
 			DEDataDefinitionGetResponse deDataDefinitionGetResponse =
 				_deDataDefinitionService.execute(deDataDefinitionGetRequest);
 
-			return deDataDefinitionGetResponse.getDeDataDefinition();
+			return deDataDefinitionGetResponse.getDEDataDefinition();
 		}
 		finally {
 			ServiceContextThreadLocal.popServiceContext();

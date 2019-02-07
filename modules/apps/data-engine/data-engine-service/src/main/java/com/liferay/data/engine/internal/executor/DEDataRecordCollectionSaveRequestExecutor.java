@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -44,6 +45,7 @@ public class DEDataRecordCollectionSaveRequestExecutor {
 
 		_deDataEngineRequestExecutor = deDataEngineRequestExecutor;
 		_ddlRecordSetLocalService = ddlRecordSetLocalService;
+		_portal = portal;
 		_resourceLocalService = resourceLocalService;
 	}
 
@@ -53,6 +55,9 @@ public class DEDataRecordCollectionSaveRequestExecutor {
 
 		DEDataRecordCollection deDataRecordCollection =
 			deDataRecordCollectionSaveRequest.getDEDataRecordCollection();
+
+		DEDataDefinition deDataDefinition =
+			deDataRecordCollection.getDEDataDefinition();
 
 		long deDataRecordCollectionId =
 			deDataRecordCollection.getDEDataRecordCollectionId();
@@ -78,6 +83,14 @@ public class DEDataRecordCollectionSaveRequestExecutor {
 				deDataRecordCollectionSaveRequest.getUserId(),
 				DEDataRecordCollectionConstants.MODEL_RESOURCE_NAME,
 				deDataRecordCollectionId, serviceContext.getModelPermissions());
+
+			_ddlRecordSetLocalService.addRecordSet(
+				deDataRecordCollectionSaveRequest.getUserId(),
+				deDataRecordCollectionSaveRequest.getGroupId(),
+				deDataDefinition.getDEDataDefinitionId(),
+				String.valueOf(deDataRecordCollectionId),
+				ddlRecordSet.getNameMap(), ddlRecordSet.getDescriptionMap(), 0,
+				DDLRecordSetConstants.SCOPE_DATA_ENGINE, serviceContext);
 		}
 		else {
 			ddlRecordSet = updateDDLRecordSet(
