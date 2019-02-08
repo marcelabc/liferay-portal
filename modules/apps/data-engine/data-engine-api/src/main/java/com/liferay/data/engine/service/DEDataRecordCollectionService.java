@@ -50,6 +50,15 @@ public interface DEDataRecordCollectionService {
 				deDataRecordCollectionDeletePermissionsRequest)
 		throws DEDataRecordCollectionException;
 
+	/**
+	 * Removes a {@link DEDataRecord} from the database corresponding to the
+	 * ID passed as a parameter on the request.
+	 * @param deDataRecordCollectionDeleteRecordRequest request to delete
+	 * a {@link DEDataRecord}
+	 * @return {@link DEDataRecordCollectionDeleteRecordResponse} Response
+	 * of the delete request
+	 * @review
+	 */
 	public DEDataRecordCollectionDeleteRecordResponse execute(
 			DEDataRecordCollectionDeleteRecordRequest
 				deDataRecordCollectionDeleteRecordRequest)
@@ -69,6 +78,15 @@ public interface DEDataRecordCollectionService {
 				deDataRecordCollectionDeleteRequest)
 		throws DEDataRecordCollectionException;
 
+	/**
+	 * Get a {@link DEDataRecord} from the database corresponding to the
+	 * ID passed as a parameter on the request.
+	 * @param DEDataRecordCollectionGetRecordRequest request to get a
+	 * {@link DEDataRecord}
+	 * @return {@link DEDataRecordCollectionGetRecordResponse} Response
+	 * of the get request
+	 * @review
+	 */
 	public DEDataRecordCollectionGetRecordResponse execute(
 			DEDataRecordCollectionGetRecordRequest
 				deDataRecordCollectionGetRecordRequest)

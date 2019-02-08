@@ -17,20 +17,50 @@ package com.liferay.data.engine.service;
 import com.liferay.data.engine.model.DEDataRecord;
 
 /**
+ * This class represents a response of the get {@link DEDataRecord} response.
+ *
  * @author Leonardo Barros
+ * @review
  */
 public final class DEDataRecordCollectionGetRecordResponse {
 
+	/**
+	 * Returns the Data Record ID of the Get response.
+	 *
+	 * @return deDataRecordId
+	 * @review
+	 */
 	public DEDataRecord getDEDataRecord() {
 		return _deDataRecord;
 	}
 
+	/**
+	 * Constructs the Get Data Record response using the Data Record ID as
+	 * an argument.
+	 * @review
+	 */
 	public static final class Builder {
 
+		/**
+		 * Returns the Data Record Collection builder
+		 *
+		 * @param deDataRecordId the primary key of the {@link DEDataRecord}
+		 * instance
+		 * @return {@link Builder}
+		 * @review
+		 */
 		public static Builder newBuilder(DEDataRecord deDataRecord) {
 			return new Builder(deDataRecord);
 		}
 
+		/**
+		 * Includes a Data Record ID in the Get response.
+		 *
+		 * @param deDataRecordId the primary key of the {@link DEDataRecord}
+		 * instance
+		 * @return {@link DEDataRecordCollectionGetRecordResponse}
+		 * @review
+		 */
 		public static DEDataRecordCollectionGetRecordResponse of(
 			DEDataRecord deDataRecord) {
 
@@ -39,6 +69,12 @@ public final class DEDataRecordCollectionGetRecordResponse {
 			).build();
 		}
 
+		/**
+		 * Constructs the Get Data Record response.
+		 *
+		 * @return {@link DEDataRecordCollectionGetRecordResponseØ}
+		 * @review
+		 */
 		public DEDataRecordCollectionGetRecordResponse build() {
 			return _deDataRecordCollectionGetRecordResponse;
 		}

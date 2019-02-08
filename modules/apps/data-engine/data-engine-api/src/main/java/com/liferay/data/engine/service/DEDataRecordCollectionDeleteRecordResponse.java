@@ -15,20 +15,50 @@
 package com.liferay.data.engine.service;
 
 /**
+ * This class represents a response of the delete {@link DEDataRecord} request.
+ *
  * @author Leonardo Barros
+ * @review
  */
 public final class DEDataRecordCollectionDeleteRecordResponse {
 
+	/**
+	 * Returns the Data Record ID of the Delete response.
+	 *
+	 * @return deDataRecordId
+	 * @review
+	 */
 	public long getDEDataRecordId() {
 		return _deDataRecordId;
 	}
 
+	/**
+	 * Constructs the Delete Data Record response using the Data Record ID as
+	 * an argument.
+	 * @review
+	 */
 	public static final class Builder {
 
+		/**
+		 * Returns the Data Record Collection builder
+		 *
+		 * @param deDataRecordId the primary key of the {@link DEDataRecord}
+		 * instance
+		 * @return {@link Builder}
+		 * @review
+		 */
 		public static Builder newBuilder(long deDataRecordId) {
 			return new Builder(deDataRecordId);
 		}
 
+		/**
+		 * Includes a a Data Record ID in the Delete response.
+		 *
+		 * @param deDataRecordId the primary key of the {@link DEDataRecord}
+		 * instance
+		 * @return {@link DEDataRecordCollectionDeleteRecordResponse}
+		 * @review
+		 */
 		public static DEDataRecordCollectionDeleteRecordResponse of(
 			long deDataRecordId) {
 
@@ -37,6 +67,12 @@ public final class DEDataRecordCollectionDeleteRecordResponse {
 			).build();
 		}
 
+		/**
+		 * Constructs the Delete Data Record response.
+		 *
+		 * @return {@link DEDataRecordCollectionDeleteRecordResponse}
+		 * @review
+		 */
 		public DEDataRecordCollectionDeleteRecordResponse build() {
 			return _deDataRecordCollectionDeleteRecordResponse;
 		}

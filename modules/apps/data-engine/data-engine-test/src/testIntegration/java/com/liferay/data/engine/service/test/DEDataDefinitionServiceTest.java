@@ -887,7 +887,8 @@ public class DEDataDefinitionServiceTest {
 			ServiceContextThreadLocal.popServiceContext();
 		}
 
-		User user = UserTestUtil.addGroupUser(_group, RoleConstants.SITE_MEMBER);
+		User user = UserTestUtil.addGroupUser(
+			_group, RoleConstants.SITE_MEMBER);
 
 		PermissionThreadLocal.setPermissionChecker(
 			PermissionCheckerFactoryUtil.create(user));
