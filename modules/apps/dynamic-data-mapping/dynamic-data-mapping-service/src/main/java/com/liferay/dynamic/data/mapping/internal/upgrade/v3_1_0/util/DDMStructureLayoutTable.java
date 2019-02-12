@@ -37,8 +37,8 @@ public class DDMStructureLayoutTable {
 		{"createDate", Types.TIMESTAMP},
 		{"modifiedDate", Types.TIMESTAMP},
 		{"structureVersionId", Types.BIGINT},
-		{"definition", Types.CLOB},
-		{"description", Types.CLOB},
+		{"definition_", Types.CLOB},
+		{"description_", Types.CLOB},
 		{"name", Types.CLOB}
 	};
 
@@ -63,14 +63,14 @@ TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
 
 TABLE_COLUMNS_MAP.put("structureVersionId", Types.BIGINT);
 
-TABLE_COLUMNS_MAP.put("definition", Types.CLOB);
+TABLE_COLUMNS_MAP.put("definition_", Types.CLOB);
 
-TABLE_COLUMNS_MAP.put("description", Types.CLOB);
+TABLE_COLUMNS_MAP.put("description_", Types.CLOB);
 
 TABLE_COLUMNS_MAP.put("name", Types.CLOB);
 
 }
-	public static final String TABLE_SQL_CREATE = "create table DDMStructureLayout (uuid_ VARCHAR(75) null,structureLayoutId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,structureVersionId LONG,definition TEXT null,description TEXT null,name TEXT null)";
+	public static final String TABLE_SQL_CREATE = "create table DDMStructureLayout (uuid_ VARCHAR(75) null,structureLayoutId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,structureVersionId LONG,definition_ TEXT null,description_ TEXT null,name TEXT null)";
 
 	public static final String TABLE_SQL_DROP = "drop table DDMStructureLayout";
 

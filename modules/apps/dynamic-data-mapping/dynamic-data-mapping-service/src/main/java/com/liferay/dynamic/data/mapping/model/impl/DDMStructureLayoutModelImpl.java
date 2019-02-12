@@ -91,7 +91,7 @@ public class DDMStructureLayoutModelImpl extends BaseModelImpl<DDMStructureLayou
 			{ "modifiedDate", Types.TIMESTAMP },
 			{ "structureVersionId", Types.BIGINT },
 			{ "definition_", Types.CLOB },
-			{ "description", Types.CLOB },
+			{ "description_", Types.CLOB },
 			{ "name", Types.CLOB }
 		};
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP = new HashMap<String, Integer>();
@@ -107,11 +107,11 @@ public class DDMStructureLayoutModelImpl extends BaseModelImpl<DDMStructureLayou
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("structureVersionId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("definition_", Types.CLOB);
-		TABLE_COLUMNS_MAP.put("description", Types.CLOB);
+		TABLE_COLUMNS_MAP.put("description_", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("name", Types.CLOB);
 	}
 
-	public static final String TABLE_SQL_CREATE = "create table DDMStructureLayout (uuid_ VARCHAR(75) null,structureLayoutId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,structureVersionId LONG,definition_ TEXT null,description TEXT null,name TEXT null)";
+	public static final String TABLE_SQL_CREATE = "create table DDMStructureLayout (uuid_ VARCHAR(75) null,structureLayoutId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,structureVersionId LONG,definition_ TEXT null,description_ TEXT null,name TEXT null)";
 	public static final String TABLE_SQL_DROP = "drop table DDMStructureLayout";
 	public static final String ORDER_BY_JPQL = " ORDER BY ddmStructureLayout.structureLayoutId ASC";
 	public static final String ORDER_BY_SQL = " ORDER BY DDMStructureLayout.structureLayoutId ASC";
