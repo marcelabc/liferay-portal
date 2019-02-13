@@ -83,7 +83,7 @@ public interface DDMStructureLayoutLocalService extends BaseLocalService,
 	public DDMStructureLayout addStructureLayout(long userId, long groupId,
 		long structureVersionId, DDMFormLayout ddmFormLayout,
 		ServiceContext serviceContext) throws PortalException;
-	
+
 	@Indexable(type = IndexableType.REINDEX)
 	public DDMStructureLayout addStructureLayout(long userId, long groupId,
 		long structureVersionId, String definition,
