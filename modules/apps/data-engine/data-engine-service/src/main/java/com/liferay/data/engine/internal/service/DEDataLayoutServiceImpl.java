@@ -16,6 +16,7 @@ package com.liferay.data.engine.internal.service;
 
 import com.liferay.data.engine.constants.DEActionKeys;
 import com.liferay.data.engine.exception.DEDataLayoutException;
+import com.liferay.data.engine.internal.executor.DEDataEngineRequestExecutor;
 import com.liferay.data.engine.internal.executor.DEDataLayoutCountRequestExecutor;
 import com.liferay.data.engine.internal.executor.DEDataLayoutDeleteModelPermissionsRequestExecutor;
 import com.liferay.data.engine.internal.executor.DEDataLayoutDeletePermissionsRequestExecutor;
@@ -25,9 +26,11 @@ import com.liferay.data.engine.internal.executor.DEDataLayoutListRequestExecutor
 import com.liferay.data.engine.internal.executor.DEDataLayoutSaveModelPermissionsRequestExecutor;
 import com.liferay.data.engine.internal.executor.DEDataLayoutSavePermissionsRequestExecutor;
 import com.liferay.data.engine.internal.executor.DEDataLayoutSaveRequestExecutor;
+import com.liferay.data.engine.internal.io.DEDataDefinitionDeserializerTracker;
 import com.liferay.data.engine.internal.io.DEDataLayoutDeserializerTracker;
 import com.liferay.data.engine.internal.io.DEDataLayoutSerializerTracker;
 import com.liferay.data.engine.internal.security.permission.DEDataEnginePermissionSupport;
+import com.liferay.data.engine.internal.storage.DEDataStorageTracker;
 import com.liferay.data.engine.model.DEDataLayout;
 import com.liferay.data.engine.service.DEDataLayoutCountRequest;
 import com.liferay.data.engine.service.DEDataLayoutCountResponse;
@@ -313,6 +316,11 @@ public class DEDataLayoutServiceImpl
 
 	@Activate
 	protected void setUpExecutors() {
+		_deDataEngineRequestExecutor = new DEDataEngineRequestExecutor(
+			_ddmStructureVersionLocalService,
+			_deDataDefinitionDeserializerTracker,
+			_deDataLayoutDeserializerTracker, _deDataStorageTracker);
+
 		_deDataLayoutCountRequestExecutor =
 			new DEDataLayoutCountRequestExecutor(
 				_ddmStructureLayoutLocalService);
@@ -330,12 +338,11 @@ public class DEDataLayoutServiceImpl
 				_ddmStructureLayoutLocalService);
 
 		_deDataLayoutGetRequestExecutor = new DEDataLayoutGetRequestExecutor(
-			_ddmStructureLayoutLocalService, _ddmStructureVersionLocalService,
-			_deDataLayoutDeserializerTracker);
+			_ddmStructureLayoutLocalService, _deDataEngineRequestExecutor);
 
 		_deDataLayoutListRequestExecutor = new DEDataLayoutListRequestExecutor(
 			_ddmStructureLayoutLocalService, _ddmStructureVersionLocalService,
-			_deDataLayoutDeserializerTracker);
+			_deDataEngineRequestExecutor, _deDataLayoutDeserializerTracker);
 
 		_deDataLayoutSaveModelPermissionsRequestExecutor =
 			new DEDataLayoutSaveModelPermissionsRequestExecutor(
@@ -350,6 +357,9 @@ public class DEDataLayoutServiceImpl
 			_ddmStructureLocalService, _deDataLayoutSerializerTracker,
 			resourceLocalService);
 	}
+
+	@Reference
+	protected DEDataStorageTracker _deDataStorageTracker;
 
 	@Reference
 	protected GroupLocalService groupLocalService;
@@ -372,6 +382,11 @@ public class DEDataLayoutServiceImpl
 	@Reference
 	private DDMStructureVersionLocalService _ddmStructureVersionLocalService;
 
+	@Reference
+	private DEDataDefinitionDeserializerTracker
+		_deDataDefinitionDeserializerTracker;
+
+	private DEDataEngineRequestExecutor _deDataEngineRequestExecutor;
 	private DEDataLayoutCountRequestExecutor _deDataLayoutCountRequestExecutor;
 	private DEDataLayoutDeleteModelPermissionsRequestExecutor
 		_deDataLayoutDeleteModelPermissionsRequestExecutor;

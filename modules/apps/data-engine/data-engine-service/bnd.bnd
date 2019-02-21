@@ -3,4 +3,10 @@ Bundle-SymbolicName: com.liferay.data.engine.service
 Bundle-Version: 1.0.0
 Liferay-Require-SchemaVersion: 1.0.0
 Liferay-Service: true
+Require-Capability:\
+	soy;\
+		filter:="(type=LiferayFormField)",\
+	soy;\
+		filter:="(type=LiferayForm)"
 Web-ContextPath: /data-engine-service
+-includeresource: package.json

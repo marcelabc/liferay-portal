@@ -8,7 +8,7 @@
 	{@param? _handleValueInputEdited: any}
 	{@param? _handleValueInputFocused: any}
 	{@param? _keyword: string}
-	{@param? _value: string}
+	{@param? _value: ?}
 	{@param? id: string}
 	{@param? label: string}
 	{@param? placeholder: string}
@@ -39,13 +39,13 @@
 			{/call}
 		{/param}
 
-		{param tip: $tip /}
 		{param id: $id /}
 		{param label: $label /}
 		{param repeatable: $repeatable /}
 		{param required: $required /}
 		{param showLabel: $showLabel /}
 		{param spritemap: $spritemap /}
+		{param tip: $tip /}
 	{/call}
 {/template}
 
@@ -57,12 +57,40 @@
 	{@param? _handleValueInputEdited: any}
 	{@param? _handleValueInputFocused: any}
 	{@param? _keyword: string}
-	{@param? _value: string}
+	{@param? _value: ?}
 	{@param? placeholder: string}
 	{@param? readOnly: bool}
 	{@param? required: bool}
 	{@param? showLabel: bool}
 	{@param? spritemap: string}
+
+	{let $inputAttributes kind="attributes"}
+		class="form-control"
+
+		{if $placeholder}
+			placeholder="{$placeholder}"
+		{/if}
+
+		type="text"
+
+		data-oninput="{$_handleValueInputEdited}"
+
+		{if not $readOnly}
+			disabled="disabled"
+		{/if}
+
+		value="{$_value}"
+	{/let}
+
+	<input {$inputAttributes}>
+
+	{let $keyAttributes kind="attributes"}
+		class="key-value-input"
+
+		type="text"
+
+		data-oninput="{$_handleKeywordInputChanged}"
+	{/let}
 
 	{call Text.render}
 		{param events: [

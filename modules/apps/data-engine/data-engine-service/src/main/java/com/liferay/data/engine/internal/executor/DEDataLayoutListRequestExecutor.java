@@ -19,6 +19,7 @@ import com.liferay.data.engine.internal.io.DEDataLayoutDeserializerTracker;
 import com.liferay.data.engine.io.DEDataLayoutDeserializer;
 import com.liferay.data.engine.io.DEDataLayoutDeserializerApplyRequest;
 import com.liferay.data.engine.io.DEDataLayoutDeserializerApplyResponse;
+import com.liferay.data.engine.model.DEDataDefinition;
 import com.liferay.data.engine.model.DEDataLayout;
 import com.liferay.data.engine.service.DEDataLayoutListRequest;
 import com.liferay.data.engine.service.DEDataLayoutListResponse;
@@ -40,10 +41,12 @@ public class DEDataLayoutListRequestExecutor {
 	public DEDataLayoutListRequestExecutor(
 		DDMStructureLayoutLocalService ddmStructureLayoutLocalService,
 		DDMStructureVersionLocalService ddmStructureVersionLocalService,
+		DEDataEngineRequestExecutor deDataEngineRequestExecutor,
 		DEDataLayoutDeserializerTracker deDataLayoutDeserializerTracker) {
 
 		_ddmStructureLayoutLocalService = ddmStructureLayoutLocalService;
 		_ddmStructureVersionLocalService = ddmStructureVersionLocalService;
+		_deDataEngineRequestExecutor = deDataEngineRequestExecutor;
 		_deDataLayoutDeserializerTracker = deDataLayoutDeserializerTracker;
 	}
 
@@ -73,16 +76,17 @@ public class DEDataLayoutListRequestExecutor {
 		}
 	}
 
-	private Long _getDDMStructureId(DDMStructureLayout ddmStructureLayout)
+	private DEDataDefinition _getDEDataDefinition(
+			DDMStructureLayout ddmStructureLayout)
 		throws PortalException {
 
 		DDMStructureVersion ddmStructureVersion =
-			_ddmStructureVersionLocalService.getDDMStructureVersion(
+			_ddmStructureVersionLocalService.getStructureVersion(
 				ddmStructureLayout.getStructureVersionId());
 
 		DDMStructure ddmStructure = ddmStructureVersion.getStructure();
 
-		return ddmStructure.getStructureId();
+		return _deDataEngineRequestExecutor.map(ddmStructure);
 	}
 
 	private DEDataLayout _map(DDMStructureLayout ddmStructureLayout)
@@ -104,8 +108,8 @@ public class DEDataLayoutListRequestExecutor {
 				deDataLayoutDeserializerApplyResponse.getDEDataLayout();
 
 			deDataLayout.setCreateDate(ddmStructureLayout.getCreateDate());
-			deDataLayout.setDEDataDefinitionId(
-				_getDDMStructureId(ddmStructureLayout));
+			deDataLayout.setDEDataDefinition(
+				_getDEDataDefinition(ddmStructureLayout));
 			deDataLayout.setDEDataLayoutId(
 				ddmStructureLayout.getStructureLayoutId());
 			deDataLayout.setDescription(ddmStructureLayout.getDescriptionMap());
@@ -124,6 +128,7 @@ public class DEDataLayoutListRequestExecutor {
 		_ddmStructureLayoutLocalService;
 	private final DDMStructureVersionLocalService
 		_ddmStructureVersionLocalService;
+	private final DEDataEngineRequestExecutor _deDataEngineRequestExecutor;
 	private final DEDataLayoutDeserializerTracker
 		_deDataLayoutDeserializerTracker;
 

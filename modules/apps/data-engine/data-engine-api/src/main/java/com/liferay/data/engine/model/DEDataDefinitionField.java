@@ -18,6 +18,7 @@ import com.liferay.petra.lang.HashUtil;
 
 import java.io.Serializable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -62,6 +63,8 @@ public final class DEDataDefinitionField implements Serializable {
 			(DEDataDefinitionField)obj;
 
 		if (Objects.equals(
+				_customProperties, deDataDefinitionField._customProperties) &&
+			Objects.equals(
 				_defaultValue, deDataDefinitionField._defaultValue) &&
 			Objects.equals(_indexable, deDataDefinitionField._indexable) &&
 			Objects.equals(_label, deDataDefinitionField._label) &&
@@ -75,6 +78,14 @@ public final class DEDataDefinitionField implements Serializable {
 		}
 
 		return false;
+	}
+
+	public Map<String, Object> getCustomProperties() {
+		return Collections.unmodifiableMap(_customProperties);
+	}
+
+	public Object getCustomProperty(String name) {
+		return _customProperties.get(name);
 	}
 
 	public Object getDefaultValue() {
@@ -97,9 +108,15 @@ public final class DEDataDefinitionField implements Serializable {
 		return _type;
 	}
 
+	public boolean hasCustomProperty(String name) {
+		return _customProperties.containsKey(name);
+	}
+
 	@Override
 	public int hashCode() {
 		int hash = 0;
+
+		hash = HashUtil.hash(hash, _customProperties.hashCode());
 
 		if (_defaultValue != null) {
 			hash = HashUtil.hash(hash, _defaultValue.hashCode());
@@ -125,6 +142,10 @@ public final class DEDataDefinitionField implements Serializable {
 
 	public boolean isRepeatable() {
 		return _repeatable;
+	}
+
+	public void setCustomProperty(String name, Object value) {
+		_customProperties.put(name, value);
 	}
 
 	public void setDefaultValue(Object defaultValue) {
@@ -167,6 +188,7 @@ public final class DEDataDefinitionField implements Serializable {
 		_type = type;
 	}
 
+	private Map<String, Object> _customProperties = new HashMap<>();
 	private Object _defaultValue;
 	private boolean _indexable = true;
 	private Map<String, String> _label = new HashMap<>();

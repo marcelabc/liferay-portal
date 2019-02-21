@@ -1,6 +1,7 @@
 {namespace FormRenderer}
 
 {template .render}
+	{@param pages: ?}
 	{@param spritemap: string}
 	{@param? _handleColumnResized: any}
 	{@param? _handleChangePage: any}
@@ -20,7 +21,6 @@
 	{@param? dropdownExpanded: bool}
 	{@param? editable: bool}
 	{@param? modeRenderer: string}
-	{@param? pages: ?}
 	{@param? pageSettingsItems: ?}
 	{@param? paginationMode: string}
 	{@param? successPageLabel: string}
@@ -43,14 +43,14 @@
 		{param _handlePaginationRightClicked: $_handlePaginationRightClicked /}
 		{param _handleSuccesPageChanged: $_handleSuccesPageChanged /}
 		{param _handleUpdatePage: $_handleUpdatePage /}
-		{param activePage: $activePage /}
+		{param activePage: $activePage ?: 0 /}
 		{param contentRenderer: $contentRenderer /}
 		{param defaultPageTitle: $defaultPageTitle /}
 		{param dropdownExpanded: $dropdownExpanded /}
 		{param editable: $editable /}
 		{param pages: $pages /}
 		{param pageSettingsItems: $pageSettingsItems /}
-		{param paginationMode: $paginationMode /}
+		{param paginationMode: $paginationMode ?: 'wizard' /}
 		{param spritemap: $spritemap /}
 		{param successPageLabel: $successPageLabel /}
 		{param successPageSettings: $successPageSettings /}
@@ -59,6 +59,8 @@
 {/template}
 
 {deltemplate FormRenderer.pages variant="'grid'"}
+	{@param activePage: number}
+	{@param pages: ?}
 	{@param spritemap: string}
 	{@param? _handleColumnResized: any}
 	{@param? _handleChangePage: any}
@@ -73,12 +75,10 @@
 	{@param? _handlePaginationRightClicked: any}
 	{@param? _handleSuccesPageChanged: any}
 	{@param? _handleUpdatePage: any}
-	{@param? activePage: number}
 	{@param? contentRenderer: string}
 	{@param? defaultPageTitle: string}
 	{@param? dropdownExpanded: bool}
 	{@param? editable: bool}
-	{@param? pages: ?}
 	{@param? pageSettingsItems: ?}
 	{@param? paginationMode: string}
 	{@param? successPageLabel: string}
@@ -163,16 +163,16 @@
 {/deltemplate}
 
 {deltemplate FormRenderer.paginationContainer}
+	{@param activePage: number}
+	{@param pages: ?}
 	{@param spritemap: string}
 	{@param? _handleChangePage: any}
 	{@param? _handleExpandedChanged: any}
 	{@param? _handlePaginationLeftClicked: any}
 	{@param? _handlePaginationRightClicked: any}
 	{@param? _handlePageSettingsClicked: any}
-	{@param? activePage: number}
 	{@param? defaultPageTitle: string}
 	{@param? dropdownExpanded: bool}
-	{@param? pages: ?}
 	{@param? pageSettingsItems: ?}
 	{@param? paginationMode: string}
 	{@param? successPageLabel: string}
@@ -233,10 +233,10 @@
 {/deltemplate}
 
 {deltemplate FormRenderer.wizard}
+	{@param activePage: number}
+	{@param pages: ?}
 	{@param? _handleChangePage: any}
-	{@param? activePage: number}
 	{@param? defaultPageTitle: string}
-	{@param? pages: ?}
 	{@param? successPageLabel: string}
 	{@param? successPageSettings: ?}
 
@@ -288,11 +288,11 @@
 {/deltemplate}
 
 {deltemplate FormRenderer.pagination}
+	{@param activePage: number}
+	{@param pages: ?}
 	{@param? _handleChangePage: any}
 	{@param? _handlePaginationLeftClicked: any}
 	{@param? _handlePaginationRightClicked: any}
-	{@param? activePage: number}
-	{@param? pages: ?}
 	{@param? successPageLabel: string}
 	{@param? successPageSettings: ?}
 
@@ -360,16 +360,16 @@
 {/deltemplate}
 
 {deltemplate FormRenderer.pages variant="'list'"}
+	{@param activePage: number}
+	{@param pages: ?}
 	{@param spritemap: string}
 	{@param? _handleFieldBlurred: any}
 	{@param? _handleDeleteButtonClicked: any}
 	{@param? _handleDuplicateButtonClicked: any}
 	{@param? _handleFieldEdited: any}
 	{@param? _handleUpdatePage: any}
-	{@param? activePage: number}
 	{@param? contentRenderer: string}
 	{@param? editable: bool}
-	{@param? pages: ?}
 	{@param? total: int}
 
 	<div class="ddm-page-list-container">

@@ -12,33 +12,26 @@
  * details.
  */
 
-package com.liferay.data.engine.internal.io;
+package com.liferay.data.engine.renderer;
 
-import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.util.PropsImpl;
+import aQute.bnd.annotation.ProviderType;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.liferay.data.engine.model.DEDataLayout;
+import com.liferay.portal.kernel.exception.PortalException;
 
-import org.junit.BeforeClass;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Leonardo Barros
  */
-public abstract class BaseTestCase {
+@ProviderType
+public interface DEDataLayoutRenderer {
 
-	@BeforeClass
-	public static void setUpClass() {
-		PropsUtil.setProps(new PropsImpl());
-	}
-
-	protected String read(String fileName) throws IOException {
-		Class<?> clazz = getClass();
-
-		InputStream inputStream = clazz.getResourceAsStream(fileName);
-
-		return StringUtil.read(inputStream);
-	}
+	public String render(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, DEDataLayout deDataLayout,
+			boolean readOnly)
+		throws PortalException;
 
 }

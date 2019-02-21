@@ -30,6 +30,7 @@ import com.liferay.data.engine.internal.executor.DEDataDefinitionSearchExecutor;
 import com.liferay.data.engine.internal.executor.DEDataEngineRequestExecutor;
 import com.liferay.data.engine.internal.io.DEDataDefinitionDeserializerTracker;
 import com.liferay.data.engine.internal.io.DEDataDefinitionSerializerTracker;
+import com.liferay.data.engine.internal.io.DEDataLayoutDeserializerTracker;
 import com.liferay.data.engine.internal.security.permission.DEDataEnginePermissionSupport;
 import com.liferay.data.engine.internal.storage.DEDataStorageTracker;
 import com.liferay.data.engine.model.DEDataDefinition;
@@ -340,7 +341,9 @@ public class DEDataDefinitionServiceImpl
 	@Activate
 	protected void activate() {
 		_deDataEngineRequestExecutor = new DEDataEngineRequestExecutor(
-			deDataDefinitionDeserializerTracker, deDataStorageTracker);
+			_ddmStructureVersionLocalService,
+			deDataDefinitionDeserializerTracker,
+			_deDataLayoutDeserializerTracker, deDataStorageTracker);
 
 		_deDataDefinitionCountRequestExecutor =
 			new DEDataDefinitionCountRequestExecutor(
@@ -425,6 +428,9 @@ public class DEDataDefinitionServiceImpl
 		deDataDefinitionFieldsSerializerTracker;
 
 	@Reference
+	protected DEDataLayoutDeserializerTracker deDataLayoutDeserializerTracker;
+
+	@Reference
 	protected DEDataStorageTracker deDataStorageTracker;
 
 	@Reference
@@ -442,6 +448,7 @@ public class DEDataDefinitionServiceImpl
 	@Reference
 	protected RoleLocalService roleLocalService;
 
+	private DDMStructureVersionLocalService _ddmStructureVersionLocalService;
 	private DEDataDefinitionCountRequestExecutor
 		_deDataDefinitionCountRequestExecutor;
 	private DEDataDefinitionDeleteModelPermissionsRequestExecutor
@@ -464,6 +471,7 @@ public class DEDataDefinitionServiceImpl
 		_deDataDefinitionSearchCountExecutor;
 	private DEDataDefinitionSearchExecutor _deDataDefinitionSearchExecutor;
 	private DEDataEngineRequestExecutor _deDataEngineRequestExecutor;
+	private DEDataLayoutDeserializerTracker _deDataLayoutDeserializerTracker;
 	private ModelResourcePermission<DEDataDefinition> _modelResourcePermission;
 
 }

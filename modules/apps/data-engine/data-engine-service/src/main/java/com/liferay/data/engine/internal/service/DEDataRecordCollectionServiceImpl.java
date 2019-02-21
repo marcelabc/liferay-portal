@@ -32,11 +32,11 @@ import com.liferay.data.engine.internal.executor.DEDataRecordCollectionSaveRecor
 import com.liferay.data.engine.internal.executor.DEDataRecordCollectionSaveRequestExecutor;
 import com.liferay.data.engine.internal.executor.DEDataRecordCollectionSearchExecutor;
 import com.liferay.data.engine.internal.io.DEDataDefinitionDeserializerTracker;
+import com.liferay.data.engine.internal.io.DEDataLayoutDeserializerTracker;
 import com.liferay.data.engine.internal.rule.DEDataDefinitionRuleFunctionTracker;
 import com.liferay.data.engine.internal.security.permission.DEDataEnginePermissionSupport;
 import com.liferay.data.engine.internal.storage.DEDataRecordExporterTracker;
 import com.liferay.data.engine.internal.storage.DEDataStorageTracker;
-import com.liferay.data.engine.internal.util.DEDataEngineUtil;
 import com.liferay.data.engine.model.DEDataDefinition;
 import com.liferay.data.engine.model.DEDataDefinitionField;
 import com.liferay.data.engine.model.DEDataDefinitionRule;
@@ -78,11 +78,13 @@ import com.liferay.data.engine.service.DEDataRecordCollectionService;
 import com.liferay.data.engine.storage.DEDataRecordExporter;
 import com.liferay.data.engine.storage.DEDataRecordExporterApplyRequest;
 import com.liferay.data.engine.storage.DEDataRecordExporterApplyResponse;
+import com.liferay.data.engine.util.DEDataEngineUtil;
 import com.liferay.dynamic.data.lists.exception.NoSuchRecordException;
 import com.liferay.dynamic.data.lists.exception.NoSuchRecordSetException;
 import com.liferay.dynamic.data.lists.service.DDLRecordLocalService;
 import com.liferay.dynamic.data.lists.service.DDLRecordSetLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStorageLinkLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMStructureVersionLocalService;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -98,7 +100,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -569,7 +570,6 @@ public class DEDataRecordCollectionServiceImpl
 		}
 	}
 
-	@Override
 	public DEDataRecordCollectionSearchResponse execute(
 			DEDataRecordCollectionSearchRequest
 				deDataRecordCollectionSearchRequest)
@@ -584,6 +584,76 @@ public class DEDataRecordCollectionServiceImpl
 		}
 	}
 
+	@Activate
+	protected void activate() {
+		_deDataEnginePermissionSupport = new DEDataEnginePermissionSupport(
+			groupLocalService);
+
+		_deDataRecordCollectionSaveRequestExecutor =
+			new DEDataRecordCollectionSaveRequestExecutor(
+				_deDataEngineRequestExecutor, ddlRecordSetLocalService,
+				resourceLocalService);
+
+		_deDataEngineRequestExecutor = new DEDataEngineRequestExecutor(
+			ddmStructureVersionLocalService,
+			deDataDefinitionDeserializerTracker,
+			deDataLayoutDeserializerTracker, deDataStorageTracker);
+
+		_deDataRecordCollectionDeleteModelPermissionsRequestExecutor =
+			new DEDataRecordCollectionDeleteModelPermissionsRequestExecutor(
+				resourcePermissionLocalService, roleLocalService);
+
+		_deDataRecordCollectionDeletePermissionsRequestExecutor =
+			new DEDataRecordCollectionDeletePermissionsRequestExecutor(
+				resourcePermissionLocalService, roleLocalService);
+
+		_deDataRecordCollectionDeleteRecordRequestExecutor =
+			new DEDataRecordCollectionDeleteRecordRequestExecutor(
+				deDataStorageTracker, ddlRecordLocalService);
+
+		_deDataRecordCollectionDeleteRequestExecutor =
+			new DEDataRecordCollectionDeleteRequestExecutor(
+				ddlRecordSetLocalService);
+
+		_deDataRecordCollectionGetRecordRequestExecutor =
+			new DEDataRecordCollectionGetRecordRequestExecutor(
+				_deDataEngineRequestExecutor, ddlRecordLocalService);
+
+		_deDataRecordCollectionGetRequestExecutor =
+			new DEDataRecordCollectionGetRequestExecutor(
+				ddlRecordSetLocalService, _deDataEngineRequestExecutor);
+
+		_deDataRecordCollectionListRequestExecutor =
+			new DEDataRecordCollectionListRequestExecutor(
+				ddlRecordSetLocalService, _deDataEngineRequestExecutor);
+
+		_deDataRecordCollectionListRecordRequestExecutor =
+			new DEDataRecordCollectionListRecordRequestExecutor(
+				ddlRecordLocalService, _deDataEngineRequestExecutor);
+
+		_deDataRecordCollectionSaveModelPermissionsRequestExecutor =
+			new DEDataRecordCollectionSaveModelPermissionsRequestExecutor(
+				resourcePermissionLocalService);
+
+		_deDataRecordCollectionSavePermissionsRequestExecutor =
+			new DEDataRecordCollectionSavePermissionsRequestExecutor(
+				resourcePermissionLocalService, roleLocalService);
+
+		_deDataRecordCollectionSaveRecordRequestExecutor =
+			new DEDataRecordCollectionSaveRecordRequestExecutor(
+				ddlRecordLocalService, deDataStorageTracker,
+				ddmStorageLinkLocalService, portal);
+
+		_deDataRecordCollectionSaveRequestExecutor =
+			new DEDataRecordCollectionSaveRequestExecutor(
+				_deDataEngineRequestExecutor, ddlRecordSetLocalService,
+				resourceLocalService);
+
+		_deDataRecordCollectionSearchExecutor =
+			new DEDataRecordCollectionSearchExecutor(
+				ddlRecordSetLocalService, _deDataEngineRequestExecutor);
+	}
+
 	protected DEDataDefinitionRuleFunctionApplyRequest
 		createDEDataDefinitionRuleFunctionApplyRequest(
 			DEDataDefinitionField deDataDefinitionField,
@@ -596,6 +666,7 @@ public class DEDataRecordCollectionServiceImpl
 
 		deDataDefinitionRuleFunctionApplyRequest.setDEDataDefinitionField(
 			deDataDefinitionField);
+
 		deDataDefinitionRuleFunctionApplyRequest.setParameters(
 			deDataDefinitionRule.getParameters());
 
@@ -664,21 +735,9 @@ public class DEDataRecordCollectionServiceImpl
 		);
 	}
 
-	protected Map<String, DEDataDefinitionField> getDEDataDefinitionFieldsMap(
-		DEDataDefinition deDataDefinition) {
-
-		List<DEDataDefinitionField> deDataDefinitionFields =
-			deDataDefinition.getDEDataDefinitionFields();
-
-		Stream<DEDataDefinitionField> stream = deDataDefinitionFields.stream();
-
-		return stream.collect(
-			Collectors.toMap(field -> field.getName(), Function.identity()));
-	}
-
 	@Override
 	protected DEDataEnginePermissionSupport getDEDataEnginePermissionSupport() {
-		return new DEDataEnginePermissionSupport(groupLocalService);
+		return _deDataEnginePermissionSupport;
 	}
 
 	protected boolean isValidationRule(
@@ -699,66 +758,6 @@ public class DEDataRecordCollectionServiceImpl
 			modelResourcePermission) {
 
 		_modelResourcePermission = modelResourcePermission;
-	}
-
-	@Activate
-	protected void setUpExecutors() {
-		_deDataEngineRequestExecutor = new DEDataEngineRequestExecutor(
-			deDataDefinitionDeserializerTracker, deDataStorageTracker);
-
-		_deDataRecordCollectionDeleteModelPermissionsRequestExecutor =
-			new DEDataRecordCollectionDeleteModelPermissionsRequestExecutor(
-				resourcePermissionLocalService, roleLocalService);
-
-		_deDataRecordCollectionDeletePermissionsRequestExecutor =
-			new DEDataRecordCollectionDeletePermissionsRequestExecutor(
-				resourcePermissionLocalService, roleLocalService);
-
-		_deDataRecordCollectionDeleteRecordRequestExecutor =
-			new DEDataRecordCollectionDeleteRecordRequestExecutor(
-				deDataStorageTracker, ddlRecordLocalService);
-
-		_deDataRecordCollectionDeleteRequestExecutor =
-			new DEDataRecordCollectionDeleteRequestExecutor(
-				ddlRecordSetLocalService);
-
-		_deDataRecordCollectionGetRecordRequestExecutor =
-			new DEDataRecordCollectionGetRecordRequestExecutor(
-				_deDataEngineRequestExecutor, ddlRecordLocalService);
-
-		_deDataRecordCollectionGetRequestExecutor =
-			new DEDataRecordCollectionGetRequestExecutor(
-				ddlRecordSetLocalService, _deDataEngineRequestExecutor);
-
-		_deDataRecordCollectionListRequestExecutor =
-			new DEDataRecordCollectionListRequestExecutor(
-				ddlRecordSetLocalService, _deDataEngineRequestExecutor);
-
-		_deDataRecordCollectionListRecordRequestExecutor =
-			new DEDataRecordCollectionListRecordRequestExecutor(
-				ddlRecordLocalService, _deDataEngineRequestExecutor);
-
-		_deDataRecordCollectionSaveModelPermissionsRequestExecutor =
-			new DEDataRecordCollectionSaveModelPermissionsRequestExecutor(
-				resourcePermissionLocalService);
-
-		_deDataRecordCollectionSavePermissionsRequestExecutor =
-			new DEDataRecordCollectionSavePermissionsRequestExecutor(
-				resourcePermissionLocalService, roleLocalService);
-
-		_deDataRecordCollectionSaveRecordRequestExecutor =
-			new DEDataRecordCollectionSaveRecordRequestExecutor(
-				ddlRecordLocalService, deDataStorageTracker,
-				ddmStorageLinkLocalService, portal);
-
-		_deDataRecordCollectionSaveRequestExecutor =
-			new DEDataRecordCollectionSaveRequestExecutor(
-				_deDataEngineRequestExecutor, ddlRecordSetLocalService,
-				resourceLocalService);
-
-		_deDataRecordCollectionSearchExecutor =
-			new DEDataRecordCollectionSearchExecutor(
-				ddlRecordSetLocalService, _deDataEngineRequestExecutor);
 	}
 
 	protected void validate(
@@ -829,7 +828,7 @@ public class DEDataRecordCollectionServiceImpl
 		}
 
 		Map<String, DEDataDefinitionField> deDataDefinitionFields =
-			getDEDataDefinitionFieldsMap(deDataDefinition);
+			DEDataEngineUtil.getDEDataDefinitionFieldsMap(deDataDefinition);
 
 		Map<String, Set<String>> validationErrors = new HashMap<>();
 
@@ -857,12 +856,17 @@ public class DEDataRecordCollectionServiceImpl
 	protected DDMStorageLinkLocalService ddmStorageLinkLocalService;
 
 	@Reference
+	protected DDMStructureVersionLocalService ddmStructureVersionLocalService;
+
+	@Reference
 	protected DEDataDefinitionDeserializerTracker
 		deDataDefinitionDeserializerTracker;
 
 	@Reference
 	protected DEDataDefinitionRuleFunctionTracker
 		deDataDefinitionRuleFunctionTracker;
+
+	protected DEDataLayoutDeserializerTracker deDataLayoutDeserializerTracker;
 
 	@Reference
 	protected DEDataRecordExporterTracker deDataRecordExporterTracker;
@@ -885,6 +889,7 @@ public class DEDataRecordCollectionServiceImpl
 	@Reference
 	protected RoleLocalService roleLocalService;
 
+	private DEDataEnginePermissionSupport _deDataEnginePermissionSupport;
 	private DEDataEngineRequestExecutor _deDataEngineRequestExecutor;
 	private DEDataRecordCollectionDeleteModelPermissionsRequestExecutor
 		_deDataRecordCollectionDeleteModelPermissionsRequestExecutor;

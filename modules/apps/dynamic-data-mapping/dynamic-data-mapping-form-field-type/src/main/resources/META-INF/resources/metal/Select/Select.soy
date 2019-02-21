@@ -2,16 +2,20 @@
 
 {template .render}
 	{@param strings: [chooseAnOption: string, chooseOptions: string]}
-	{@param value: list<string>}
+	{@param value: list<?>}
 	{@param? _handleClick: any}
 	{@param? _handleItemClicked: any}
 	{@param? _handleLabelClosed: any}
 	{@param? dataSourceType: string}
+	{@param? disableEmptyOption: bool}
 	{@param? expanded: bool}
+	{@param? fixedOptions: ?}
 	{@param? id: string}
 	{@param? label: string}
 	{@param? multiple: bool}
+	{@param? open: bool}
 	{@param? options: list<?>}
+	{@param? predefinedValue: list<?>}
 	{@param? readOnly: bool}
 	{@param? repeatable: bool}
 	{@param? required: bool}
@@ -36,7 +40,11 @@
 				{param value: $value /}
 			{/call}
 		{/param}
+		{param disableEmptyOption: $disableEmptyOption /}
+		{param fixedOptions: $fixedOptions /}
 		{param label: $label /}
+		{param open: $open /}
+		{param predefinedValue: $predefinedValue /}
 		{param ref: 'base' /}
 		{param repeatable: $repeatable /}
 		{param required: $required /}
@@ -49,7 +57,7 @@
 {template .content}
 	{@param spritemap: string}
 	{@param strings: [chooseAnOption: string, chooseOptions: string]}
-	{@param value: list<string>}
+	{@param value: list<?>}
 	{@param? _handleClick: any}
 	{@param? _handleItemClicked: any}
 	{@param? _handleLabelClosed: any}

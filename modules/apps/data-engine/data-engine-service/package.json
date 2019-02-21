@@ -1,0 +1,11 @@
+{
+	"devDependencies": {
+		"liferay-npm-bundler": "^2.2.1"
+	},
+	"name": "data-engine-service",
+	"private": true,
+	"scripts": {
+		"build": "liferay-npm-bundler"
+	},
+	"version": "1.0.0"
+}

@@ -15,6 +15,8 @@
 package com.liferay.data.engine.internal.io;
 
 import com.liferay.data.engine.exception.DEDataDefinitionDeserializerException;
+import com.liferay.data.engine.field.DEFieldType;
+import com.liferay.data.engine.internal.field.DEFieldTypeTracker;
 import com.liferay.data.engine.io.DEDataDefinitionDeserializer;
 import com.liferay.data.engine.io.DEDataDefinitionDeserializerApplyRequest;
 import com.liferay.data.engine.io.DEDataDefinitionDeserializerApplyResponse;
@@ -29,8 +31,6 @@ import com.liferay.portal.kernel.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -81,68 +81,10 @@ public class DEDataDefinitionJSONDeserializer
 			JSONObject jsonObject)
 		throws DEDataDefinitionDeserializerException {
 
-		Map<String, String> labels = new TreeMap<>();
+		DEFieldType deFieldType = deFieldTypeTracker.getDEFieldType(
+			jsonObject.getString("type"));
 
-		if (jsonObject.has("label")) {
-			JSONObject labelJSONObject = jsonObject.getJSONObject("label");
-
-			if (labelJSONObject == null) {
-				throw new DEDataDefinitionDeserializerException(
-					"Label property must contain localized values");
-			}
-
-			Iterator<String> keys = labelJSONObject.keys();
-
-			while (keys.hasNext()) {
-				String key = keys.next();
-
-				labels.put(key, labelJSONObject.getString(key));
-			}
-		}
-
-		if (!jsonObject.has("name")) {
-			throw new DEDataDefinitionDeserializerException(
-				"Name property is required");
-		}
-
-		if (!jsonObject.has("type")) {
-			throw new DEDataDefinitionDeserializerException(
-				"Type property is required");
-		}
-
-		Map<String, String> tips = new TreeMap<>();
-
-		if (jsonObject.has("tip")) {
-			JSONObject tipJSONObject = jsonObject.getJSONObject("tip");
-
-			if (tipJSONObject == null) {
-				throw new DEDataDefinitionDeserializerException(
-					"Tip property must contain localized values");
-			}
-
-			Iterator<String> keys = tipJSONObject.keys();
-
-			while (keys.hasNext()) {
-				String key = keys.next();
-
-				tips.put(key, tipJSONObject.getString(key));
-			}
-		}
-
-		DEDataDefinitionField deDataDefinitionField = new DEDataDefinitionField(
-			jsonObject.getString("name"), jsonObject.getString("type"));
-
-		deDataDefinitionField.setDefaultValue(jsonObject.get("defaultValue"));
-		deDataDefinitionField.setIndexable(
-			jsonObject.getBoolean("indexable", true));
-		deDataDefinitionField.addLabels(labels);
-		deDataDefinitionField.setLocalizable(
-			jsonObject.getBoolean("localizable", false));
-		deDataDefinitionField.setRepeatable(
-			jsonObject.getBoolean("repeatable", false));
-		deDataDefinitionField.addTips(tips);
-
-		return deDataDefinitionField;
+		return deFieldType.deserialize(jsonObject);
 	}
 
 	protected List<String> getDEDataDefinitionFieldNames(JSONArray jsonArray) {
@@ -211,6 +153,9 @@ public class DEDataDefinitionJSONDeserializer
 
 		return deDataDefinitionRules;
 	}
+
+	@Reference
+	protected DEFieldTypeTracker deFieldTypeTracker;
 
 	@Reference
 	protected JSONFactory jsonFactory;

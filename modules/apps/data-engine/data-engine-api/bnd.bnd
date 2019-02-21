@@ -4,8 +4,11 @@ Bundle-Version: 1.0.0
 Export-Package:\
 	com.liferay.data.engine.constants,\
 	com.liferay.data.engine.exception,\
+	com.liferay.data.engine.field,\
 	com.liferay.data.engine.io,\
 	com.liferay.data.engine.model,\
+	com.liferay.data.engine.renderer,\
 	com.liferay.data.engine.rule,\
 	com.liferay.data.engine.service,\
-	com.liferay.data.engine.storage
+	com.liferay.data.engine.storage,\
+	com.liferay.data.engine.util

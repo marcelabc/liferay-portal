@@ -303,8 +303,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout1 = _createDEDataLayout(
 			"layout", "this is a layout", "wizard", "en_US");
 
-		deDataLayout1.setDEDataDefinitionId(
-			deDataDefinition.getDEDataDefinitionId());
+		deDataLayout1.setDEDataDefinition(deDataDefinition);
 
 		DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 			DEDataLayoutRequestBuilder.saveBuilder(
@@ -321,8 +320,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout2 = _createDEDataLayout(
 			"layout", "this is a layout", "wizard", "en_US");
 
-		deDataLayout2.setDEDataDefinitionId(
-			deDataDefinition.getDEDataDefinitionId());
+		deDataLayout2.setDEDataDefinition(deDataDefinition);
 
 		deDataLayoutSaveRequest = DEDataLayoutRequestBuilder.saveBuilder(
 			deDataLayout2
@@ -347,8 +345,8 @@ public class DEDataLayoutServiceTest {
 		deDataLayout2 = deDataLayoutGetResponse.getDEDataLayout();
 
 		Assert.assertEquals(
-			deDataLayout1.getDEDataDefinitionId(),
-			deDataLayout2.getDEDataDefinitionId());
+			deDataLayout1.getDEDataDefinition(),
+			deDataLayout2.getDEDataDefinition());
 	}
 
 	@Test(expected = DEDataLayoutException.MustHavePermission.class)
@@ -737,8 +735,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout = _createDEDataLayout(
 			"layout", "this is a layout", "wizard", "en_US");
 
-		deDataLayout.setDEDataDefinitionId(
-			deDataDefinition.getDEDataDefinitionId());
+		deDataLayout.setDEDataDefinition(deDataDefinition);
 
 		DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 			DEDataLayoutRequestBuilder.saveBuilder(
@@ -791,8 +788,7 @@ public class DEDataLayoutServiceTest {
 			DEDataLayout deDataLayout = _createDEDataLayout(
 				"layout", "this is a layout", "wizard", "en_US");
 
-			deDataLayout.setDEDataDefinitionId(
-				deDataDefinition.getDEDataDefinitionId());
+			deDataLayout.setDEDataDefinition(deDataDefinition);
 
 			DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 				DEDataLayoutRequestBuilder.saveBuilder(
@@ -855,8 +851,7 @@ public class DEDataLayoutServiceTest {
 			DEDataLayout deDataLayout = _createDEDataLayout(
 				"layout", "this is a layout", "wizard", "en_US");
 
-			deDataLayout.setDEDataDefinitionId(
-				deDataDefinition.getDEDataDefinitionId());
+			deDataLayout.setDEDataDefinition(deDataDefinition);
 
 			DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 				DEDataLayoutRequestBuilder.saveBuilder(
@@ -923,7 +918,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout1 = _createDEDataLayout(
 			"layout", "this is a layout", "wizard", "en_US");
 
-		deDataLayout1.setDEDataDefinitionId(-1L);
+		deDataLayout1.setDEDataDefinition(new DEDataDefinition());
 
 		DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 			DEDataLayoutRequestBuilder.saveBuilder(
@@ -953,8 +948,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout = _createDEDataLayout(
 			"layout", "this is a layout", "wizard", "en_US");
 
-		deDataLayout.setDEDataDefinitionId(
-			deDataDefinition.getDEDataDefinitionId());
+		deDataLayout.setDEDataDefinition(deDataDefinition);
 
 		deDataLayout.setName(null);
 
@@ -986,8 +980,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout = _createDEDataLayout(
 			"layout", "this is a layout", "wizard", "en_US");
 
-		deDataLayout.setDEDataDefinitionId(
-			deDataDefinition.getDEDataDefinitionId());
+		deDataLayout.setDEDataDefinition(deDataDefinition);
 
 		deDataLayout.setDEDataLayoutId(-1L);
 
@@ -1032,8 +1025,7 @@ public class DEDataLayoutServiceTest {
 			expectedDEDataLayout = _createDEDataLayout(
 				"layout", "this is a layout", "wizard", "en_US");
 
-			expectedDEDataLayout.setDEDataDefinitionId(
-				deDataDefinition.getDEDataDefinitionId());
+			expectedDEDataLayout.setDEDataDefinition(deDataDefinition);
 
 			DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 				DEDataLayoutRequestBuilder.saveBuilder(
@@ -1091,8 +1083,7 @@ public class DEDataLayoutServiceTest {
 			expectedDEDataLayout = _createDEDataLayout(
 				"layout", "this is a layout", "wizard", "en_US");
 
-			expectedDEDataLayout.setDEDataDefinitionId(
-				deDataDefinition.getDEDataDefinitionId());
+			expectedDEDataLayout.setDEDataDefinition(deDataDefinition);
 
 			DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 				DEDataLayoutRequestBuilder.saveBuilder(
@@ -1640,7 +1631,7 @@ public class DEDataLayoutServiceTest {
 					DEDataLayoutRequestBuilder.saveModelPermissionsBuilder(
 						TestPropsValues.getCompanyId(), _group.getGroupId(),
 						user1.getUserId(), _group.getGroupId(),
-						deDataLayout.getDEDataDefinitionId(),
+						deDataLayout.getDEDataLayoutId(),
 						new String[] {role2.getName()}
 					).allowUpdate(
 					).build();
@@ -1855,8 +1846,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout = _createDEDataLayout(
 			"layout", "this is a layout", "wizard", "en_US");
 
-		deDataLayout.setDEDataDefinitionId(
-			deDataDefinition.getDEDataDefinitionId());
+		deDataLayout.setDEDataDefinition(deDataDefinition);
 
 		DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 			DEDataLayoutRequestBuilder.saveBuilder(
@@ -2081,8 +2071,7 @@ public class DEDataLayoutServiceTest {
 			DEDataLayout deDataLayout = _createDEDataLayout(
 				"layout", "this is a layout", "wizard", "en_US");
 
-			deDataLayout.setDEDataDefinitionId(
-				deDataDefinition.getDEDataDefinitionId());
+			deDataLayout.setDEDataDefinition(deDataDefinition);
 
 			DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 				DEDataLayoutRequestBuilder.saveBuilder(
@@ -2123,8 +2112,7 @@ public class DEDataLayoutServiceTest {
 		DEDataLayout deDataLayout = _createDEDataLayout(
 			nameLayout, descriptionLayout, "wizard", "en_US");
 
-		deDataLayout.setDEDataDefinitionId(
-			deDataDefinition.getDEDataDefinitionId());
+		deDataLayout.setDEDataDefinition(deDataDefinition);
 
 		DEDataLayoutSaveRequest deDataLayoutSaveRequest =
 			DEDataLayoutRequestBuilder.saveBuilder(
@@ -2190,7 +2178,7 @@ public class DEDataLayoutServiceTest {
 		String languageId) {
 
 		DEDataLayoutColumn deDataLayoutColumn = _createDEDataLayoutColumn(
-			12, "field");
+			12, "field1");
 
 		Queue<DEDataLayoutColumn> deDataLayoutColumns = new ArrayDeque<>();
 

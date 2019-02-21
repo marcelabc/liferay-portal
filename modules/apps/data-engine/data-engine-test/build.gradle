@@ -1,4 +1,5 @@
 dependencies {
+	testIntegrationCompile group: "com.google.template", name: "soy", version: "2015-04-10"
 	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.test", version: "default"
 	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.test.integration", version: "default"

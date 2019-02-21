@@ -5,19 +5,18 @@
 	{@param? tip: string}
 	{@param? options: list<[
 		label: string,
-		name: string,
 		value: string
 	]>}
 	{@param? id: string}
 	{@param? inline: bool}
 	{@param? label: string}
 	{@param name: string}
-	{@param? predefinedValue: string}
+	{@param? predefinedValue: ?}
 	{@param? repeatable: bool}
 	{@param? required: bool}
 	{@param? showLabel: bool}
 	{@param? spritemap: string}
-	{@param? value: string}
+	{@param? value: ?}
 
 	{call FieldBase.render}
 		{param contentRenderer kind="html"}
@@ -46,12 +45,11 @@
 	{@param? inline: bool}
 	{@param? options: list<[
 		label: string,
-		name: string,
 		value: string
 	]>}
 	{@param? predefinedValue: string}
 	{@param? disabled: bool}
-	{@param? value: string}
+	{@param? value: ?}
 
 	{if $options}
 		<div class="ddm-radio">

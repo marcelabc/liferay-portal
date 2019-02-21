@@ -54,8 +54,7 @@ public class DEDataLayout implements ClassedModel, Serializable {
 
 		DEDataLayout deDataLayout = (DEDataLayout)obj;
 
-		if (Objects.equals(
-				_deDataDefinitionId, deDataLayout._deDataDefinitionId) &&
+		if (Objects.equals(_deDataDefinition, deDataLayout._deDataDefinition) &&
 			Objects.equals(_deDataLayoutId, deDataLayout._deDataLayoutId) &&
 			Arrays.equals(
 				_deDataLayoutPages.toArray(),
@@ -82,11 +81,11 @@ public class DEDataLayout implements ClassedModel, Serializable {
 	}
 
 	/**
-	 * Gets the id of the data definition associated with this layout
-	 * @return the data definition id
+	 * Gets the data definition associated with this layout
+	 * @return the data definition
 	 */
-	public long getDEDataDefinitionId() {
-		return _deDataDefinitionId;
+	public DEDataDefinition getDEDataDefinition() {
+		return _deDataDefinition;
 	}
 
 	/**
@@ -210,7 +209,7 @@ public class DEDataLayout implements ClassedModel, Serializable {
 	 */
 	@Override
 	public int hashCode() {
-		int hash = HashUtil.hash(0, _deDataDefinitionId);
+		int hash = HashUtil.hash(0, _deDataDefinition);
 
 		hash = HashUtil.hash(hash, _deDataLayoutId);
 		hash = HashUtil.hash(hash, _deDataLayoutPages.hashCode());
@@ -231,12 +230,12 @@ public class DEDataLayout implements ClassedModel, Serializable {
 	}
 
 	/**
-	 * Sets the id o the data definition associated with this layout
-	 * @param deDataDefinitionId the data definition id
+	 * Sets the data definition associated with this layout
+	 * @param deDataDefinition the data definition id
 	 * @review
 	 */
-	public void setDEDataDefinitionId(long deDataDefinitionId) {
-		_deDataDefinitionId = deDataDefinitionId;
+	public void setDEDataDefinition(DEDataDefinition deDataDefinition) {
+		_deDataDefinition = deDataDefinition;
 	}
 
 	/**
@@ -340,7 +339,7 @@ public class DEDataLayout implements ClassedModel, Serializable {
 	}
 
 	private Date _createDate;
-	private long _deDataDefinitionId;
+	private DEDataDefinition _deDataDefinition;
 	private long _deDataLayoutId;
 	private Queue<DEDataLayoutPage> _deDataLayoutPages = new ArrayDeque<>();
 	private String _defaultLanguageId;

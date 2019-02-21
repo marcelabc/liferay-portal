@@ -752,7 +752,7 @@ public class DEDataDefinitionServiceTest {
 			};
 
 			DEDataDefinitionField deDataDefinitionField1 =
-				new DEDataDefinitionField("name", "string");
+				new DEDataDefinitionField("name", "text");
 
 			deDataDefinitionField1.addLabels(nameLabels);
 
@@ -764,7 +764,7 @@ public class DEDataDefinitionServiceTest {
 			};
 
 			DEDataDefinitionField deDataDefinitionField2 =
-				new DEDataDefinitionField("email", "string");
+				new DEDataDefinitionField("email", "text");
 
 			deDataDefinitionField2.addLabels(emailLabels);
 
@@ -845,7 +845,7 @@ public class DEDataDefinitionServiceTest {
 			};
 
 			DEDataDefinitionField deDataDefinitionField1 =
-				new DEDataDefinitionField("name", "string");
+				new DEDataDefinitionField("name", "text");
 
 			deDataDefinitionField1.addLabels(nameLabels);
 
@@ -857,7 +857,7 @@ public class DEDataDefinitionServiceTest {
 			};
 
 			DEDataDefinitionField deDataDefinitionField2 =
-				new DEDataDefinitionField("email", "string");
+				new DEDataDefinitionField("email", "text");
 
 			deDataDefinitionField2.addLabels(emailLabels);
 
@@ -1197,7 +1197,7 @@ public class DEDataDefinitionServiceTest {
 			};
 
 			DEDataDefinitionField deDataDefinitionField =
-				new DEDataDefinitionField("email", "string");
+				new DEDataDefinitionField("email", "text");
 
 			deDataDefinitionField.addLabels(emailLabels);
 
@@ -1247,7 +1247,7 @@ public class DEDataDefinitionServiceTest {
 			};
 
 			DEDataDefinitionField deDataDefinitionField =
-				new DEDataDefinitionField("email", "string");
+				new DEDataDefinitionField("email", "text");
 
 			deDataDefinitionField.addLabels(emailLabels);
 
@@ -1299,7 +1299,7 @@ public class DEDataDefinitionServiceTest {
 			};
 
 			DEDataDefinitionField deDataDefinitionField =
-				new DEDataDefinitionField("email", "string");
+				new DEDataDefinitionField("email", "text");
 
 			deDataDefinitionField.addLabels(emailLabels);
 

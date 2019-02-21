@@ -68,7 +68,7 @@ public class DEDataDefinitionSaveRequestExecutor {
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
-		DDMStructure ddmStructure = null;
+		DDMStructure ddmStructure;
 
 		if (deDataDefinitionId == 0) {
 			ddmStructure = createDDMStructure(

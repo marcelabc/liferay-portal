@@ -17,11 +17,16 @@ package com.liferay.data.engine.internal.executor;
 import com.liferay.data.engine.exception.DEDataDefinitionDeserializerException;
 import com.liferay.data.engine.exception.DEDataRecordCollectionException;
 import com.liferay.data.engine.internal.io.DEDataDefinitionDeserializerTracker;
+import com.liferay.data.engine.internal.io.DEDataLayoutDeserializerTracker;
 import com.liferay.data.engine.internal.storage.DEDataStorageTracker;
 import com.liferay.data.engine.io.DEDataDefinitionDeserializer;
 import com.liferay.data.engine.io.DEDataDefinitionDeserializerApplyRequest;
 import com.liferay.data.engine.io.DEDataDefinitionDeserializerApplyResponse;
+import com.liferay.data.engine.io.DEDataLayoutDeserializer;
+import com.liferay.data.engine.io.DEDataLayoutDeserializerApplyRequest;
+import com.liferay.data.engine.io.DEDataLayoutDeserializerApplyResponse;
 import com.liferay.data.engine.model.DEDataDefinition;
+import com.liferay.data.engine.model.DEDataLayout;
 import com.liferay.data.engine.model.DEDataRecord;
 import com.liferay.data.engine.model.DEDataRecordCollection;
 import com.liferay.data.engine.storage.DEDataStorage;
@@ -31,6 +36,9 @@ import com.liferay.data.engine.storage.DEDataStorageRequestBuilder;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
+import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
+import com.liferay.dynamic.data.mapping.service.DDMStructureVersionLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 
 /**
@@ -39,11 +47,15 @@ import com.liferay.portal.kernel.exception.PortalException;
 public class DEDataEngineRequestExecutor {
 
 	public DEDataEngineRequestExecutor(
+		DDMStructureVersionLocalService ddmStructureVersionLocalService,
 		DEDataDefinitionDeserializerTracker deDataDefinitionDeserializerTracker,
+		DEDataLayoutDeserializerTracker deDataLayoutDeserializerTracker,
 		DEDataStorageTracker deDataStorageTracker) {
 
+		_ddmStructureVersionLocalService = ddmStructureVersionLocalService;
 		_deDataDefinitionDeserializerTracker =
 			deDataDefinitionDeserializerTracker;
+		_deDataLayoutDeserializerTracker = deDataLayoutDeserializerTracker;
 		_deDataStorageTracker = deDataStorageTracker;
 	}
 
@@ -97,7 +109,7 @@ public class DEDataEngineRequestExecutor {
 	}
 
 	public DEDataDefinition map(DDMStructure ddmStructure)
-		throws DEDataDefinitionDeserializerException {
+		throws PortalException {
 
 		DEDataDefinition deDataDefinition = deserialize(
 			ddmStructure.getDefinition());
@@ -111,6 +123,42 @@ public class DEDataEngineRequestExecutor {
 		deDataDefinition.setUserId(ddmStructure.getUserId());
 
 		return deDataDefinition;
+	}
+
+	public DEDataLayout map(DDMStructureLayout ddmStructureLayout)
+		throws PortalException {
+
+		DEDataLayoutDeserializer deDataLayoutDeserializer =
+			_deDataLayoutDeserializerTracker.getDEDataLayoutSerializer("json");
+
+		DEDataLayout deDataLayout = null;
+
+		DEDataLayoutDeserializerApplyResponse
+			deDataLayoutDeserializerApplyResponse =
+				deDataLayoutDeserializer.apply(
+					DEDataLayoutDeserializerApplyRequest.Builder.of(
+						ddmStructureLayout.getDefinition()));
+
+		deDataLayout = deDataLayoutDeserializerApplyResponse.getDEDataLayout();
+
+		deDataLayout.setCreateDate(ddmStructureLayout.getCreateDate());
+
+		DDMStructureVersion ddmStructureVersion =
+			_ddmStructureVersionLocalService.getDDMStructureVersion(
+				ddmStructureLayout.getStructureVersionId());
+
+		DDMStructure ddmStructure = ddmStructureVersion.getStructure();
+
+		deDataLayout.setDEDataDefinition(map(ddmStructure));
+
+		deDataLayout.setDEDataLayoutId(
+			ddmStructureLayout.getStructureLayoutId());
+		deDataLayout.setDescription(ddmStructureLayout.getDescriptionMap());
+		deDataLayout.setModifiedDate(ddmStructureLayout.getModifiedDate());
+		deDataLayout.setName(ddmStructureLayout.getNameMap());
+		deDataLayout.setUserId(ddmStructureLayout.getUserId());
+
+		return deDataLayout;
 	}
 
 	public DEDataRecord map(
@@ -162,8 +210,12 @@ public class DEDataEngineRequestExecutor {
 		return deDataDefinitionDeserializerApplyResponse.getDEDataDefinition();
 	}
 
+	private final DDMStructureVersionLocalService
+		_ddmStructureVersionLocalService;
 	private final DEDataDefinitionDeserializerTracker
 		_deDataDefinitionDeserializerTracker;
+	private final DEDataLayoutDeserializerTracker
+		_deDataLayoutDeserializerTracker;
 	private final DEDataStorageTracker _deDataStorageTracker;
 
 }

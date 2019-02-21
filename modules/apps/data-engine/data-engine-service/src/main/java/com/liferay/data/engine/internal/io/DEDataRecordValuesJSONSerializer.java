@@ -14,13 +14,13 @@
 
 package com.liferay.data.engine.internal.io;
 
-import com.liferay.data.engine.internal.util.DEDataEngineUtil;
 import com.liferay.data.engine.io.DEDataRecordValuesResponseBuilder;
 import com.liferay.data.engine.io.DEDataRecordValuesSerializer;
 import com.liferay.data.engine.io.DEDataRecordValuesSerializerApplyRequest;
 import com.liferay.data.engine.io.DEDataRecordValuesSerializerApplyResponse;
 import com.liferay.data.engine.model.DEDataDefinition;
 import com.liferay.data.engine.model.DEDataDefinitionField;
+import com.liferay.data.engine.util.DEDataEngineUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;

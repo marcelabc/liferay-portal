@@ -15,6 +15,8 @@
 package com.liferay.data.engine.internal.io;
 
 import com.liferay.data.engine.exception.DEDataDefinitionSerializerException;
+import com.liferay.data.engine.field.DEFieldType;
+import com.liferay.data.engine.internal.field.DEFieldTypeTracker;
 import com.liferay.data.engine.io.DEDataDefinitionSerializer;
 import com.liferay.data.engine.io.DEDataDefinitionSerializerApplyRequest;
 import com.liferay.data.engine.io.DEDataDefinitionSerializerApplyResponse;
@@ -24,11 +26,9 @@ import com.liferay.data.engine.model.DEDataDefinitionRule;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.util.Validator;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
@@ -77,51 +77,10 @@ public class DEDataDefinitionJSONSerializer
 			DEDataDefinitionField deDataDefinitionField)
 		throws DEDataDefinitionSerializerException {
 
-		JSONObject jsonObject = jsonFactory.createJSONObject();
+		DEFieldType deFieldType = deFieldTypeTracker.getDEFieldType(
+			deDataDefinitionField.getType());
 
-		Object defaultValue = deDataDefinitionField.getDefaultValue();
-
-		if (defaultValue != null) {
-			jsonObject.put("defaultValue", defaultValue);
-		}
-
-		jsonObject.put("indexable", deDataDefinitionField.isIndexable());
-
-		Map<String, String> label = deDataDefinitionField.getLabel();
-
-		if (!label.isEmpty()) {
-			setProperty("label", jsonObject, label);
-		}
-
-		jsonObject.put("localizable", deDataDefinitionField.isLocalizable());
-
-		String name = deDataDefinitionField.getName();
-
-		if (Validator.isNull(name)) {
-			throw new DEDataDefinitionSerializerException(
-				"Name property is required");
-		}
-
-		jsonObject.put("name", name);
-
-		jsonObject.put("repeatable", deDataDefinitionField.isRepeatable());
-
-		Map<String, String> tip = deDataDefinitionField.getTip();
-
-		if (!tip.isEmpty()) {
-			setProperty("tip", jsonObject, tip);
-		}
-
-		String type = deDataDefinitionField.getType();
-
-		if ((type == null) || type.isEmpty()) {
-			throw new DEDataDefinitionSerializerException(
-				"Type property is required");
-		}
-
-		jsonObject.put("type", type);
-
-		return jsonObject;
+		return deFieldType.serialize(deDataDefinitionField, jsonFactory);
 	}
 
 	protected JSONArray getDEDataDefinitionFieldNamesJSONArray(
@@ -196,20 +155,8 @@ public class DEDataDefinitionJSONSerializer
 		return jsonArray;
 	}
 
-	protected void setProperty(
-		String propertyKey, JSONObject jsonObject, Map<String, String> map) {
-
-		JSONObject languageJSONObject = jsonFactory.createJSONObject();
-
-		Set<Map.Entry<String, String>> set = map.entrySet();
-
-		Stream<Map.Entry<String, String>> stream = set.stream();
-
-		stream.forEach(
-			entry -> languageJSONObject.put(entry.getKey(), entry.getValue()));
-
-		jsonObject.put(propertyKey, languageJSONObject);
-	}
+	@Reference
+	protected DEFieldTypeTracker deFieldTypeTracker;
 
 	@Reference
 	protected JSONFactory jsonFactory;

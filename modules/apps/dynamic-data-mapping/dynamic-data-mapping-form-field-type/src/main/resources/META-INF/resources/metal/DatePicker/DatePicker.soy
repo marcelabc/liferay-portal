@@ -6,7 +6,7 @@
 {template .render}
 	{@param name: string}
 	{@param spritemap: string}
-	{@param years: list<?>}
+	{@param? years: list<?>}
 	{@param? _daySelected: any}
 	{@param? _handleDayClicked: any}
 	{@param? _handleDotClicked: any}
@@ -36,7 +36,7 @@
 	{@param? showLabel: bool}
 	{@param? tip: string}
 	{@param? tooltip: string}
-	{@param? value: string}
+	{@param? value: ?}
 	{@param? weekdaysShort: list<string>}
 
 	{call FieldBase.render}
@@ -87,7 +87,7 @@
 
 {template .content}
 	{@param spritemap: string}
-	{@param years: list<?>}
+	{@param? years: list<?>}
 	{@param? _daySelected: any}
 	{@param? _handleDayClicked: any}
 	{@param? _handleDotClicked: any}
@@ -111,7 +111,7 @@
 	{@param? readOnly: bool}
 	{@param? weekdaysShort: list<string>}
 	{@param? predefinedValue: string}
-	{@param? value: string}
+	{@param? value: ?}
 
 	{let $attributes kind="attributes"}
 		class="input-group
@@ -181,7 +181,7 @@
 
 		<div class="{$classes}">
 			<div class="datepicker">
-				{if $months and isNonnull($_month) and isNonnull($_year)}
+				{if $months and isNonnull($_month) and $years and isNonnull($_year)}
 					{call .header}
 						{param _handleDotClicked: $_handleDotClicked /}
 						{param _handleNavigateChange: $_handleNavigateChange /}

@@ -429,7 +429,7 @@ public class DEDataEngineTestUtil {
 			};
 
 			DEDataDefinitionField deDataDefinitionField =
-				new DEDataDefinitionField("fieldDefault", "string");
+				new DEDataDefinitionField("fieldDefault", "text");
 
 			deDataDefinitionField.addLabels(field1Labels);
 
@@ -827,7 +827,7 @@ public class DEDataEngineTestUtil {
 		};
 
 		DEDataDefinitionField deDataDefinitionField1 =
-			new DEDataDefinitionField("name", "string");
+			new DEDataDefinitionField("name", "text");
 
 		deDataDefinitionField1.addLabels(nameLabels);
 
@@ -839,7 +839,7 @@ public class DEDataEngineTestUtil {
 		};
 
 		DEDataDefinitionField deDataDefinitionField2 =
-			new DEDataDefinitionField("email", "string");
+			new DEDataDefinitionField("email", "text");
 
 		deDataDefinitionField2.addLabels(emailLabels);
 
