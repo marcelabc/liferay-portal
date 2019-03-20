@@ -14,6 +14,8 @@
 
 package com.liferay.data.engine.service;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.data.engine.exception.DEDataLayoutException;
 
 /**
@@ -22,10 +24,37 @@ import com.liferay.data.engine.exception.DEDataLayoutException;
  * @review
  * @author Jeyvison Nascimento
  */
+@ProviderType
 public interface DEDataLayoutService {
 
 	public DEDataLayoutCountResponse execute(
 			DEDataLayoutCountRequest deDataLayoutCountRequest)
+		throws DEDataLayoutException;
+
+	/**
+	 * Execute the Delete Model Permissions Request which can revoke a
+	 * permission to a role to not perform actions involving a Data Layout model
+	 *
+	 * @param deDataLayoutDeleteModelPermissionsRequest
+	 * @return {@link DEDataLayoutDeleteModelPermissionsResponse}
+	 * @review
+	 */
+	public DEDataLayoutDeleteModelPermissionsResponse execute(
+			DEDataLayoutDeleteModelPermissionsRequest
+				deDataLayoutDeleteModelPermissionsRequest)
+		throws DEDataLayoutException;
+
+	/**
+	 * Execute the Delete Permissions Request which can revoke permission to
+	 * a role to not perform actions involving a Data Layout
+	 *
+	 * @param deDataLayoutDeletePermissionsRequest
+	 * @return {@link DEDataLayoutDeletePermissionsResponse}
+	 * @review
+	 */
+	public DEDataLayoutDeletePermissionsResponse execute(
+			DEDataLayoutDeletePermissionsRequest
+				deDataLayoutDeletePermissionsRequest)
 		throws DEDataLayoutException;
 
 	/**
@@ -59,6 +88,32 @@ public interface DEDataLayoutService {
 	 */
 	public DEDataLayoutListResponse execute(
 			DEDataLayoutListRequest deDataLayoutListRequest)
+		throws DEDataLayoutException;
+
+	/**
+	 * Execute the Save Model Permissions Request which can grant permission
+	 * to a role to perform actions involving a Data Layout model
+	 *
+	 * @param deDataLayoutSaveModelPermissionsRequest
+	 * @return {@link DEDataLayoutSaveModelPermissionsResponse}
+	 * @review
+	 */
+	public DEDataLayoutSaveModelPermissionsResponse execute(
+			DEDataLayoutSaveModelPermissionsRequest
+				deDataLayoutSaveModelPermissionsRequest)
+		throws DEDataLayoutException;
+
+	/**
+	 * Execute the Save Permissions Request which can grant permission to a
+	 * role to perform actions involving a Data Layout
+	 *
+	 * @param deDataLayoutSavePermissionsRequest
+	 * @return {@link DEDataLayoutSavePermissionsResponse}
+	 * @review
+	 */
+	public DEDataLayoutSavePermissionsResponse execute(
+			DEDataLayoutSavePermissionsRequest
+				deDataLayoutSavePermissionsRequest)
 		throws DEDataLayoutException;
 
 	/**
