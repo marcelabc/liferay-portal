@@ -24,8 +24,6 @@ import com.liferay.petra.string.StringBundler;
 import graphql.annotations.annotationTypes.GraphQLField;
 import graphql.annotations.annotationTypes.GraphQLName;
 
-import java.util.Objects;
-
 import javax.annotation.Generated;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -307,32 +305,31 @@ public class DataDefinitionField {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected LocalizedValue[] tip;
 
-	@Override
-	public boolean equals(Object object) {
-		if (this == object) {
-			return true;
-		}
-
-		if (!(object instanceof DataDefinitionField)) {
-			return false;
-		}
-
-		DataDefinitionField dataDefinitionField = (DataDefinitionField)object;
-
-		return Objects.equals(toString(), dataDefinitionField.toString());
-	}
-
-	@Override
-	public int hashCode() {
-		String string = toString();
-
-		return string.hashCode();
-	}
-
 	public String toString() {
 		StringBundler sb = new StringBundler();
 
 		sb.append("{");
+
+		sb.append("\"customProperties\": ");
+
+		if (customProperties == null) {
+			sb.append("null");
+		}
+		else {
+			sb.append("[");
+
+			for (int i = 0; i < customProperties.length; i++) {
+				sb.append(customProperties[i]);
+
+				if ((i + 1) < customProperties.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		sb.append(", ");
 
 		sb.append("\"customProperties\": ");
 
