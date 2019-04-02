@@ -16,13 +16,13 @@ package com.liferay.data.engine.rest.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.data.engine.rest.dto.v1_0.DataDefinition;
+import com.liferay.data.engine.rest.dto.v1_0.DataDefinitionPermission;
 import com.liferay.data.engine.rest.dto.v1_0.LocalizedValue;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
 import java.util.Objects;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 /**
@@ -32,16 +32,40 @@ import org.junit.runner.RunWith;
 public class DataDefinitionResourceTest
 	extends BaseDataDefinitionResourceTestCase {
 
-	@Ignore
+	public static final String OPERATION_DELETE_PERMISSION = "delete";
+
+	public static final String OPERATION_SAVE_PERMISSION = "save";
+
 	@Override
 	public void testPostContentSpaceDataDefinitionPermission()
 		throws Exception {
+
+		DataDefinitionPermission dataDefinitionPermission =
+			new DataDefinitionPermission() {
+				{
+					addDataDefinition = true;
+				}
+			};
+
+		invokePostContentSpaceDataDefinitionPermission(
+			testGroup.getGroupId(), OPERATION_SAVE_PERMISSION,
+			dataDefinitionPermission);
 	}
 
-	@Ignore
 	@Override
 	public void testPostDataDefinitionDataDefinitionPermission()
 		throws Exception {
+
+		DataDefinitionPermission dataDefinitionPermission =
+			new DataDefinitionPermission() {
+				{
+					view = true;
+				}
+			};
+
+		invokePostContentSpaceDataDefinitionPermission(
+			testGroup.getGroupId(), OPERATION_SAVE_PERMISSION,
+			dataDefinitionPermission);
 	}
 
 	protected void assertValid(DataDefinition dataDefinition) {
