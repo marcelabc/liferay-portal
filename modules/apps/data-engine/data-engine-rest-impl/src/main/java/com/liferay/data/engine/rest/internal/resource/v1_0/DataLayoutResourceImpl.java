@@ -15,7 +15,9 @@
 package com.liferay.data.engine.rest.internal.resource.v1_0;
 
 import com.liferay.data.engine.rest.dto.v1_0.DataLayout;
+import com.liferay.data.engine.rest.dto.v1_0.DataLayoutPermission;
 import com.liferay.data.engine.rest.internal.constants.DataActionKeys;
+import com.liferay.data.engine.rest.internal.constants.DataLayoutConstants;
 import com.liferay.data.engine.rest.internal.dto.v1_0.util.DataLayoutUtil;
 import com.liferay.data.engine.rest.internal.dto.v1_0.util.LocalizedValueUtil;
 import com.liferay.data.engine.rest.internal.model.InternalDataLayout;
@@ -34,10 +36,15 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -89,6 +96,35 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 	}
 
 	@Override
+	public void postContentSpaceDataLayoutPermission(
+			Long contentSpaceId, String operation,
+			DataLayoutPermission dataLayoutPermission)
+		throws Exception {
+
+		DataEnginePermissionUtil.checkOperationPermission(
+			contentSpaceId, _groupLocalService, operation);
+
+		List<String> actionIds = new ArrayList<>();
+
+		if (dataLayoutPermission.getAddDataLayout()) {
+			actionIds.add(DataActionKeys.ADD_DATA_LAYOUT);
+		}
+
+		if (dataLayoutPermission.getDefinePermissions()) {
+			actionIds.add(DataActionKeys.DEFINE_PERMISSIONS);
+		}
+
+		if (actionIds.isEmpty()) {
+			return;
+		}
+
+		DataEnginePermissionUtil.persistPermission(
+			actionIds, contextCompany, operation,
+			_resourcePermissionLocalService, _roleLocalService,
+			dataLayoutPermission.getRoleNames());
+	}
+
+	@Override
 	public DataLayout postDataDefinitionDataLayout(
 			Long dataDefinitionId, DataLayout dataLayout)
 		throws Exception {
@@ -124,6 +160,42 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 			serviceContext.getModelPermissions());
 
 		return dataLayout;
+	}
+
+	public void postDataLayoutDataLayoutPermission(
+			Long dataLayoutId, String operation,
+			DataLayoutPermission dataLayoutPermission)
+		throws Exception {
+
+		DDMStructureLayout ddmStructureLayout =
+			_ddmStructureLayoutLocalService.getStructureLayout(dataLayoutId);
+
+		DataEnginePermissionUtil.checkOperationPermission(
+			ddmStructureLayout.getGroupId(), _groupLocalService, operation);
+
+		List<String> actionIds = new ArrayList<>();
+
+		if (dataLayoutPermission.getDelete()) {
+			actionIds.add(ActionKeys.DELETE);
+		}
+
+		if (dataLayoutPermission.getUpdate()) {
+			actionIds.add(ActionKeys.UPDATE);
+		}
+
+		if (dataLayoutPermission.getView()) {
+			actionIds.add(ActionKeys.VIEW);
+		}
+
+		if (actionIds.isEmpty()) {
+			return;
+		}
+
+		DataEnginePermissionUtil.persistModelPermission(
+			actionIds, contextCompany, ddmStructureLayout.getGroupId(),
+			dataLayoutId, operation, DataLayoutConstants.RESOURCE_NAME,
+			_resourcePermissionLocalService, _roleLocalService,
+			dataLayoutPermission.getRoleNames());
 	}
 
 	@Override
@@ -219,5 +291,11 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 
 	@Reference
 	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Reference
+	private RoleLocalService _roleLocalService;
 
 }

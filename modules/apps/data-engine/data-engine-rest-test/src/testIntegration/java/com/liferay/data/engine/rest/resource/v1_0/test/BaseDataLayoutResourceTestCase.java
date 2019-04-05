@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 import com.liferay.data.engine.rest.dto.v1_0.DataLayout;
+import com.liferay.data.engine.rest.dto.v1_0.DataLayoutPermission;
 import com.liferay.data.engine.rest.resource.v1_0.DataLayoutResource;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -270,6 +271,57 @@ public abstract class BaseDataLayoutResourceTestCase {
 	}
 
 	@Test
+	public void testPostContentSpaceDataLayoutPermission() throws Exception {
+		Assert.assertTrue(true);
+	}
+
+	protected void invokePostContentSpaceDataLayoutPermission(
+			Long contentSpaceId, String operation,
+			DataLayoutPermission dataLayoutPermission)
+		throws Exception {
+
+		Http.Options options = _createHttpOptions();
+
+		String location =
+			_resourceURL +
+				_toPath(
+					"/content-spaces/{contentSpaceId}/data-layout-permissions",
+					contentSpaceId);
+
+		options.setLocation(location);
+
+		options.setPost(true);
+
+		String string = HttpUtil.URLtoString(options);
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("HTTP response: " + string);
+		}
+	}
+
+	protected Http.Response invokePostContentSpaceDataLayoutPermissionResponse(
+			Long contentSpaceId, String operation,
+			DataLayoutPermission dataLayoutPermission)
+		throws Exception {
+
+		Http.Options options = _createHttpOptions();
+
+		String location =
+			_resourceURL +
+				_toPath(
+					"/content-spaces/{contentSpaceId}/data-layout-permissions",
+					contentSpaceId);
+
+		options.setLocation(location);
+
+		options.setPost(true);
+
+		HttpUtil.URLtoByteArray(options);
+
+		return options.getResponse();
+	}
+
+	@Test
 	public void testPostDataDefinitionDataLayout() throws Exception {
 		DataLayout randomDataLayout = randomDataLayout();
 
@@ -339,6 +391,57 @@ public abstract class BaseDataLayoutResourceTestCase {
 				_toPath(
 					"/data-definitions/{dataDefinitionId}/data-layouts",
 					dataDefinitionId);
+
+		options.setLocation(location);
+
+		options.setPost(true);
+
+		HttpUtil.URLtoByteArray(options);
+
+		return options.getResponse();
+	}
+
+	@Test
+	public void testPostDataLayoutDataLayoutPermission() throws Exception {
+		Assert.assertTrue(true);
+	}
+
+	protected void invokePostDataLayoutDataLayoutPermission(
+			Long dataLayoutId, String operation,
+			DataLayoutPermission dataLayoutPermission)
+		throws Exception {
+
+		Http.Options options = _createHttpOptions();
+
+		String location =
+			_resourceURL +
+				_toPath(
+					"/data-layout/{dataLayoutId}/data-layout-permissions",
+					dataLayoutId);
+
+		options.setLocation(location);
+
+		options.setPost(true);
+
+		String string = HttpUtil.URLtoString(options);
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("HTTP response: " + string);
+		}
+	}
+
+	protected Http.Response invokePostDataLayoutDataLayoutPermissionResponse(
+			Long dataLayoutId, String operation,
+			DataLayoutPermission dataLayoutPermission)
+		throws Exception {
+
+		Http.Options options = _createHttpOptions();
+
+		String location =
+			_resourceURL +
+				_toPath(
+					"/data-layout/{dataLayoutId}/data-layout-permissions",
+					dataLayoutId);
 
 		options.setLocation(location);
 
