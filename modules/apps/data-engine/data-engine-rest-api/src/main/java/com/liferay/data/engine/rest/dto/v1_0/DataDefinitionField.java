@@ -24,6 +24,8 @@ import com.liferay.petra.string.StringBundler;
 import graphql.annotations.annotationTypes.GraphQLField;
 import graphql.annotations.annotationTypes.GraphQLName;
 
+import java.util.Objects;
+
 import javax.annotation.Generated;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -66,17 +68,18 @@ public class DataDefinitionField {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected CustomProperty[] customProperties;
 
-	public Object getDefaultValue() {
+	public LocalizedValue[] getDefaultValue() {
 		return defaultValue;
 	}
 
-	public void setDefaultValue(Object defaultValue) {
+	public void setDefaultValue(LocalizedValue[] defaultValue) {
 		this.defaultValue = defaultValue;
 	}
 
 	@JsonIgnore
 	public void setDefaultValue(
-		UnsafeSupplier<Object, Exception> defaultValueUnsafeSupplier) {
+		UnsafeSupplier<LocalizedValue[], Exception>
+			defaultValueUnsafeSupplier) {
 
 		try {
 			defaultValue = defaultValueUnsafeSupplier.get();
@@ -91,7 +94,7 @@ public class DataDefinitionField {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Object defaultValue;
+	protected LocalizedValue[] defaultValue;
 
 	public String getFieldType() {
 		return fieldType;
@@ -305,6 +308,28 @@ public class DataDefinitionField {
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected LocalizedValue[] tip;
 
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+
+		if (!(object instanceof DataDefinitionField)) {
+			return false;
+		}
+
+		DataDefinitionField dataDefinitionField = (DataDefinitionField)object;
+
+		return Objects.equals(toString(), dataDefinitionField.toString());
+	}
+
+	@Override
+	public int hashCode() {
+		String string = toString();
+
+		return string.hashCode();
+	}
+
 	public String toString() {
 		StringBundler sb = new StringBundler();
 
@@ -331,18 +356,18 @@ public class DataDefinitionField {
 
 		sb.append(", ");
 
-		sb.append("\"customProperties\": ");
+		sb.append("\"defaultValue\": ");
 
-		if (customProperties == null) {
+		if (defaultValue == null) {
 			sb.append("null");
 		}
 		else {
 			sb.append("[");
 
-			for (int i = 0; i < customProperties.length; i++) {
-				sb.append(customProperties[i]);
+			for (int i = 0; i < defaultValue.length; i++) {
+				sb.append(defaultValue[i]);
 
-				if ((i + 1) < customProperties.length) {
+				if ((i + 1) < defaultValue.length) {
 					sb.append(", ");
 				}
 			}
@@ -350,11 +375,6 @@ public class DataDefinitionField {
 			sb.append("]");
 		}
 
-		sb.append(", ");
-
-		sb.append("\"defaultValue\": ");
-
-		sb.append(defaultValue);
 		sb.append(", ");
 
 		sb.append("\"fieldType\": ");

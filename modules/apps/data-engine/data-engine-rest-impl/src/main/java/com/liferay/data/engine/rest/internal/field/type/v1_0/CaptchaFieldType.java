@@ -75,7 +75,8 @@ public class CaptchaFieldType extends FieldType {
 							httpServletResponse, unsyncStringWriter)));
 				setUrl(
 					CustomPropertyUtil.getString(
-						dataDefinitionField.getCustomProperties(), "url"));
+						dataDefinitionField.getCustomProperties(), "url",
+						StringPool.BLANK));
 			}
 		};
 
