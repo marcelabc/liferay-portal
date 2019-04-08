@@ -65,6 +65,20 @@ public class LocalizedValueUtil {
 		return jsonObject;
 	}
 
+	public static Map<String, String> toLocalizationMap(JSONObject jsonObject) {
+		Map<String, String> localizationMap = new HashMap<>();
+
+		Iterator<String> languageKeys = jsonObject.keys();
+
+		while (languageKeys.hasNext()) {
+			String languageId = languageKeys.next();
+
+			localizationMap.put(languageId, jsonObject.getString(languageId));
+		}
+
+		return localizationMap;
+	}
+
 	public static Map<Locale, String> toLocalizationMap(
 		LocalizedValue[] localizedValues) {
 
