@@ -16,14 +16,11 @@ package com.liferay.data.engine.rest.internal.dto.v1_0.util;
 
 import com.liferay.data.engine.rest.dto.v1_0.CustomProperty;
 import com.liferay.data.engine.rest.internal.field.type.v1_0.DataFieldOption;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Marcela Cunha
@@ -59,7 +56,7 @@ public class CustomPropertyUtil {
 		return defaultValue;
 	}
 
-	public static String getString(
+	public static List<DataFieldOption> getDataFieldOption(
 		CustomProperty[] customProperties, String key) {
 
 		for (CustomProperty customProperty : customProperties) {
