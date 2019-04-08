@@ -15,11 +15,15 @@
 package com.liferay.data.engine.rest.internal.dto.v1_0.util;
 
 import com.liferay.data.engine.rest.dto.v1_0.CustomProperty;
+import com.liferay.data.engine.rest.internal.field.type.v1_0.DataFieldOption;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Marcela Cunha
@@ -38,10 +42,16 @@ public class CustomPropertyUtil {
 	}
 
 	public static Boolean getBoolean(
+		CustomProperty[] customProperties, String key) {
+
+		return getBoolean(customProperties, key, false);
+	}
+
+	public static Boolean getBoolean(
 		CustomProperty[] customProperties, String key, boolean defaultValue) {
 
 		for (CustomProperty customProperty : customProperties) {
-			if (Objects.equals(key, customProperty.getKey())) {
+			if (StringUtils.equals(key, customProperty.getKey())) {
 				return GetterUtil.getBoolean(customProperty.getValue());
 			}
 		}
@@ -53,12 +63,30 @@ public class CustomPropertyUtil {
 		CustomProperty[] customProperties, String key) {
 
 		for (CustomProperty customProperty : customProperties) {
-			if (Objects.equals(key, customProperty.getKey())) {
+			if (StringUtils.equals(key, customProperty.getKey())) {
+				return (List<DataFieldOption>)customProperty.getValue();
+			}
+		}
+
+		return new ArrayList<>();
+	}
+
+	public static String getString(
+		CustomProperty[] customProperties, String key) {
+
+		return getString(customProperties, key, StringPool.BLANK);
+	}
+
+	public static String getString(
+		CustomProperty[] customProperties, String key, String defaultValue) {
+
+		for (CustomProperty customProperty : customProperties) {
+			if (StringUtils.equals(key, customProperty.getKey())) {
 				return GetterUtil.getString(customProperty.getValue());
 			}
 		}
 
-		return StringPool.BLANK;
+		return defaultValue;
 	}
 
 }
