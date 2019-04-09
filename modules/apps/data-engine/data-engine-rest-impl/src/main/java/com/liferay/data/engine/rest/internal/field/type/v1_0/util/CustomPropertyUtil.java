@@ -98,6 +98,22 @@ public class CustomPropertyUtil {
 		return Long.valueOf(0);
 	}
 
+	public static Map<String, String> getMap(
+		CustomProperty[] customProperties, String key) {
+
+		if (ArrayUtil.isEmpty(customProperties)) {
+			return new HashMap<>();
+		}
+
+		for (CustomProperty customProperty : customProperties) {
+			if (StringUtils.equals(key, customProperty.getKey())) {
+				return (Map<String, String>)customProperty.getValue();
+			}
+		}
+
+		return new HashMap<>();
+	}
+
 	public static String getString(
 		CustomProperty[] customProperties, String key) {
 
@@ -118,6 +134,36 @@ public class CustomPropertyUtil {
 		}
 
 		return defaultValue;
+	}
+
+	public static JSONObject toJSONObject(Map<String, String> stringMap)
+		throws Exception {
+
+		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+
+		if (stringMap.isEmpty()) {
+			return jsonObject;
+		}
+
+		for (Map.Entry<String, String> stringEntry : stringMap.entrySet()) {
+			jsonObject.put(stringEntry.getKey(), stringEntry.getValue());
+		}
+
+		return jsonObject;
+	}
+
+	public static Map<String, String> toMap(JSONObject jsonObject) {
+		Map<String, String> values = new HashMap<>();
+
+		Iterator<String> keys = jsonObject.keys();
+
+		while (keys.hasNext()) {
+			String key = keys.next();
+
+			values.put(key, jsonObject.getString(key));
+		}
+
+		return values;
 	}
 
 }
