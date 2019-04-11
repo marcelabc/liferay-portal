@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -131,6 +132,22 @@ public class CustomPropertyUtil {
 		return Collections.emptyMap();
 	}
 
+	public static Map<String, List<Object>> getMap1(
+		CustomProperty[] customProperties, String key) {
+
+		if (ArrayUtil.isEmpty(customProperties)) {
+			return Collections.emptyMap();
+		}
+
+		for (CustomProperty customProperty : customProperties) {
+			if (StringUtils.equals(key, customProperty.getKey())) {
+				return (Map<String, List<Object>>)customProperty.getValue();
+			}
+		}
+
+		return Collections.emptyMap();
+	}
+
 	public static String getString(
 		CustomProperty[] customProperties, String key) {
 
@@ -151,6 +168,18 @@ public class CustomPropertyUtil {
 		}
 
 		return defaultValue;
+	}
+
+	public static List<Object> getValues(
+		Map<String, List<Object>> map, String[] keys) {
+
+		List<Object> values = new ArrayList<>();
+
+		for (String key : keys) {
+			values.addAll(map.get(key));
+		}
+
+		return values;
 	}
 
 	public static JSONObject toJSONObject(Map<String, String> values)
