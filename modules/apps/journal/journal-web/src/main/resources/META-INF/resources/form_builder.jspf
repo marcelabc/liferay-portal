@@ -21,7 +21,7 @@ String defaultLanguageId = LocaleUtil.toLanguageId(LocaleUtil.getSiteDefault());
 
 DDMForm ddmForm = journalEditDDMStructuresDisplayContext.getDDMForm();
 
-if (ddmForm != null) {
+if ((ddmForm != null) && (ddmForm.getDefaultLocale() != null)) {
 	String ddmFormDefaultLanguageId = LocaleUtil.toLanguageId(ddmForm.getDefaultLocale());
 
 	if (!Objects.equals(defaultLanguageId, ddmFormDefaultLanguageId)) {
