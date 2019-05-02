@@ -86,7 +86,7 @@
 				dataType: string,
 				type: string,
 				label: string,
-				value: string
+				value: ?
 			]>,
 			operator: string,
 			operators: list<[
@@ -694,6 +694,7 @@
 											{param events: [
 												'fieldEdited': $_handleSecondOperandValueEdited
 											] /}
+											{param multiple: $secondOperandType == 'checkbox_multiple' /}
 											{param name: $secondOperandFieldName /}
 											{param options: $firstOperandOptions /}
 											{param placeholder kind="text"}
@@ -702,7 +703,7 @@
 											{param readOnly: $readOnly /}
 											{param ref: 'secondOperand' + $index /}
 											{param spritemap: $spritemap /}
-											{param value: [$secondOperandValue] /}
+											{param value: $secondOperandValue /}
 										{/delcall}
 									{elseif $secondOperandType == 'field'}
 										{delcall PageRenderer.RegisterFieldType variant="'select'"}

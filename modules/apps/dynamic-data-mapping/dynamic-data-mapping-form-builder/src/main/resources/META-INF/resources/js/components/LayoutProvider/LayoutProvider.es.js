@@ -347,6 +347,25 @@ class LayoutProvider extends Component {
 						};
 					}
 
+					/**Fiz isso pq o back end quer receber string e não array */
+					if (condition.operands[1]) {
+						condition.operands.forEach(operand =>
+							{
+								condition = {
+									...condition,
+									operands: [
+										{...condition.operands[0]},
+										{
+											...condition.operands[1],
+											label: condition.operands[1].label ? condition.operands[1].label.toString() : '',
+											value: condition.operands[1].value.toString()
+										}
+									]
+								}
+							}
+						);
+					}
+
 					return condition;
 				}
 			);

@@ -47,10 +47,10 @@ export const ruleStructure = Config.shapeOf(
 					operands: Config.arrayOf(
 						Config.shapeOf(
 							{
-								label: Config.string(),
+								label: Config.oneOfType([Config.array(), Config.string()]),
 								repeatable: Config.bool(),
 								type: Config.string(),
-								value: Config.string()
+								value: Config.oneOfType([Config.array(), Config.string()])
 							}
 						)
 					),

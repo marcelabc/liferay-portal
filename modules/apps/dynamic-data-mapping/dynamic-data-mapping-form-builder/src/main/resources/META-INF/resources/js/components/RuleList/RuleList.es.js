@@ -71,10 +71,10 @@ class RuleList extends Component {
 								operands: Config.arrayOf(
 									Config.shapeOf(
 										{
-											label: Config.string(),
+											label: Config.oneOfType([Config.array(), Config.string()]),
 											repeatable: Config.bool(),
 											type: Config.string(),
-											value: Config.string()
+											value: Config.oneOfType([Config.array(), Config.string()])
 										}
 									)
 								),
@@ -105,6 +105,7 @@ class RuleList extends Component {
 
 		strings: Config.object().value(
 			{
+				'and': Liferay.Language.get('and'),
 				'belongs-to': Liferay.Language.get('belongs-to'),
 				'calculate-field': Liferay.Language.get('calculate-field-x-as-x'),
 				contains: Liferay.Language.get('contains'),
@@ -212,6 +213,25 @@ class RuleList extends Component {
 						),
 						conditions: rule.conditions.map(
 							condition => {
+								/** ta chegando do Back end as string separadas em dois objetos. Fiz isso
+								 * para juntar em um unico objeto
+								 */
+								if(condition.operands.length > 2) {
+									let operandValues = condition.operands.slice(1);
+									let newSecondOperandValue = operandValues.map(operandValue => operandValue.value);
+
+									condition.operands = [
+										{
+											...condition.operands[0]
+										},
+										{
+											type: operandValues[0].type,
+											label: newSecondOperandValue,
+											value: newSecondOperandValue
+										}
+									]
+								}
+
 								if (condition.operands.length < 2 && condition.operands[0].type === 'list') {
 									condition.operands = [
 										{
@@ -235,7 +255,7 @@ class RuleList extends Component {
 
 											return {
 												...operand,
-												label,
+												label: this._formatLabel(label),
 												value: label
 											};
 										}
@@ -249,6 +269,16 @@ class RuleList extends Component {
 			),
 			rulesCardOptions: this._getRulesCardOptions()
 		};
+	}
+
+	_formatLabel(value) {
+		let label = value;
+
+		if (!Array.isArray(value)) {
+			label = [value];
+		}
+
+		return label;
 	}
 
 	_getDataProviderName(id) {

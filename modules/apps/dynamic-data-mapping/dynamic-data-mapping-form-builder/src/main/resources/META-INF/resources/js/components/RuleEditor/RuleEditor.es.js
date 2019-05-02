@@ -136,10 +136,10 @@ class RuleEditor extends Component {
 						Config.shapeOf(
 							{
 								dataType: Config.string(),
-								label: Config.string(),
+								label: Config.oneOfType([Config.array(), Config.string()]),
 								repeatable: Config.bool(),
 								type: Config.string(),
-								value: Config.string()
+								value: Config.oneOfType([Config.array(), Config.string()])
 							}
 						)
 					),
@@ -302,10 +302,10 @@ class RuleEditor extends Component {
 							operands: Config.arrayOf(
 								Config.shapeOf(
 									{
-										label: Config.string(),
+										label: Config.oneOfType([Config.array(), Config.string()]),
 										repeatable: Config.bool(),
 										type: Config.string(),
-										value: Config.string()
+										value: Config.oneOfType([Config.array(), Config.string()])
 									}
 								)
 							),
@@ -1356,9 +1356,11 @@ class RuleEditor extends Component {
 
 	_handleSecondOperandValueEdited(event) {
 		const {conditions} = this;
-		const {fieldInstance, value} = event;
+		const {fieldInstance} = event;
+		let {value} = event;
 		const index = this._getIndex(fieldInstance, '.condition-type-value');
-		const secondOperandValue = Array.isArray(value) ? value[0] : value;
+		value = value.filter((value) => {return value != ''});
+		const secondOperandValue = Array.isArray(value) && !fieldInstance.multiple ? value[0] : value;
 
 		this.setState(
 			{

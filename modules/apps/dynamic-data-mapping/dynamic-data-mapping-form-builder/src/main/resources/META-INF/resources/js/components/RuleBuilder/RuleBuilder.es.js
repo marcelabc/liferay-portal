@@ -3,6 +3,7 @@ import dom from 'metal-dom';
 import RuleEditor from '../../components/RuleEditor/RuleEditor.es';
 import RuleList from '../../components/RuleList/RuleList.es';
 import {Config} from 'metal-state';
+import {ruleStructure} from '../../util/config.es';
 import {EventHandler} from 'metal-events';
 import {makeFetch} from '../../util/fetch.es';
 
@@ -58,39 +59,7 @@ class RuleBuilder extends Component {
 
 		rolesURL: Config.string().required(),
 
-		rules: Config.arrayOf(
-			Config.shapeOf(
-				{
-					actions: Config.arrayOf(
-						Config.shapeOf(
-							{
-								action: Config.string(),
-								label: Config.string(),
-								target: Config.string()
-							}
-						)
-					),
-					conditions: Config.arrayOf(
-						Config.shapeOf(
-							{
-								operands: Config.arrayOf(
-									Config.shapeOf(
-										{
-											label: Config.string(),
-											repeatable: Config.bool(),
-											type: Config.string(),
-											value: Config.string()
-										}
-									)
-								),
-								operator: Config.string()
-							}
-						)
-					),
-					logicalOperator: Config.string()
-				}
-			)
-		).value([]),
+		rules: Config.arrayOf(ruleStructure).value([]),
 
 		/**
 		 * The path to the SVG spritemap file containing the icons.
@@ -136,39 +105,7 @@ class RuleBuilder extends Component {
 			)
 		).internal(),
 
-		rules: Config.arrayOf(
-			Config.shapeOf(
-				{
-					actions: Config.arrayOf(
-						Config.shapeOf(
-							{
-								action: Config.string(),
-								label: Config.string(),
-								target: Config.string()
-							}
-						)
-					),
-					conditions: Config.arrayOf(
-						Config.shapeOf(
-							{
-								operands: Config.arrayOf(
-									Config.shapeOf(
-										{
-											label: Config.string(),
-											repeatable: Config.bool(),
-											type: Config.string(),
-											value: Config.string()
-										}
-									)
-								),
-								operator: Config.string()
-							}
-						)
-					),
-					logicalOperator: Config.string()
-				}
-			)
-		).valueFn('_setRulesValueFn')
+		rules: Config.arrayOf(ruleStructure).valueFn('_setRulesValueFn')
 	};
 
 	created() {

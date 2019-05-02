@@ -10,7 +10,7 @@
 				operator: string,
 				operands: list<[
 					type: string,
-					label: string,
+					label: ?,
 					value: string
 				]>
 			]>,
@@ -58,7 +58,7 @@
 				operator: string,
 				operands: list<[
 					type: string,
-					label: string,
+					label: ?,
 					value: ?
 				]>
 			]>,
@@ -100,6 +100,7 @@
 
 									{if $condition.operands[1]}
 										{call .condition}
+											{param and: $strings['and'] /}
 											{param operandLabel: $condition.operands[1].label /}
 											{param operandType: $condition.operands[1].type /}
 											{param operandValue: $condition.operands[1].value /}
@@ -217,8 +218,9 @@
  * Prints Rules Conditions.
  */
 {template .condition}
+	{@param? and: string}
 	{@param operandType: string}
-	{@param? operandLabel: string}
+	{@param? operandLabel: ?}
 	{@param? operandValue: ?}
 
 	<div class="ddm-condition-container">
@@ -233,9 +235,19 @@
 		{/if}
 
 		{if $operandLabel}
-			{call .label}
-				{param content: $operandLabel /}
-			{/call}
+			{if length($operandLabel) > 1}
+				{foreach $label in $operandLabel}
+					{if isLast($label)} {$and} {/if}
+					{call .label}
+						{param content: $label /}
+					{/call}
+					{if index($label) < length($operandLabel) - 2} , {/if}
+				{/foreach}
+			{else}
+				{call .label}
+					{param content: $operandLabel[0] /}
+				{/call}
+			{/if}
 		{else}
 			{call .label}
 				{param content: $operandValue /}
