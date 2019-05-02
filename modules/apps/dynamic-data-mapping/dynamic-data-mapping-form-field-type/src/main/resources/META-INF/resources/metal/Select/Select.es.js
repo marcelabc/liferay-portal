@@ -127,7 +127,9 @@ class Select extends Component {
 
 	_handleItemClicked({data, preventDefault}) {
 		const {multiple} = this;
-		const currentValue = this._getArrayValue(this.value.filter((value) => {return value != undefined}));
+
+		const currentValue = this._getArrayValue(this.value).filter((value) => {return value != undefined});
+
 		const itemValue = data.item.value;
 
 		let newValue;
