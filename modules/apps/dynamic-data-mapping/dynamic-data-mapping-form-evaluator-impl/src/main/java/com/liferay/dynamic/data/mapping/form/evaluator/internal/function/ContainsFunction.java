@@ -17,8 +17,12 @@ package com.liferay.dynamic.data.mapping.form.evaluator.internal.function;
 import com.liferay.dynamic.data.mapping.constants.DDMConstants;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunction;
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -39,7 +43,12 @@ public class ContainsFunction
 		}
 
 		if (object instanceof JSONArray) {
-			return apply(object.toString(), key);
+			List<String> objectList = _toList(object.toString());
+			List<String> keyList = _toList(key.toString());
+			
+			return objectList.containsAll(keyList);
+			
+			//return apply(object.toString(), key);
 		}
 
 		if (object instanceof String) {
@@ -63,6 +72,12 @@ public class ContainsFunction
 		string2 = StringUtil.toLowerCase(string2);
 
 		return string1.contains(string2);
+	}
+	
+	private List<String> _toList(String string) {
+		String value = string.substring(1, string.length() - 1);		
+		String[] values = StringUtil.split(value);
+		return ListUtil.toList(values);
 	}
 
 }

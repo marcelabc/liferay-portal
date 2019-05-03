@@ -14,6 +14,12 @@
 
 package com.liferay.dynamic.data.mapping.form.builder.internal.converter;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.DDMFormRuleAction;
 import com.liferay.dynamic.data.mapping.form.builder.internal.converter.model.DDMFormRuleCondition;
@@ -27,12 +33,6 @@ import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.util.ListUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Rafael Praxedes
@@ -115,9 +115,30 @@ public class DDMFormRuleDeserializer {
 		JSONDeserializer<DDMFormRuleCondition[]> jsonDeserializer =
 			_jsonFactory.createJSONDeserializer();
 
+		JSONObject conditionsJSONObject = conditionsJSONArray.getJSONObject(0);
+		
+		JSONArray operands = conditionsJSONObject.getJSONArray("operands");
+		
+		if (operands.getJSONObject(1) != null) {
+			JSONObject fieldProperties = operands.getJSONObject(1);
+			
+			String fieldType = fieldProperties.getString("fieldType");
+			
+			if (fieldType.equals("checkbox_multiple")) {
+				fieldProperties = operands.getJSONObject(1);
+				
+				if (fieldProperties.getJSONArray("value") != null) {
+					JSONArray array = fieldProperties.getJSONArray("value");
+					
+					fieldProperties.put("value", array.toString());			
+				}
+			}
+		}
+		
+		
 		DDMFormRuleCondition[] ruleConditions = jsonDeserializer.deserialize(
 			conditionsJSONArray.toJSONString(), DDMFormRuleCondition[].class);
-
+		
 		return ListUtil.toList(ruleConditions);
 	}
 

@@ -148,7 +148,11 @@ public class DDMFormRuleConverter {
 		if (isNumericConstant(operand.getType())) {
 			return value;
 		}
-
+		
+		if (StringUtil.equals(operand.getFieldType(), "checkbox_multiple")) {
+			return StringUtil.quote(value);
+		}
+		
 		String[] values = StringUtil.split(value);
 
 		UnaryOperator<String> quoteOperation = StringUtil::quote;

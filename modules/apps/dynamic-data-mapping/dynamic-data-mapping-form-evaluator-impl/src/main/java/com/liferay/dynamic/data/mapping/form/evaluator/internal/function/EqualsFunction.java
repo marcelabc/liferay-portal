@@ -16,8 +16,14 @@ package com.liferay.dynamic.data.mapping.form.evaluator.internal.function;
 
 import com.liferay.dynamic.data.mapping.constants.DDMConstants;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunction;
+import com.liferay.portal.json.JSONArrayImpl;
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
@@ -37,11 +43,12 @@ public class EqualsFunction
 		Object value1 = object1;
 
 		if (object1 instanceof JSONArray) {
-			value1 = _getValue((JSONArray)object1);
+			value1 = object1.toString();
+			//value1 = _getValue((JSONArray)object1);
 		}
 
 		Object value2 = object2;
-
+		
 		if (object2 instanceof JSONArray) {
 			value2 = _getValue((JSONArray)object2);
 		}

@@ -81,11 +81,17 @@ public class DDMFormRuleCondition {
 		public Operand() {
 		}
 
-		public Operand(String type, String value) {
+		public Operand(String fieldType, String type, String value) {
+			_fieldType = fieldType;
 			_type = type;
 			_value = value;
 		}
 
+		public Operand(String type, String value) {
+			_type = type;
+			_value = value;
+		}
+		
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) {
@@ -98,13 +104,18 @@ public class DDMFormRuleCondition {
 
 			Operand operand = (Operand)obj;
 
-			if (Objects.equals(_type, operand._type) &&
+			if (Objects.equals(_fieldType, operand._fieldType) && 
+				Objects.equals(_type, operand._type) &&
 				Objects.equals(_value, operand._value)) {
 
 				return true;
 			}
 
 			return false;
+		}
+		
+		public String getFieldType() {
+			return _fieldType;
 		}
 
 		public String getType() {
@@ -114,14 +125,20 @@ public class DDMFormRuleCondition {
 		public String getValue() {
 			return _value;
 		}
-
+		
 		@Override
 		public int hashCode() {
-			int hash = HashUtil.hash(0, _type);
+			int hash = HashUtil.hash(0, _fieldType);
+			
+			hash = HashUtil.hash(hash, _type);
 
 			return HashUtil.hash(hash, _value);
 		}
 
+		public void setFieldType(String _fieldType) {
+			this._fieldType = _fieldType;
+		}
+		
 		public void setType(String type) {
 			_type = type;
 		}
@@ -130,9 +147,9 @@ public class DDMFormRuleCondition {
 			_value = value;
 		}
 
+		private String _fieldType;
 		private String _type;
 		private String _value;
-
 	}
 
 	private List<Operand> _operands;

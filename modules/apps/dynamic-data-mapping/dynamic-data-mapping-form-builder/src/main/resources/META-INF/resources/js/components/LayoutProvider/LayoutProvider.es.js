@@ -357,8 +357,9 @@ class LayoutProvider extends Component {
 										{...condition.operands[0]},
 										{
 											...condition.operands[1],
-											label: condition.operands[1].label ? condition.operands[1].label.toString() : '',
-											value: condition.operands[1].value.toString()
+											fieldType: this._setFieldType(condition.operands[0].value),
+											label: condition.operands[1].label ? condition.operands[1].label : '',
+											value: condition.operands[1].value
 										}
 									]
 								}
@@ -372,6 +373,24 @@ class LayoutProvider extends Component {
 		}
 
 		return rules;
+	}
+	
+	_setFieldType(fieldValue) {
+		let {pages} = this.state;
+		
+		let fieldType;
+		
+		const visitor = new PagesVisitor(pages);
+		
+		visitor.mapFields(
+			(field, fieldIndex, columnIndex, rowIndex, pageIndex) => {
+				if (field.fieldName === fieldValue) {
+					fieldType = field.type;
+				}
+			}
+		);
+		
+		return fieldType;
 	}
 
 	render() {
