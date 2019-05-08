@@ -40,6 +40,8 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
@@ -100,17 +102,32 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 
 	@Override
 	public Page<DataLayout> getSiteDataLayoutPage(
-			Long siteId, Pagination pagination)
+			Long siteId, String keywords, Pagination pagination)
 		throws Exception {
+
+		if (Validator.isNull(keywords)) {
+			return Page.of(
+				transform(
+					_ddmStructureLayoutLocalService.getStructureLayouts(
+						siteId, pagination.getStartPosition(),
+						pagination.getEndPosition()),
+					this::_toDataLayout),
+				pagination,
+				_ddmStructureLayoutLocalService.getStructureLayoutsCount(
+					siteId));
+		}
 
 		return Page.of(
 			transform(
-				_ddmStructureLayoutLocalService.getStructureLayouts(
-					siteId, pagination.getStartPosition(),
-					pagination.getEndPosition()),
+				_ddmStructureLayoutLocalService.search(
+					contextCompany.getCompanyId(), new long[] {siteId},
+					_getClassNameId(), keywords, pagination.getStartPosition(),
+					pagination.getEndPosition(), null),
 				this::_toDataLayout),
 			pagination,
-			_ddmStructureLayoutLocalService.getStructureLayoutsCount(siteId));
+			_ddmStructureLayoutLocalService.searchCount(
+				contextCompany.getCompanyId(), new long[] {siteId},
+				_getClassNameId(), keywords));
 	}
 
 	@Override
@@ -249,6 +266,10 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 		_modelResourcePermission = modelResourcePermission;
 	}
 
+	private long _getClassNameId() {
+		return _portal.getClassNameId(InternalDataLayout.class);
+	}
+
 	private long _getDDMStructureId(DDMStructureLayout ddmStructureLayout)
 		throws Exception {
 
@@ -306,6 +327,9 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 
 	private ModelResourcePermission<InternalDataRecordCollection>
 		_modelResourcePermission;
+
+	@Reference
+	private Portal _portal;
 
 	@Reference
 	private ResourceLocalService _resourceLocalService;
