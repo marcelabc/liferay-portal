@@ -217,7 +217,7 @@ public class DataLayoutResource {
 	}
 
 	public Page<DataLayout> getSiteDataLayoutPage(
-			Long siteId, Pagination pagination)
+			Long siteId, String keywords, Pagination pagination)
 		throws Exception {
 
 		HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();

@@ -673,7 +673,7 @@ public abstract class BaseDataLayoutResourceTestCase {
 					irrelevantSiteId, randomIrrelevantDataLayout());
 
 			Page<DataLayout> page = invokeGetSiteDataLayoutPage(
-				irrelevantSiteId, Pagination.of(1, 2));
+				irrelevantSiteId, null, Pagination.of(1, 2));
 
 			Assert.assertEquals(1, page.getTotalCount());
 
@@ -690,7 +690,7 @@ public abstract class BaseDataLayoutResourceTestCase {
 			siteId, randomDataLayout());
 
 		Page<DataLayout> page = invokeGetSiteDataLayoutPage(
-			siteId, Pagination.of(1, 2));
+			siteId, null, Pagination.of(1, 2));
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -714,14 +714,14 @@ public abstract class BaseDataLayoutResourceTestCase {
 			siteId, randomDataLayout());
 
 		Page<DataLayout> page1 = invokeGetSiteDataLayoutPage(
-			siteId, Pagination.of(1, 2));
+			siteId, null, Pagination.of(1, 2));
 
 		List<DataLayout> dataLayouts1 = (List<DataLayout>)page1.getItems();
 
 		Assert.assertEquals(dataLayouts1.toString(), 2, dataLayouts1.size());
 
 		Page<DataLayout> page2 = invokeGetSiteDataLayoutPage(
-			siteId, Pagination.of(2, 2));
+			siteId, null, Pagination.of(2, 2));
 
 		Assert.assertEquals(3, page2.getTotalCount());
 
@@ -758,7 +758,7 @@ public abstract class BaseDataLayoutResourceTestCase {
 	}
 
 	protected Page<DataLayout> invokeGetSiteDataLayoutPage(
-			Long siteId, Pagination pagination)
+			Long siteId, String keywords, Pagination pagination)
 		throws Exception {
 
 		Http.Options options = _createHttpOptions();
@@ -783,7 +783,7 @@ public abstract class BaseDataLayoutResourceTestCase {
 	}
 
 	protected Http.Response invokeGetSiteDataLayoutPageResponse(
-			Long siteId, Pagination pagination)
+			Long siteId, String keywords, Pagination pagination)
 		throws Exception {
 
 		Http.Options options = _createHttpOptions();
