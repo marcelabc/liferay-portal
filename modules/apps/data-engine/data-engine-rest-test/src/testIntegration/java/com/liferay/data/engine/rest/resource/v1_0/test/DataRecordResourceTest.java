@@ -1,28 +1,135 @@
-/**
- * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
- *
- * This library is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or (at your option)
- * any later version.
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
- * details.
- */
-
-package com.liferay.data.engine.rest.resource.v1_0.test;
-
-import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-
-/**
- * @author Jeyvison Nascimento
- */
-@Ignore
-@RunWith(Arquillian.class)
-public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
-}
+///**
+// * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+// *
+// * This library is free software; you can redistribute it and/or modify it under
+// * the terms of the GNU Lesser General Public License as published by the Free
+// * Software Foundation; either version 2.1 of the License, or (at your option)
+// * any later version.
+// *
+// * This library is distributed in the hope that it will be useful, but WITHOUT
+// * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+// * details.
+// */
+//
+//package com.liferay.data.engine.rest.resource.v1_0.test;
+//
+//import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+//import com.liferay.data.engine.rest.client.dto.v1_0.DataRecord;
+//import com.liferay.data.engine.rest.resource.v1_0.test.util.DataDefinitionTestUtil;
+//import com.liferay.data.engine.rest.resource.v1_0.test.util.DataRecordCollectionTestUtil;
+//import com.liferay.dynamic.data.lists.model.DDLRecordSet;
+//import com.liferay.dynamic.data.mapping.model.DDMStructure;
+//import com.liferay.portal.kernel.service.ResourceLocalService;
+//import com.liferay.portal.test.rule.Inject;
+//
+//import java.util.HashMap;
+//
+//import org.junit.Before;
+//import org.junit.runner.RunWith;
+//
+///**
+// * @author Jeyvison Nascimento
+// */
+//@RunWith(Arquillian.class)
+//public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
+//
+//	@Before
+//	public void setUp() throws Exception {
+//		super.setUp();
+//
+//		_ddmStructure = DataDefinitionTestUtil.addDDMStructure(testGroup);
+//		_ddlRecordSet = DataRecordCollectionTestUtil.addRecordSet(
+//			_ddmStructure, testGroup, _resourceLocalService);
+//		_irrelevantDDLRecordSet = DataRecordCollectionTestUtil.addRecordSet(
+//			_ddmStructure, irrelevantGroup, _resourceLocalService);
+//	}
+//
+//	@Override
+//	protected String[] getAdditionalAssertFieldNames() {
+//		return new String[] {"dataRecordCollectionId", "dataRecordValues"};
+//	}
+//
+//	@Override
+//	protected DataRecord randomDataRecord() throws Exception {
+//		return new DataRecord() {
+//			{
+//				dataRecordCollectionId = _ddlRecordSet.getRecordSetId();
+//				dataRecordValues = new HashMap<String, Object>() {
+//					{
+//						put("MyText", "Text");
+//					}
+//				};
+//			}
+//		};
+//	}
+//
+//	@Override
+//	protected DataRecord randomIrrelevantDataRecord() throws Exception {
+//		DataRecord randomIrrelevantDataRecord = randomDataRecord();
+//
+//		randomIrrelevantDataRecord.setDataRecordCollectionId(
+//			_irrelevantDDLRecordSet.getRecordSetId());
+//
+//		return randomIrrelevantDataRecord;
+//	}
+//
+//	@Override
+//	protected DataRecord testDeleteDataRecord_addDataRecord() throws Exception {
+//		return invokePostDataRecordCollectionDataRecord(
+//			_ddlRecordSet.getRecordSetId(), randomDataRecord());
+//	}
+//
+//	@Override
+//	protected DataRecord testGetDataRecord_addDataRecord() throws Exception {
+//		return invokePostDataRecordCollectionDataRecord(
+//			_ddlRecordSet.getRecordSetId(), randomDataRecord());
+//	}
+//
+//	@Override
+//	protected DataRecord
+//			testGetDataRecordCollectionDataRecordsPage_addDataRecord(
+//				Long dataLayoutId, DataRecord dataRecord)
+//		throws Exception {
+//
+//		long dataRecordCollectionId = _ddlRecordSet.getRecordSetId();
+//
+//		if (dataLayoutId == _irrelevantDDLRecordSet.getDDMStructureId()) {
+//			dataRecordCollectionId = _irrelevantDDLRecordSet.getRecordSetId();
+//		}
+//
+//		return invokePostDataRecordCollectionDataRecord(
+//			dataRecordCollectionId, randomDataRecord());
+//	}
+//
+//	@Override
+//	protected Long
+//			testGetDataRecordCollectionDataRecordsPage_getDataRecordCollectionId()
+//		throws Exception {
+//
+//		return _ddlRecordSet.getRecordSetId();
+//	}
+//
+//	@Override
+//	protected DataRecord testPostDataRecordCollectionDataRecord_addDataRecord(
+//			DataRecord dataRecord)
+//		throws Exception {
+//
+//		return invokePostDataRecordCollectionDataRecord(
+//			_ddlRecordSet.getRecordSetId(), dataRecord);
+//	}
+//
+//	@Override
+//	protected DataRecord testPutDataRecord_addDataRecord() throws Exception {
+//		return invokePostDataRecordCollectionDataRecord(
+//			_ddlRecordSet.getRecordSetId(), randomDataRecord());
+//	}
+//
+//	private DDLRecordSet _ddlRecordSet;
+//	private DDMStructure _ddmStructure;
+//	private DDLRecordSet _irrelevantDDLRecordSet;
+//
+//	@Inject
+//	private ResourceLocalService _resourceLocalService;
+//
+//}

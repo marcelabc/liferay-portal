@@ -33,7 +33,8 @@ import javax.annotation.Generated;
 public class DataRecordResource {
 
 	public Page<DataRecord> getDataRecordCollectionDataRecordsPage(
-			Long dataRecordCollectionId, Pagination pagination)
+			Long dataRecordCollectionId, String[] fieldNames,
+			Pagination pagination)
 		throws Exception {
 
 		HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -101,12 +102,17 @@ public class DataRecordResource {
 	}
 
 	public String getDataRecordCollectionDataRecordExport(
-			Long dataRecordCollectionId)
+			Long dataRecordCollectionId, String[] fieldNames,
+			Pagination pagination)
 		throws Exception {
 
 		HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
 
 		httpInvoker.httpMethod(HttpInvoker.HttpMethod.GET);
+
+		httpInvoker.parameter("page", String.valueOf(pagination.getPage()));
+		httpInvoker.parameter(
+			"pageSize", String.valueOf(pagination.getPageSize()));
 
 		httpInvoker.path(
 			"http://localhost:8080/o/data-engine/v1.0/data-record-collections/{dataRecordCollectionId}/data-records/export",

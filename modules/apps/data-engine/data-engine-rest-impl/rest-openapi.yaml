@@ -680,6 +680,12 @@ paths:
                       format: int64
                       type: integer
                 - in: query
+                  name: fieldNames
+                  schema:
+                      items:
+                          type: string
+                      type: array
+                - in: query
                   name: page
                   schema:
                       type: integer
@@ -739,6 +745,20 @@ paths:
                   required: true
                   schema:
                       format: int64
+                      type: integer
+                - in: query
+                  name: fieldNames
+                  schema:
+                      items:
+                          type: string
+                      type: array
+                - in: query
+                  name: page
+                  schema:
+                      type: integer
+                - in: query
+                  name: pageSize
+                  schema:
                       type: integer
             responses:
                 204:

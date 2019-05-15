@@ -25,9 +25,9 @@ import com.liferay.data.engine.rest.internal.rule.function.v1_0.DataRuleFunction
 import com.liferay.data.engine.rest.internal.rule.function.v1_0.DataRuleFunctionFactory;
 import com.liferay.data.engine.rest.internal.rule.function.v1_0.DataRuleFunctionResult;
 import com.liferay.data.engine.rest.internal.storage.DataRecordExporter;
-import com.liferay.data.engine.rest.internal.storage.DataStorageTracker;
 import com.liferay.data.engine.rest.resource.v1_0.DataRecordResource;
 import com.liferay.data.engine.spi.storage.DataStorage;
+import com.liferay.data.engine.spi.storage.DataStorageTracker;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.dynamic.data.lists.model.DDLRecordSetVersion;
@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.pagination.Page;
@@ -108,40 +109,53 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 			PermissionThreadLocal.getPermissionChecker(),
 			ddlRecord.getRecordSetId(), DataActionKeys.VIEW_DATA_RECORD);
 
-		return _toDataRecord(ddlRecord);
+		return _toDataRecord(ddlRecord, null);
 	}
 
 	@Override
 	public String getDataRecordCollectionDataRecordExport(
-			Long dataRecordCollectionId)
+			Long dataRecordCollectionId, String[] fieldNames,
+			Pagination pagination)
 		throws Exception {
 
 		_modelResourcePermission.check(
 			PermissionThreadLocal.getPermissionChecker(),
 			dataRecordCollectionId, DataActionKeys.EXPORT_DATA_RECORDS);
 
+		if (pagination.getPageSize() > _PAGE_SIZE_LIMIT) {
+			throw new BadRequestException("Page size is out of limit");
+		}
+
 		return _dataRecordExporter.export(
 			transform(
 				_ddlRecordLocalService.getRecords(
-					dataRecordCollectionId, -1, -1, null),
-				this::_toDataRecord));
+					dataRecordCollectionId, pagination.getStartPosition(),
+					pagination.getEndPosition(), null),
+				dataRecord -> _toDataRecord(
+					dataRecord, ListUtil.fromArray(fieldNames))));
 	}
 
 	@Override
 	public Page<DataRecord> getDataRecordCollectionDataRecordsPage(
-			Long dataRecordCollectionId, Pagination pagination)
+			Long dataRecordCollectionId, String[] fieldNames,
+			Pagination pagination)
 		throws Exception {
 
 		_modelResourcePermission.check(
 			PermissionThreadLocal.getPermissionChecker(),
 			dataRecordCollectionId, DataActionKeys.VIEW_DATA_RECORD);
 
+		if (pagination.getPageSize() > _PAGE_SIZE_LIMIT) {
+			throw new BadRequestException("Page size is out of limit");
+		}
+
 		return Page.of(
 			transform(
 				_ddlRecordLocalService.getRecords(
 					dataRecordCollectionId, pagination.getStartPosition(),
 					pagination.getEndPosition(), null),
-				this::_toDataRecord),
+				dataRecord -> _toDataRecord(
+					dataRecord, ListUtil.fromArray(fieldNames))),
 			pagination,
 			_ddlRecordLocalService.getRecordsCount(
 				dataRecordCollectionId, PrincipalThreadLocal.getUserId()));
@@ -176,7 +190,8 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 					ddlRecordSet.getRecordSetId(),
 					dataRecord.getDataRecordValues(),
 					ddlRecordSet.getGroupId()),
-				dataRecord.getDataRecordCollectionId(), new ServiceContext()));
+				dataRecord.getDataRecordCollectionId(), new ServiceContext()),
+			null);
 	}
 
 	@Override
@@ -192,6 +207,8 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 			ddlRecordSet.getRecordSetId(), DataActionKeys.UPDATE_DATA_RECORD);
 
 		dataRecord.setDataRecordCollectionId(ddlRecordSet.getRecordSetId());
+
+		dataRecord.setId(dataRecordId);
 
 		DDMStructure ddmStructure = ddlRecordSet.getDDMStructure();
 
@@ -249,7 +266,10 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 		return dataStorage;
 	}
 
-	private DataRecord _toDataRecord(DDLRecord ddlRecord) throws Exception {
+	private DataRecord _toDataRecord(
+			DDLRecord ddlRecord, List<String> fieldNames)
+		throws Exception {
+
 		DDLRecordSet ddlRecordSet = ddlRecord.getRecordSet();
 
 		DDMStructure ddmStructure = ddlRecordSet.getDDMStructure();
@@ -261,7 +281,8 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 			{
 				dataRecordCollectionId = ddlRecordSet.getRecordSetId();
 				dataRecordValues = dataStorage.get(
-					ddmStructure.getStructureId(), ddlRecord.getDDMStorageId());
+					ddmStructure.getStructureId(), ddlRecord.getDDMStorageId(),
+					fieldNames);
 				id = ddlRecord.getRecordId();
 			}
 		};
@@ -358,6 +379,8 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 			throw new BadRequestException(errorCodesMap.toString());
 		}
 	}
+
+	private static final int _PAGE_SIZE_LIMIT = 250;
 
 	private DataRecordExporter _dataRecordExporter;
 

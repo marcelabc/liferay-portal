@@ -46,6 +46,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
@@ -62,6 +63,7 @@ public abstract class BaseDataRecordResourceImpl implements DataRecordResource {
 	@Parameters(
 		value = {
 			@Parameter(in = ParameterIn.PATH, name = "dataRecordCollectionId"),
+			@Parameter(in = ParameterIn.QUERY, name = "fieldNames"),
 			@Parameter(in = ParameterIn.QUERY, name = "page"),
 			@Parameter(in = ParameterIn.QUERY, name = "pageSize")
 		}
@@ -72,6 +74,8 @@ public abstract class BaseDataRecordResourceImpl implements DataRecordResource {
 	public Page<DataRecord> getDataRecordCollectionDataRecordsPage(
 			@NotNull @Parameter(hidden = true)
 			@PathParam("dataRecordCollectionId") Long dataRecordCollectionId,
+			@Parameter(hidden = true) @QueryParam("fieldNames") String[]
+				fieldNames,
 			@Context Pagination pagination)
 		throws Exception {
 
@@ -102,7 +106,10 @@ public abstract class BaseDataRecordResourceImpl implements DataRecordResource {
 	@GET
 	@Parameters(
 		value = {
-			@Parameter(in = ParameterIn.PATH, name = "dataRecordCollectionId")
+			@Parameter(in = ParameterIn.PATH, name = "dataRecordCollectionId"),
+			@Parameter(in = ParameterIn.QUERY, name = "fieldNames"),
+			@Parameter(in = ParameterIn.QUERY, name = "page"),
+			@Parameter(in = ParameterIn.QUERY, name = "pageSize")
 		}
 	)
 	@Path(
@@ -112,7 +119,10 @@ public abstract class BaseDataRecordResourceImpl implements DataRecordResource {
 	@Tags(value = {@Tag(name = "DataRecord")})
 	public String getDataRecordCollectionDataRecordExport(
 			@NotNull @Parameter(hidden = true)
-			@PathParam("dataRecordCollectionId") Long dataRecordCollectionId)
+			@PathParam("dataRecordCollectionId") Long dataRecordCollectionId,
+			@Parameter(hidden = true) @QueryParam("fieldNames") String[]
+				fieldNames,
+			@Context Pagination pagination)
 		throws Exception {
 
 		return StringPool.BLANK;

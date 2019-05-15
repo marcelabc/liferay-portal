@@ -14,27 +14,13 @@
 
 package com.liferay.data.engine.spi.storage;
 
-import java.util.List;
-import java.util.Map;
-
 import org.osgi.annotation.versioning.ProviderType;
 
-
 /**
- * @author Jeyvison Nascimento
+ * @author Marcela Cunha
  */
 @ProviderType
-public interface DataStorage {
+public interface DataStorageTracker {
 
-	public long delete(long dataStorageId) throws Exception;
-
-	public Map<String, Object> get(
-			long dataDefinitionId, long dataStorageId, List<String> fieldNames)
-		throws Exception;
-
-	public long save(
-			long dataRecordCollectionId, Map<String, Object> dataRecordValues,
-			long siteId)
-		throws Exception;
-
+	public DataStorage getDataStorage(String dataStorageType) ;
 }

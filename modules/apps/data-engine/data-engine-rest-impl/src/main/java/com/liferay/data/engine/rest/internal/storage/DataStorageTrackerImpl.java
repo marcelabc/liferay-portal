@@ -15,6 +15,7 @@
 package com.liferay.data.engine.rest.internal.storage;
 
 import com.liferay.data.engine.spi.storage.DataStorage;
+import com.liferay.data.engine.spi.storage.DataStorageTracker;
 import com.liferay.portal.kernel.util.MapUtil;
 
 import java.util.Map;
@@ -31,8 +32,9 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Jeyvison Nascimento
  */
 @Component(immediate = true, service = DataStorageTracker.class)
-public class DataStorageTracker {
+public class DataStorageTrackerImpl implements DataStorageTracker {
 
+	@Override
 	public DataStorage getDataStorage(String dataStorageType) {
 		return _dataStorages.get(dataStorageType);
 	}

@@ -33,7 +33,8 @@ import javax.annotation.Generated;
 public interface DataRecordResource {
 
 	public Page<DataRecord> getDataRecordCollectionDataRecordsPage(
-			Long dataRecordCollectionId, Pagination pagination)
+			Long dataRecordCollectionId, String[] fieldNames,
+			Pagination pagination)
 		throws Exception;
 
 	public DataRecord postDataRecordCollectionDataRecord(
@@ -41,7 +42,8 @@ public interface DataRecordResource {
 		throws Exception;
 
 	public String getDataRecordCollectionDataRecordExport(
-			Long dataRecordCollectionId)
+			Long dataRecordCollectionId, String[] fieldNames,
+			Pagination pagination)
 		throws Exception;
 
 	public void deleteDataRecord(Long dataRecordId) throws Exception;

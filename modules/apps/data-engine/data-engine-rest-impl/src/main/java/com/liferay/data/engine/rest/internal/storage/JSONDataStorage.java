@@ -27,6 +27,7 @@ import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 
+import java.util.List;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
@@ -54,7 +55,8 @@ public class JSONDataStorage implements DataStorage {
 	}
 
 	@Override
-	public Map<String, Object> get(long dataDefinitionId, long dataStorageId)
+	public Map<String, Object> get(
+			long dataDefinitionId, long dataStorageId, List<String> fieldNames)
 		throws Exception {
 
 		DDMContent ddmContent = _ddmContentLocalService.getContent(
@@ -63,7 +65,7 @@ public class JSONDataStorage implements DataStorage {
 		return DataRecordValuesUtil.toDataRecordValues(
 			DataDefinitionUtil.toDataDefinition(
 				_ddmStructureLocalService.getStructure(dataDefinitionId)),
-			ddmContent.getData());
+			ddmContent.getData(), fieldNames);
 	}
 
 	@Override

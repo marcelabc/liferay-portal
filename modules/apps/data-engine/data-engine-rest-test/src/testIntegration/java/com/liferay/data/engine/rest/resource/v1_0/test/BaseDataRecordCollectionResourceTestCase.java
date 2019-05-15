@@ -18,8 +18,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
 import com.liferay.data.engine.rest.client.dto.v1_0.DataRecordCollection;
@@ -121,14 +119,6 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 				enable(SerializationFeature.INDENT_OUTPUT);
 				setDateFormat(new ISO8601DateFormat());
-				setFilterProvider(
-					new SimpleFilterProvider() {
-						{
-							addFilter(
-								"Liferay.Vulcan",
-								SimpleBeanPropertyFilter.serializeAll());
-						}
-					});
 				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 				setSerializationInclusion(JsonInclude.Include.NON_NULL);
 			}
@@ -151,14 +141,6 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			{
 				configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 				setDateFormat(new ISO8601DateFormat());
-				setFilterProvider(
-					new SimpleFilterProvider() {
-						{
-							addFilter(
-								"Liferay.Vulcan",
-								SimpleBeanPropertyFilter.serializeAll());
-						}
-					});
 				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 				setSerializationInclusion(JsonInclude.Include.NON_NULL);
 			}
@@ -314,6 +296,7 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 					"/data-definitions/{dataDefinitionId}/data-record-collections",
 					dataDefinitionId);
 
+		location = HttpUtil.addParameter(location, "keywords", keywords);
 		location = HttpUtil.addParameter(
 			location, "page", pagination.getPage());
 		location = HttpUtil.addParameter(
@@ -343,6 +326,7 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 					"/data-definitions/{dataDefinitionId}/data-record-collections",
 					dataDefinitionId);
 
+		location = HttpUtil.addParameter(location, "keywords", keywords);
 		location = HttpUtil.addParameter(
 			location, "page", pagination.getPage());
 		location = HttpUtil.addParameter(
@@ -698,6 +682,8 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 					"/data-record-collections/{dataRecordCollectionId}/data-record-collection-permissions",
 					dataRecordCollectionId);
 
+		location = HttpUtil.addParameter(location, "operation", operation);
+
 		options.setLocation(location);
 
 		options.setPost(true);
@@ -722,6 +708,8 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 				_toPath(
 					"/data-record-collections/{dataRecordCollectionId}/data-record-collection-permissions",
 					dataRecordCollectionId);
+
+		location = HttpUtil.addParameter(location, "operation", operation);
 
 		options.setLocation(location);
 
@@ -750,6 +738,8 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 					"/sites/{siteId}/data-record-collection-permissions",
 					siteId);
 
+		location = HttpUtil.addParameter(location, "operation", operation);
+
 		options.setLocation(location);
 
 		options.setPost(true);
@@ -774,6 +764,8 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 				_toPath(
 					"/sites/{siteId}/data-record-collection-permissions",
 					siteId);
+
+		location = HttpUtil.addParameter(location, "operation", operation);
 
 		options.setLocation(location);
 
@@ -912,6 +904,7 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			_resourceURL +
 				_toPath("/sites/{siteId}/data-record-collections", siteId);
 
+		location = HttpUtil.addParameter(location, "keywords", keywords);
 		location = HttpUtil.addParameter(
 			location, "page", pagination.getPage());
 		location = HttpUtil.addParameter(
@@ -938,6 +931,7 @@ public abstract class BaseDataRecordCollectionResourceTestCase {
 			_resourceURL +
 				_toPath("/sites/{siteId}/data-record-collections", siteId);
 
+		location = HttpUtil.addParameter(location, "keywords", keywords);
 		location = HttpUtil.addParameter(
 			location, "page", pagination.getPage());
 		location = HttpUtil.addParameter(
