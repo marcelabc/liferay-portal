@@ -56,11 +56,11 @@ public class DataLayoutResourceTest extends BaseDataLayoutResourceTestCase {
 
 		DataLayout dataLayout1 =
 			testGetDataDefinitionDataLayoutsPage_addDataLayout(
-				dataDefinitionId, randomDataLayout("form layout"));
+				dataDefinitionId, createDataLayout("form layout"));
 
 		DataLayout dataLayout2 =
 			testGetDataDefinitionDataLayoutsPage_addDataLayout(
-				dataDefinitionId, randomDataLayout("app layout"));
+				dataDefinitionId, createDataLayout("app layout"));
 
 		Page<DataLayout> page =
 			DataLayoutResource.getDataDefinitionDataLayoutsPage(
@@ -78,112 +78,37 @@ public class DataLayoutResourceTest extends BaseDataLayoutResourceTestCase {
 	public void testSearchDataDefinitionDataLayoutsByFullName()
 		throws Exception {
 
-		Long dataDefinitionId =
-			testGetDataDefinitionDataLayoutsPage_getDataDefinitionId();
-
-		DataLayout dataLayout =
-			testGetDataDefinitionDataLayoutsPage_addDataLayout(
-				dataDefinitionId, randomDataLayout("form layout"));
-
-		Page<DataLayout> page =
-			DataLayoutResource.getDataDefinitionDataLayoutsPage(
-				dataDefinitionId, "form layout", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataDefinitionDataLayoutSearchTestByName("form layout", "form layout");
 	}
 
 	@Test
 	public void testSearchDataDefinitionDataLayoutsByLongName()
 		throws Exception {
 
-		Long dataDefinitionId =
-			testGetDataDefinitionDataLayoutsPage_getDataDefinitionId();
-
-		DataLayout dataLayout =
-			testGetDataDefinitionDataLayoutsPage_addDataLayout(
-				dataDefinitionId,
-				randomDataLayout("abcdefghijklmnopqrstuvwxyz0123456789"));
-
-		Page<DataLayout> page =
-			DataLayoutResource.getDataDefinitionDataLayoutsPage(
-				dataDefinitionId, "abcdefghijklmnopqrstuvwxyz0123456789",
-				Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataDefinitionDataLayoutSearchTestByName(
+			"abcdefghijklmnopqrstuvwxyz0123456789",
+			"abcdefghijklmnopqrstuvwxyz0123456789");
 	}
 
 	@Test
 	public void testSearchDataDefinitionDataLayoutsByNameWithNonasciiChar()
 		throws Exception {
 
-		Long dataDefinitionId =
-			testGetDataDefinitionDataLayoutsPage_getDataDefinitionId();
-
-		DataLayout dataLayout =
-			testGetDataDefinitionDataLayoutsPage_addDataLayout(
-				dataDefinitionId, randomDataLayout("π€† layout"));
-
-		Page<DataLayout> page =
-			DataLayoutResource.getDataDefinitionDataLayoutsPage(
-				dataDefinitionId, "π€† layout", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataDefinitionDataLayoutSearchTestByName("π€† layout", "π€† layout");
 	}
 
 	@Test
 	public void testSearchDataDefinitionDataLayoutsByNameWithSpecialASCIIChar()
 		throws Exception {
 
-		Long dataDefinitionId =
-			testGetDataDefinitionDataLayoutsPage_getDataDefinitionId();
-
-		DataLayout dataLayout =
-			testGetDataDefinitionDataLayoutsPage_addDataLayout(
-				dataDefinitionId, randomDataLayout("!@#layout"));
-
-		Page<DataLayout> page =
-			DataLayoutResource.getDataDefinitionDataLayoutsPage(
-				dataDefinitionId, "!@#l", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataDefinitionDataLayoutSearchTestByName("!@#layout", "!@#l");
 	}
 
 	@Test
 	public void testSearchDataDefinitionDataLayoutsByPartialName()
 		throws Exception {
 
-		Long dataDefinitionId =
-			testGetDataDefinitionDataLayoutsPage_getDataDefinitionId();
-
-		DataLayout dataLayout =
-			testGetDataDefinitionDataLayoutsPage_addDataLayout(
-				dataDefinitionId, randomDataLayout("form layout"));
-
-		Page<DataLayout> page =
-			DataLayoutResource.getDataDefinitionDataLayoutsPage(
-				dataDefinitionId, "layo", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataDefinitionDataLayoutSearchTestByName("form layout", "layo");
 	}
 
 	@Test
@@ -191,10 +116,10 @@ public class DataLayoutResourceTest extends BaseDataLayoutResourceTestCase {
 		Long siteId = testGetSiteDataLayoutPage_getSiteId();
 
 		DataLayout dataLayout1 = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("form layout"));
+			siteId, createDataLayout("form layout"));
 
 		DataLayout dataLayout2 = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("app layout"));
+			siteId, createDataLayout("app layout"));
 
 		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
 			siteId, " ", Pagination.of(1, 2));
@@ -208,105 +133,36 @@ public class DataLayoutResourceTest extends BaseDataLayoutResourceTestCase {
 
 	@Test
 	public void testSearchDataLayoutByCaseSensitiveName() throws Exception {
-		Long siteId = testGetSiteDataLayoutPage_getSiteId();
-
-		DataLayout dataLayout = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("FoRmSLaYoUt"));
-
-		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
-			siteId, "FORM", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataLayoutSearchTestByName("FoRmSLaYoUt", "FORM");
 	}
 
 	@Test
 	public void testSearchDataLayoutByFullName() throws Exception {
-		Long siteId = testGetSiteDataLayoutPage_getSiteId();
-
-		DataLayout dataLayout = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("form layout"));
-
-		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
-			siteId, "form layout", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataLayoutSearchTestByName("form layout", "form layout");
 	}
 
 	@Test
 	public void testSearchDataLayoutByLongName() throws Exception {
-		Long siteId = testGetSiteDataLayoutPage_getSiteId();
-
-		DataLayout dataLayout = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("abcdefghijklmnopqrstuvwxyz0123456789"));
-
-		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
-			siteId, "abcdefghijklmnopqrstuvwxyz0123456789",
-			Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataLayoutSearchTestByName(
+			"abcdefghijklmnopqrstuvwxyz0123456789",
+			"abcdefghijklmnopqrstuvwxyz0123456789");
 	}
 
 	@Test
 	public void testSearchDataLayoutByNameWithNonasciiChar() throws Exception {
-		Long siteId = testGetSiteDataLayoutPage_getSiteId();
-
-		DataLayout dataLayout = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("π€† layout"));
-
-		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
-			siteId, "π€†", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataLayoutSearchTestByName("π€† layout", "π€†");
 	}
 
 	@Test
 	public void testSearchDataLayoutByNameWithSpecialASCIIChar()
 		throws Exception {
 
-		Long siteId = testGetSiteDataLayoutPage_getSiteId();
-
-		DataLayout dataLayout = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("!@#layout "));
-
-		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
-			siteId, "!@#l", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataLayoutSearchTestByName("!@#layout", "!@#l");
 	}
 
 	@Test
 	public void testSearchDataLayoutByPartialName() throws Exception {
-		Long siteId = testGetSiteDataLayoutPage_getSiteId();
-
-		DataLayout dataLayout = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout("form layout"));
-
-		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
-			siteId, "layo", Pagination.of(1, 2));
-
-		Assert.assertEquals(1, page.getTotalCount());
-
-		assertEqualsIgnoringOrder(
-			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
-		assertValid(page);
+		dataLayoutSearchTestByName("form layout", "layo");
 	}
 
 	@Test
@@ -335,13 +191,59 @@ public class DataLayoutResourceTest extends BaseDataLayoutResourceTestCase {
 
 	@Test
 	public void testSearchSiteDataLayoutPage() throws Exception {
+		dataLayoutSearchTestByName("article layout", "arti");
+	}
+
+	protected DataLayout createDataLayout(String dataLayoutName) {
+		return new DataLayout() {
+			{
+				dataDefinitionId = _ddmStructure.getStructureId();
+				dateCreated = RandomTestUtil.nextDate();
+				dateModified = RandomTestUtil.nextDate();
+				defaultLanguageId = "en_US";
+				id = RandomTestUtil.randomLong();
+				name = new HashMap<String, Object>() {
+					{
+						put("en_US", dataLayoutName);
+					}
+				};
+			}
+		};
+	}
+
+	protected void dataDefinitionDataLayoutSearchTestByName(
+			String dataLayoutName, String keywords)
+		throws Exception {
+
+		Long dataDefinitionId =
+			testGetDataDefinitionDataLayoutsPage_getDataDefinitionId();
+
+		DataLayout dataLayout =
+			testGetDataDefinitionDataLayoutsPage_addDataLayout(
+				dataDefinitionId, createDataLayout(dataLayoutName));
+
+		Page<DataLayout> page =
+			DataLayoutResource.getDataDefinitionDataLayoutsPage(
+				dataDefinitionId, keywords, Pagination.of(1, 2));
+
+		Assert.assertEquals(1, page.getTotalCount());
+
+		assertEqualsIgnoringOrder(
+			Arrays.asList(dataLayout), (List<DataLayout>)page.getItems());
+		assertValid(page);
+	}
+
+	protected void dataLayoutSearchTestByName(
+			String dataLayoutName, String keywords)
+		throws Exception {
+
 		Long siteId = testGetSiteDataLayoutPage_getSiteId();
 
 		DataLayout dataLayout = testGetSiteDataLayoutPage_addDataLayout(
-			siteId, randomDataLayout(" article layout"));
+			siteId, createDataLayout(dataLayoutName));
 
 		Page<DataLayout> page = DataLayoutResource.getSiteDataLayoutPage(
-			siteId, " arti", Pagination.of(1, 2));
+			siteId, keywords, Pagination.of(1, 2));
 
 		Assert.assertEquals(1, page.getTotalCount());
 
@@ -357,37 +259,7 @@ public class DataLayoutResourceTest extends BaseDataLayoutResourceTestCase {
 
 	@Override
 	protected DataLayout randomDataLayout() {
-		return new DataLayout() {
-			{
-				dataDefinitionId = _ddmStructure.getStructureId();
-				dateCreated = RandomTestUtil.nextDate();
-				dateModified = RandomTestUtil.nextDate();
-				defaultLanguageId = "en_US";
-				id = RandomTestUtil.randomLong();
-				name = new HashMap<String, Object>() {
-					{
-						put("en_US", RandomTestUtil.randomString());
-					}
-				};
-			}
-		};
-	}
-
-	protected DataLayout randomDataLayout(String value) {
-		return new DataLayout() {
-			{
-				dataDefinitionId = _ddmStructure.getStructureId();
-				dateCreated = RandomTestUtil.nextDate();
-				dateModified = RandomTestUtil.nextDate();
-				defaultLanguageId = "en_US";
-				id = RandomTestUtil.randomLong();
-				name = new HashMap<String, Object>() {
-					{
-						put("en_US", value);
-					}
-				};
-			}
-		};
+		return createDataLayout(RandomTestUtil.randomString());
 	}
 
 	@Override
