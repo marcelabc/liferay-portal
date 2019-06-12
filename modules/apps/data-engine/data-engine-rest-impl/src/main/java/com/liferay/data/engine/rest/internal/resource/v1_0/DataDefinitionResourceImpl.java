@@ -247,7 +247,7 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 			ActionKeys.UPDATE);
 
 		return DataDefinitionUtil.toDataDefinition(
-			_ddmStructureLocalService.updateStructure(
+			_ddmStructureLocalService.updateStructureWithoutUpdateVersion(
 				PrincipalThreadLocal.getUserId(), dataDefinitionId,
 				DDMStructureConstants.DEFAULT_PARENT_STRUCTURE_ID,
 				LocalizedValueUtil.toLocaleStringMap(dataDefinition.getName()),
