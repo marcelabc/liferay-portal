@@ -1525,6 +1525,20 @@ public class DDMStructureLocalServiceUtil {
 			serviceContext);
 	}
 
+	public static com.liferay.dynamic.data.mapping.model.DDMStructure
+			updateStructureWithoutUpdateVersion(
+				long userId, long structureId, long parentStructureId,
+				java.util.Map<java.util.Locale, String> nameMap,
+				java.util.Map<java.util.Locale, String> descriptionMap,
+				String definition,
+				com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return getService().updateStructureWithoutUpdateVersion(
+			userId, structureId, parentStructureId, nameMap, descriptionMap,
+			definition, serviceContext);
+	}
+
 	/**
 	 * Updates the structure matching the structure ID, replacing its XSD with a
 	 * new one.

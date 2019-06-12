@@ -1164,6 +1164,12 @@ public interface DDMStructureLocalService
 			String definition, ServiceContext serviceContext)
 		throws PortalException;
 
+	public DDMStructure updateStructureWithoutUpdateVersion(
+			long userId, long structureId, long parentStructureId,
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			String definition, ServiceContext serviceContext)
+		throws PortalException;
+
 	/**
 	 * Updates the structure matching the structure ID, replacing its XSD with a
 	 * new one.

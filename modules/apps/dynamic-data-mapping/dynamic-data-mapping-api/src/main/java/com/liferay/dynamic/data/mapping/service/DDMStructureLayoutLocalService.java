@@ -360,8 +360,21 @@ public interface DDMStructureLayoutLocalService
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<DDMStructureLayout> search(
+			long companyId, long[] groupIds, long classNameId, String keywords,
+			long structureVersionId, int start, int end,
+			OrderByComparator<DDMStructureLayout> orderByComparator)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int searchCount(
 			long companyId, long[] groupIds, long classNameId, String keywords)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int searchCount(
+			long companyId, long[] groupIds, long classNameId, String keywords,
+			long structureVersionId)
 		throws PortalException;
 
 	/**
