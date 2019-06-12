@@ -24,8 +24,8 @@ import com.liferay.data.engine.rest.resource.v1_0.DataRecordCollectionResource;
 import com.liferay.data.engine.rest.resource.v1_0.DataRecordResource;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
@@ -300,34 +300,30 @@ public class Query {
 			DataDefinitionResource dataDefinitionResource)
 		throws Exception {
 
-		dataDefinitionResource.setContextCompany(
-			CompanyLocalServiceUtil.getCompany(
-				CompanyThreadLocal.getCompanyId()));
+		dataDefinitionResource.setContextAcceptLanguage(_acceptLanguage);
+		dataDefinitionResource.setContextCompany(_company);
 	}
 
 	private void _populateResourceContext(DataLayoutResource dataLayoutResource)
 		throws Exception {
 
-		dataLayoutResource.setContextCompany(
-			CompanyLocalServiceUtil.getCompany(
-				CompanyThreadLocal.getCompanyId()));
+		dataLayoutResource.setContextAcceptLanguage(_acceptLanguage);
+		dataLayoutResource.setContextCompany(_company);
 	}
 
 	private void _populateResourceContext(DataRecordResource dataRecordResource)
 		throws Exception {
 
-		dataRecordResource.setContextCompany(
-			CompanyLocalServiceUtil.getCompany(
-				CompanyThreadLocal.getCompanyId()));
+		dataRecordResource.setContextAcceptLanguage(_acceptLanguage);
+		dataRecordResource.setContextCompany(_company);
 	}
 
 	private void _populateResourceContext(
 			DataRecordCollectionResource dataRecordCollectionResource)
 		throws Exception {
 
-		dataRecordCollectionResource.setContextCompany(
-			CompanyLocalServiceUtil.getCompany(
-				CompanyThreadLocal.getCompanyId()));
+		dataRecordCollectionResource.setContextAcceptLanguage(_acceptLanguage);
+		dataRecordCollectionResource.setContextCompany(_company);
 	}
 
 	private static ComponentServiceObjects<DataDefinitionResource>
@@ -338,5 +334,8 @@ public class Query {
 		_dataRecordResourceComponentServiceObjects;
 	private static ComponentServiceObjects<DataRecordCollectionResource>
 		_dataRecordCollectionResourceComponentServiceObjects;
+
+	private AcceptLanguage _acceptLanguage;
+	private Company _company;
 
 }
