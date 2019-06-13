@@ -1697,6 +1697,40 @@ public class DDMStructureLocalServiceImpl
 			ddmFormLayout, serviceContext, structure);
 	}
 
+	public DDMStructure updateStructureWithoutUpdateVersion(
+			long userId, long structureId, long parentStructureId,
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			String definition, ServiceContext serviceContext)
+		throws PortalException {
+
+		DDMStructure structure = ddmStructurePersistence.findByPrimaryKey(
+			structureId);
+
+		User user = userLocalService.getUser(userId);
+
+		structure.setUserId(userId);
+		structure.setParentStructureId(parentStructureId);
+
+		DDMStructureVersion latestStructureVersion =
+			ddmStructureVersionLocalService.getLatestStructureVersion(
+				structure.getStructureId());
+
+		structure.setVersion(latestStructureVersion.getVersion());
+
+		structure.setNameMap(nameMap);
+		structure.setVersionUserId(user.getUserId());
+		structure.setVersionUserName(user.getFullName());
+		structure.setModifiedDate(new Date());
+		structure.setDescriptionMap(descriptionMap);
+		structure.setDefinition(definition);
+
+		ddmStructurePersistence.update(structure);
+
+		reindexStructure(structure, serviceContext);
+
+		return structure;
+	}
+
 	/**
 	 * Updates the structure matching the structure ID, replacing its XSD with a
 	 * new one.
