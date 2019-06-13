@@ -74,6 +74,21 @@ public class DDMSearchHelper {
 		return searchContext;
 	}
 
+	public SearchContext buildStructureLayoutSearchContext(
+		long companyId, long[] groupIds, long classNameId, String name,
+		String description, String storageType, long structureVersionId,
+		Integer type, int status, int start, int end,
+		OrderByComparator<DDMStructureLayout> orderByComparator) {
+
+		SearchContext searchContext = buildStructureLayoutSearchContext(
+			companyId, groupIds, classNameId, name, description, storageType,
+			type, status, start, end, orderByComparator);
+
+		searchContext.setAttribute("structureVersionId", structureVersionId);
+
+		return searchContext;
+	}
+
 	public SearchContext buildStructureSearchContext(
 		long companyId, long[] groupIds, long userId, long classNameId,
 		Long classPK, String name, String description, String storageType,
