@@ -46,11 +46,10 @@ public class DataDefinitionResourceTest
 	public void testPostDataDefinitionDataDefinitionPermission()
 		throws Exception {
 
-		Long siteId = testGetSiteDataDefinitionsPage_getSiteId();
-
 		DataDefinition dataDefinition =
 			testGetSiteDataDefinitionsPage_addDataDefinition(
-				siteId, randomDataDefinition());
+				testGetSiteDataDefinitionsPage_getSiteId(),
+				randomDataDefinition());
 
 		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
 
@@ -80,11 +79,10 @@ public class DataDefinitionResourceTest
 
 	@Test
 	public void testSearchNonexistingSiteDataDefinition() throws Exception {
-		Long siteId = testGetSiteDataDefinitionsPage_getSiteId();
-
 		Page<DataDefinition> page =
 			dataDefinitionResource.getSiteDataDefinitionsPage(
-				siteId, "definition", Pagination.of(1, 2));
+				testGetSiteDataDefinitionsPage_getSiteId(), "definition",
+				Pagination.of(1, 2));
 
 		Assert.assertEquals(0, page.getTotalCount());
 	}
@@ -212,12 +210,6 @@ public class DataDefinitionResourceTest
 
 		Long siteId = testGetSiteDataDefinitionsPage_getSiteId();
 
-		DataDefinition dataDefinition1 =
-			testGetSiteDataDefinitionsPage_addDataDefinition(
-				siteId,
-				_createDataDefinition(
-					dataDefinitionName, dataDefinitionDescription));
-
 		Page<DataDefinition> page =
 			dataDefinitionResource.getSiteDataDefinitionsPage(
 				siteId, keywords, Pagination.of(1, 2));
@@ -225,8 +217,13 @@ public class DataDefinitionResourceTest
 		Assert.assertEquals(1, page.getTotalCount());
 
 		assertEqualsIgnoringOrder(
-			Arrays.asList(dataDefinition1),
+			Arrays.asList(
+				testGetSiteDataDefinitionsPage_addDataDefinition(
+					siteId,
+					_createDataDefinition(
+						dataDefinitionName, dataDefinitionDescription))),
 			(List<DataDefinition>)page.getItems());
+
 		assertValid(page);
 	}
 
