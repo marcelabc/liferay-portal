@@ -477,6 +477,17 @@ public class DDLRecordSetLocalServiceImpl
 			DDLRecordSetSettings.class, ddmFormValues);
 	}
 
+	@Override
+	public List<DDLRecordSet> search(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope, int start, int end,
+		OrderByComparator<DDLRecordSet> orderByComparator) {
+
+		return ddlRecordSetFinder.findByKeywords(
+			companyId, ddmStructureId, groupId, keywords, scope, start, end,
+			orderByComparator);
+	}
+
 	/**
 	 * Returns a range of all record sets matching the parameters, including a
 	 * keywords parameter for matching string values to the record set's name or
@@ -563,6 +574,15 @@ public class DDLRecordSetLocalServiceImpl
 		return ddlRecordSetFinder.findByC_G_N_D_S(
 			companyId, groupId, name, description, scope, andOperator, start,
 			end, orderByComparator);
+	}
+
+	@Override
+	public int searchCount(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope) {
+
+		return ddlRecordSetFinder.countByKeywords(
+			companyId, ddmStructureId, groupId, keywords, scope);
 	}
 
 	/**
