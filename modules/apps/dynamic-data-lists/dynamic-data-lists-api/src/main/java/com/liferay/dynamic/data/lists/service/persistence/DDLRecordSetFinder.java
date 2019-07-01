@@ -24,6 +24,10 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface DDLRecordSetFinder {
 
 	public int countByKeywords(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope);
+
+	public int countByKeywords(
 		long companyId, long groupId, String keywords, int scope);
 
 	public int countByG_D(
@@ -60,6 +64,14 @@ public interface DDLRecordSetFinder {
 		filterFindByC_G_N_D_S(
 			long companyId, long groupId, String[] names, String[] descriptions,
 			int scope, boolean andOperator, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.dynamic.data.lists.model.DDLRecordSet>
+					orderByComparator);
+
+	public java.util.List<com.liferay.dynamic.data.lists.model.DDLRecordSet>
+		findByKeywords(
+			long companyId, long ddmStructureId, long groupId, String keywords,
+			int scope, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<com.liferay.dynamic.data.lists.model.DDLRecordSet>
 					orderByComparator);

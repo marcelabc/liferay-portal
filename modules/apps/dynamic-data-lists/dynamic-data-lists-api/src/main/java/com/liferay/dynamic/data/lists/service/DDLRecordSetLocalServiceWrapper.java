@@ -670,6 +670,20 @@ public class DDLRecordSetLocalServiceWrapper
 		return _ddlRecordSetLocalService.getRecordSetSettingsModel(recordSet);
 	}
 
+	@Override
+	public java.util.List<com.liferay.dynamic.data.lists.model.DDLRecordSet>
+		search(
+			long companyId, long ddmStructureId, long groupId, String keywords,
+			int scope, int start, int end,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.dynamic.data.lists.model.DDLRecordSet>
+					orderByComparator) {
+
+		return _ddlRecordSetLocalService.search(
+			companyId, ddmStructureId, groupId, keywords, scope, start, end,
+			orderByComparator);
+	}
+
 	/**
 	 * Returns a range of all record sets matching the parameters, including a
 	 * keywords parameter for matching string values to the record set's name or
@@ -763,6 +777,15 @@ public class DDLRecordSetLocalServiceWrapper
 		return _ddlRecordSetLocalService.search(
 			companyId, groupId, name, description, scope, andOperator, start,
 			end, orderByComparator);
+	}
+
+	@Override
+	public int searchCount(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope) {
+
+		return _ddlRecordSetLocalService.searchCount(
+			companyId, ddmStructureId, groupId, keywords, scope);
 	}
 
 	/**
