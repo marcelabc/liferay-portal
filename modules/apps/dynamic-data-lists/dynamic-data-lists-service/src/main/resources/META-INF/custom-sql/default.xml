@@ -96,6 +96,23 @@
 				)
 		]]>
 	</sql>
+	<sql id="com.liferay.dynamic.data.lists.service.persistence.DDLRecordSetFinder.countByC_D_G_N_D_S">
+		<![CDATA[
+			SELECT
+				COUNT(DISTINCT DDLRecordSet.recordSetId) AS COUNT_VALUE
+			FROM
+				DDLRecordSet
+			WHERE
+				(DDLRecordSet.companyId = ?) AND
+				(DDLRecordSet.DDMStructureId = ?) AND
+				(DDLRecordSet.groupId = ?) AND
+				(DDLRecordSet.scope = ?) AND
+				(
+					(LOWER(DDLRecordSet.name) LIKE ? [$AND_OR_NULL_CHECK$]) [$AND_OR_CONNECTOR$]
+					(DDLRecordSet.description LIKE ? [$AND_OR_NULL_CHECK$])
+				)
+		]]>
+	</sql>
 	<sql id="com.liferay.dynamic.data.lists.service.persistence.DDLRecordSetFinder.findByC_G_N_D_S">
 		<![CDATA[
 			SELECT
@@ -108,6 +125,34 @@
 						DDLRecordSet
 					WHERE
 						(DDLRecordSet.companyId = ?) AND
+						(DDLRecordSet.groupId = ?) AND
+						(DDLRecordSet.scope = ?) AND
+						(
+							(LOWER(DDLRecordSet.name) LIKE ? [$AND_OR_NULL_CHECK$]) [$AND_OR_CONNECTOR$]
+							(LOWER(DDLRecordSet.description) LIKE ? [$AND_OR_NULL_CHECK$])
+						)
+				)
+				TEMP_TABLE
+					INNER JOIN
+						DDLRecordSet ON
+							TEMP_TABLE.recordSetId = DDLRecordSet.recordSetId
+			ORDER BY
+				DDLRecordSet.recordSetId DESC
+		]]>
+	</sql>
+	<sql id="com.liferay.dynamic.data.lists.service.persistence.DDLRecordSetFinder.findByC_D_G_N_D_S">
+		<![CDATA[
+			SELECT
+				{DDLRecordSet.*}
+			FROM
+				(
+					SELECT
+						DISTINCT DDLRecordSet.recordSetId
+					FROM
+						DDLRecordSet
+					WHERE
+						(DDLRecordSet.companyId = ?) AND
+						(DDLRecordSet.DDMStructureId = ?) AND
 						(DDLRecordSet.groupId = ?) AND
 						(DDLRecordSet.scope = ?) AND
 						(
