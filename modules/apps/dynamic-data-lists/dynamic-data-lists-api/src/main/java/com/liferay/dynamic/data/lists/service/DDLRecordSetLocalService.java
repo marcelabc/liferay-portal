@@ -508,6 +508,12 @@ public interface DDLRecordSetLocalService
 			DDLRecordSet recordSet)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<DDLRecordSet> search(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope, int start, int end,
+		OrderByComparator<DDLRecordSet> orderByComparator);
+
 	/**
 	 * Returns a range of all record sets matching the parameters, including a
 	 * keywords parameter for matching string values to the record set's name or
@@ -586,6 +592,11 @@ public interface DDLRecordSetLocalService
 		long companyId, long groupId, String name, String description,
 		int scope, boolean andOperator, int start, int end,
 		OrderByComparator<DDLRecordSet> orderByComparator);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int searchCount(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope);
 
 	/**
 	 * Returns the number of record sets matching the parameters. The keywords
