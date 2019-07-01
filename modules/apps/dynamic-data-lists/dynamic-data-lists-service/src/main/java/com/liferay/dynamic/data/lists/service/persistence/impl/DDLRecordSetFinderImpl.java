@@ -51,8 +51,23 @@ public class DDLRecordSetFinderImpl
 	public static final String COUNT_BY_C_G_N_D_S =
 		DDLRecordSetFinder.class.getName() + ".countByC_G_N_D_S";
 
+	public static final String COUNT_BY_C_D_G_N_D_S =
+		DDLRecordSetFinder.class.getName() + ".countByC_D_G_N_D_S";
+
 	public static final String FIND_BY_C_G_N_D_S =
 		DDLRecordSetFinder.class.getName() + ".findByC_G_N_D_S";
+
+	public static final String FIND_BY_C_D_G_N_D_S =
+		DDLRecordSetFinder.class.getName() + ".findByC_D_G_N_D_S";
+
+	@Override
+	public int countByKeywords(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope) {
+
+		return doCountByKeywords(
+			companyId, ddmStructureId, groupId, keywords, scope, false);
+	}
 
 	@Override
 	public int countByKeywords(
@@ -148,6 +163,29 @@ public class DDLRecordSetFinderImpl
 
 	@Override
 	public List<DDLRecordSet> findByKeywords(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope, int start, int end,
+		OrderByComparator<DDLRecordSet> orderByComparator) {
+
+		String[] names = null;
+		String[] descriptions = null;
+		boolean andOperator = false;
+
+		if (Validator.isNotNull(keywords)) {
+			names = _customSQL.keywords(keywords);
+			descriptions = _customSQL.keywords(keywords, false);
+		}
+		else {
+			andOperator = true;
+		}
+
+		return doFindByC_D_G_N_D_S(
+			companyId, ddmStructureId, groupId, names, descriptions, scope,
+			andOperator, start, end, orderByComparator, false);
+	}
+
+	@Override
+	public List<DDLRecordSet> findByKeywords(
 		long companyId, long groupId, String keywords, int scope, int start,
 		int end, OrderByComparator<DDLRecordSet> orderByComparator) {
 
@@ -191,6 +229,27 @@ public class DDLRecordSetFinderImpl
 		return doFindByC_G_N_D_S(
 			companyId, groupId, names, descriptions, scope, andOperator, start,
 			end, orderByComparator, false);
+	}
+
+	protected int doCountByKeywords(
+		long companyId, long ddmStructureId, long groupId, String keywords,
+		int scope, boolean inlineSQLHelper) {
+
+		String[] names = null;
+		String[] descriptions = null;
+		boolean andOperator = false;
+
+		if (Validator.isNotNull(keywords)) {
+			names = _customSQL.keywords(keywords);
+			descriptions = _customSQL.keywords(keywords, false);
+		}
+		else {
+			andOperator = true;
+		}
+
+		return doCountByC_D_G_N_D_S(
+			companyId, ddmStructureId, groupId, names, descriptions, scope,
+			andOperator, inlineSQLHelper);
 	}
 
 	protected int doCountByKeywords(
@@ -353,6 +412,93 @@ public class DDLRecordSetFinderImpl
 		}
 	}
 
+	protected int doCountByC_D_G_N_D_S(
+		long companyId, long ddmStructureId, long groupId, String[] names,
+		String[] descriptions, int scope, boolean andOperator,
+		boolean inlineSQLHelper) {
+
+		names = _customSQL.keywords(names);
+		descriptions = _customSQL.keywords(descriptions, false);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			String sql = _customSQL.get(getClass(), COUNT_BY_C_D_G_N_D_S);
+
+			if (inlineSQLHelper) {
+				sql = InlineSQLHelperUtil.replacePermissionCheck(
+					sql, DDLRecordSet.class.getName(),
+					"DDLRecordSet.recordSetId", groupId);
+			}
+
+			if (ddmStructureId <= 0) {
+				sql = StringUtil.replace(
+					sql, "(DDLRecordSet.DDMStructureId = ?) AND",
+					StringPool.BLANK);
+			}
+
+			if (groupId <= 0) {
+				sql = StringUtil.replace(
+					sql, "(DDLRecordSet.groupId = ?) AND", StringPool.BLANK);
+			}
+
+			if (scope == DDLRecordSetConstants.SCOPE_ANY) {
+				sql = StringUtil.replace(
+					sql, "(DDLRecordSet.scope = ?) AND", StringPool.BLANK);
+			}
+
+			sql = _customSQL.replaceKeywords(
+				sql, "LOWER(DDLRecordSet.name)", StringPool.LIKE, false, names);
+			sql = _customSQL.replaceKeywords(
+				sql, "DDLRecordSet.description", StringPool.LIKE, true,
+				descriptions);
+			sql = _customSQL.replaceAndOperator(sql, andOperator);
+
+			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+
+			q.addScalar(COUNT_COLUMN_NAME, Type.LONG);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(companyId);
+
+			if (ddmStructureId > 0) {
+				qPos.add(ddmStructureId);
+			}
+
+			if (groupId > 0) {
+				qPos.add(groupId);
+			}
+
+			if (scope != DDLRecordSetConstants.SCOPE_ANY) {
+				qPos.add(scope);
+			}
+
+			qPos.add(names, 2);
+			qPos.add(descriptions, 2);
+
+			Iterator<Long> itr = q.iterate();
+
+			if (itr.hasNext()) {
+				Long count = itr.next();
+
+				if (count != null) {
+					return count.intValue();
+				}
+			}
+
+			return 0;
+		}
+		catch (Exception e) {
+			throw new SystemException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
 	protected List<DDLRecordSet> doFindByC_G_N_D_S(
 		long companyId, long groupId, String[] names, String[] descriptions,
 		int scope, boolean andOperator, int start, int end,
@@ -400,6 +546,86 @@ public class DDLRecordSetFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			qPos.add(companyId);
+
+			if (groupId > 0) {
+				qPos.add(groupId);
+			}
+
+			if (scope != DDLRecordSetConstants.SCOPE_ANY) {
+				qPos.add(scope);
+			}
+
+			qPos.add(names, 2);
+			qPos.add(descriptions, 2);
+
+			return (List<DDLRecordSet>)QueryUtil.list(
+				q, getDialect(), start, end);
+		}
+		catch (Exception e) {
+			throw new SystemException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	protected List<DDLRecordSet> doFindByC_D_G_N_D_S(
+		long companyId, long ddmStructureId, long groupId, String[] names,
+		String[] descriptions, int scope, boolean andOperator, int start,
+		int end, OrderByComparator<DDLRecordSet> orderByComparator,
+		boolean inlineSQLHelper) {
+
+		names = _customSQL.keywords(names);
+		descriptions = _customSQL.keywords(descriptions, false);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			String sql = _customSQL.get(getClass(), FIND_BY_C_D_G_N_D_S);
+
+			if (inlineSQLHelper) {
+				sql = InlineSQLHelperUtil.replacePermissionCheck(
+					sql, DDLRecordSet.class.getName(),
+					"DDLRecordSet.recordSetId", groupId);
+			}
+
+			if (ddmStructureId <= 0) {
+				sql = StringUtil.replace(
+					sql, "(DDLRecordSet.DDMStructureId = ?) AND",
+					StringPool.BLANK);
+			}
+
+			if (groupId <= 0) {
+				sql = StringUtil.replace(
+					sql, "(DDLRecordSet.groupId = ?) AND", StringPool.BLANK);
+			}
+
+			if (scope == DDLRecordSetConstants.SCOPE_ANY) {
+				sql = StringUtil.replace(
+					sql, "(DDLRecordSet.scope = ?) AND", StringPool.BLANK);
+			}
+
+			sql = _customSQL.replaceKeywords(
+				sql, "LOWER(DDLRecordSet.name)", StringPool.LIKE, false, names);
+			sql = _customSQL.replaceKeywords(
+				sql, "LOWER(DDLRecordSet.description)", StringPool.LIKE, true,
+				descriptions);
+			sql = _customSQL.replaceAndOperator(sql, andOperator);
+			sql = _customSQL.replaceOrderBy(sql, orderByComparator);
+
+			SQLQuery q = session.createSynchronizedSQLQuery(sql);
+
+			q.addEntity("DDLRecordSet", DDLRecordSetImpl.class);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(companyId);
+
+			if (ddmStructureId > 0) {
+				qPos.add(ddmStructureId);
+			}
 
 			if (groupId > 0) {
 				qPos.add(groupId);
