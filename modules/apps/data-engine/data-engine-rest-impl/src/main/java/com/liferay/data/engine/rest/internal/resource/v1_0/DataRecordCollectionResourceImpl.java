@@ -61,9 +61,30 @@ public class DataRecordCollectionResourceImpl
 				Long dataDefinitionId, String keywords, Pagination pagination)
 		throws Exception {
 
-		return _commonDataRecordCollectionResource.
-			getDataDefinitionDataRecordCollectionsPage(
-				contextAcceptLanguage, dataDefinitionId, keywords, pagination);
+		if (pagination.getPageSize() > 250) {
+			throw new BadRequestException(
+				LanguageUtil.format(
+					contextAcceptLanguage.getPreferredLocale(),
+					"page-size-is-greater-than-x", 250));
+		}
+
+		DDMStructure ddmStructure = _ddmStructureLocalService.getStructure(
+			dataDefinitionId);
+
+		return Page.of(
+			transform(
+				_ddlRecordSetLocalService.search(
+					ddmStructure.getCompanyId(), ddmStructure.getStructureId(),
+					ddmStructure.getGroupId(), keywords,
+					DDLRecordSetConstants.SCOPE_DATA_ENGINE,
+					pagination.getStartPosition(), pagination.getEndPosition(),
+					null),
+				DataRecordCollectionUtil::toDataRecordCollection),
+			pagination,
+			_ddlRecordSetLocalService.searchCount(
+				ddmStructure.getCompanyId(), ddmStructure.getStructureId(),
+				ddmStructure.getGroupId(), keywords,
+				DDLRecordSetConstants.SCOPE_DATA_ENGINE));
 	}
 
 	@Override
