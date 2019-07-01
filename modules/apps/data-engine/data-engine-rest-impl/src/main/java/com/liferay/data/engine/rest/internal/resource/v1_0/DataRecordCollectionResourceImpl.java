@@ -92,15 +92,17 @@ public class DataRecordCollectionResourceImpl
 		return Page.of(
 			transform(
 				_ddlRecordSetLocalService.search(
-					ddmStructure.getCompanyId(), ddmStructure.getGroupId(),
-					keywords, DDLRecordSetConstants.SCOPE_DATA_ENGINE,
+					ddmStructure.getCompanyId(), ddmStructure.getStructureId(),
+					ddmStructure.getGroupId(), keywords,
+					DDLRecordSetConstants.SCOPE_DATA_ENGINE,
 					pagination.getStartPosition(), pagination.getEndPosition(),
 					null),
 				DataRecordCollectionUtil::toDataRecordCollection),
 			pagination,
 			_ddlRecordSetLocalService.searchCount(
-				ddmStructure.getCompanyId(), ddmStructure.getGroupId(),
-				keywords, DDLRecordSetConstants.SCOPE_DATA_ENGINE));
+				ddmStructure.getCompanyId(), ddmStructure.getStructureId(),
+				ddmStructure.getGroupId(), keywords,
+				DDLRecordSetConstants.SCOPE_DATA_ENGINE));
 	}
 
 	@Override
