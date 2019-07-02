@@ -16,13 +16,19 @@ package com.liferay.data.engine.rest.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.data.engine.rest.client.dto.v1_0.DataRecordCollection;
+import com.liferay.data.engine.rest.client.pagination.Page;
+import com.liferay.data.engine.rest.client.pagination.Pagination;
 import com.liferay.data.engine.rest.resource.v1_0.test.util.DataDefinitionTestUtil;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -42,24 +48,71 @@ public class DataRecordCollectionResourceTest
 	}
 
 	@Override
+	@Test
+	public void testGetDataDefinitionDataRecordCollectionsPage()
+		throws Exception {
+
+		super.testGetDataDefinitionDataRecordCollectionsPage();
+
+		Page<DataRecordCollection> page =
+			dataRecordCollectionResource.
+				getDataDefinitionDataRecordCollectionsPage(
+					testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId(),
+					"collection", Pagination.of(1, 2));
+
+		Assert.assertEquals(0, page.getTotalCount());
+
+		_testGetDataDefinitionDataRecordCollectionsPage(
+			"!@#description", "!@#d", "name");
+		_testGetDataDefinitionDataRecordCollectionsPage(
+			"DeFiNiTiON dEsCrIpTiOn", "DEFINITION", "name");
+		_testGetDataDefinitionDataRecordCollectionsPage(
+			"abcdefghijklmnopqrstuvwxyz0123456789",
+			"abcdefghijklmnopqrstuvwxyz0123456789", "definition");
+		_testGetDataDefinitionDataRecordCollectionsPage(
+			"description", "!@#n", "!@#name");
+		_testGetDataDefinitionDataRecordCollectionsPage(
+			"description", "DEFINITION", "DeFiNiTiON NaMe");
+		_testGetDataDefinitionDataRecordCollectionsPage(
+			"description", "π€†", "π€† name");
+		_testGetDataDefinitionDataRecordCollectionsPage(
+			"π€† description", "π€†", "name");
+	}
+
+	@Override
+	@Test
+	public void testGetSiteDataRecordCollectionsPage() throws Exception {
+		super.testGetSiteDataRecordCollectionsPage();
+
+		Page<DataRecordCollection> page =
+			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
+				testGetSiteDataRecordCollectionsPage_getSiteId(), "collection",
+				Pagination.of(1, 2));
+
+		Assert.assertEquals(0, page.getTotalCount());
+
+		_testGetSiteDataRecordCollectionsPage("!@#description", "!@#d", "name");
+		_testGetSiteDataRecordCollectionsPage(
+			"DeFiNiTiON dEsCrIpTiOn", "DEFINITION", "name");
+		_testGetSiteDataRecordCollectionsPage(
+			"abcdefghijklmnopqrstuvwxyz0123456789",
+			"abcdefghijklmnopqrstuvwxyz0123456789", "definition");
+		_testGetSiteDataRecordCollectionsPage("description", "!@#n", "!@#name");
+		_testGetSiteDataRecordCollectionsPage(
+			"description", "DEFINITION", "DeFiNiTiON NaMe");
+		_testGetSiteDataRecordCollectionsPage("description", "π€†", "π€† name");
+		_testGetSiteDataRecordCollectionsPage("π€† description", "π€†", "name");
+	}
+
+	@Override
 	protected String[] getAdditionalAssertFieldNames() {
 		return new String[] {"dataDefinitionId", "name"};
 	}
 
 	@Override
 	protected DataRecordCollection randomDataRecordCollection() {
-		return new DataRecordCollection() {
-			{
-				dataDefinitionId = _ddmStructure.getStructureId();
-				dataRecordCollectionKey = RandomTestUtil.randomString();
-				name = new HashMap<String, Object>() {
-					{
-						put("en_US", RandomTestUtil.randomString());
-					}
-				};
-				siteId = testGroup.getGroupId();
-			}
-		};
+		return _createDataRecordCollection(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 	}
 
 	@Override
@@ -145,6 +198,87 @@ public class DataRecordCollectionResourceTest
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
 				_ddmStructure.getStructureId(), randomDataRecordCollection());
+	}
+
+	private DataRecordCollection _createDataRecordCollection(
+		String description, String name) {
+
+		DataRecordCollection dataRecordCollection = new DataRecordCollection() {
+			{
+				dataDefinitionId = _ddmStructure.getStructureId();
+				dataRecordCollectionKey = RandomTestUtil.randomString();
+				siteId = testGroup.getGroupId();
+			}
+		};
+
+		dataRecordCollection.setDescription(
+			new HashMap<String, Object>() {
+				{
+					put("en_US", description);
+				}
+			});
+
+		dataRecordCollection.setName(
+			new HashMap<String, Object>() {
+				{
+					put("en_US", name);
+				}
+			});
+
+		return dataRecordCollection;
+	}
+
+	private void _testGetDataDefinitionDataRecordCollectionsPage(
+			String description, String keywords, String name)
+		throws Exception {
+
+		Long dataDefinitionId =
+			testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId();
+
+		DataRecordCollection dataRecordCollection =
+			testGetDataDefinitionDataRecordCollectionsPage_addDataRecordCollection(
+				dataDefinitionId,
+				_createDataRecordCollection(description, name));
+
+		Page<DataRecordCollection> page =
+			dataRecordCollectionResource.
+				getDataDefinitionDataRecordCollectionsPage(
+					dataDefinitionId, keywords, Pagination.of(1, 2));
+
+		Assert.assertEquals(1, page.getTotalCount());
+
+		assertEqualsIgnoringOrder(
+			Arrays.asList(dataRecordCollection),
+			(List<DataRecordCollection>)page.getItems());
+		assertValid(page);
+
+		dataRecordCollectionResource.deleteDataRecordCollection(
+			dataRecordCollection.getId());
+	}
+
+	private void _testGetSiteDataRecordCollectionsPage(
+			String description, String keywords, String name)
+		throws Exception {
+
+		Long siteId = testGetSiteDataRecordCollectionsPage_getSiteId();
+
+		DataRecordCollection dataRecordCollection =
+			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
+				siteId, _createDataRecordCollection(description, name));
+
+		Page<DataRecordCollection> page =
+			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
+				siteId, keywords, Pagination.of(1, 2));
+
+		Assert.assertEquals(1, page.getTotalCount());
+
+		assertEqualsIgnoringOrder(
+			Arrays.asList(dataRecordCollection),
+			(List<DataRecordCollection>)page.getItems());
+		assertValid(page);
+
+		dataRecordCollectionResource.deleteDataRecordCollection(
+			dataRecordCollection.getId());
 	}
 
 	private DDMStructure _ddmStructure;
