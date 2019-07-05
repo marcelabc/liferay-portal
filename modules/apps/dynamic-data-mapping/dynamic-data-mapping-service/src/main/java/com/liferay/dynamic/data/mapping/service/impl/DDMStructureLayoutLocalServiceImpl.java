@@ -239,6 +239,23 @@ public class DDMStructureLayoutLocalServiceImpl
 			ddmStructureLayoutPersistence::findByPrimaryKey);
 	}
 
+	public List<DDMStructureLayout> search(
+			long companyId, long[] groupIds, long classNameId, String keywords,
+			long structureVersionId, int start, int end,
+			OrderByComparator<DDMStructureLayout> orderByComparator)
+		throws PortalException {
+
+		SearchContext searchContext =
+			ddmSearchHelper.buildStructureLayoutSearchContext(
+				companyId, groupIds, classNameId, keywords, keywords,
+				StringPool.BLANK, structureVersionId, null,
+				WorkflowConstants.STATUS_ANY, start, end, orderByComparator);
+
+		return ddmSearchHelper.doSearch(
+			searchContext, DDMStructureLayout.class,
+			ddmStructureLayoutPersistence::findByPrimaryKey);
+	}
+
 	public int searchCount(
 			long companyId, long[] groupIds, long classNameId, String keywords)
 		throws PortalException {
@@ -248,6 +265,22 @@ public class DDMStructureLayoutLocalServiceImpl
 				companyId, groupIds, classNameId, keywords, keywords,
 				StringPool.BLANK, null, WorkflowConstants.STATUS_ANY,
 				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+
+		return ddmSearchHelper.doSearchCount(
+			searchContext, DDMStructureLayout.class);
+	}
+
+	public int searchCount(
+			long companyId, long[] groupIds, long classNameId, String keywords,
+			long structureVersionId)
+		throws PortalException {
+
+		SearchContext searchContext =
+			ddmSearchHelper.buildStructureLayoutSearchContext(
+				companyId, groupIds, classNameId, keywords, keywords,
+				StringPool.BLANK, structureVersionId, null,
+				WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null);
 
 		return ddmSearchHelper.doSearchCount(
 			searchContext, DDMStructureLayout.class);
