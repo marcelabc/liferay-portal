@@ -259,8 +259,7 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 				LocalizedValueUtil.toLocaleStringMap(dataDefinition.getName()),
 				LocalizedValueUtil.toLocaleStringMap(
 					dataDefinition.getDescription()),
-				DataDefinitionUtil.toJSON(dataDefinition),
-				new ServiceContext()));
+				DataDefinitionUtil.toJSON(dataDefinition), new ServiceContext()));
 	}
 
 	@Reference(
