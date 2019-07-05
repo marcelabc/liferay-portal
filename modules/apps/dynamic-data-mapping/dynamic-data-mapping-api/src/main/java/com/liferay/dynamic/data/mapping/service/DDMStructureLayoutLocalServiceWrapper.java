@@ -516,12 +516,37 @@ public class DDMStructureLayoutLocalServiceWrapper
 	}
 
 	@Override
+	public java.util.List
+		<com.liferay.dynamic.data.mapping.model.DDMStructureLayout> search(
+				long companyId, long[] groupIds, long classNameId,
+				String keywords, long structureVersionId, int start, int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.dynamic.data.mapping.model.DDMStructureLayout>
+						orderByComparator)
+			throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureLayoutLocalService.search(
+			companyId, groupIds, classNameId, keywords, structureVersionId,
+			start, end, orderByComparator);
+	}
+
+	@Override
 	public int searchCount(
 			long companyId, long[] groupIds, long classNameId, String keywords)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddmStructureLayoutLocalService.searchCount(
 			companyId, groupIds, classNameId, keywords);
+	}
+
+	@Override
+	public int searchCount(
+			long companyId, long[] groupIds, long classNameId, String keywords,
+			long structureVersionId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddmStructureLayoutLocalService.searchCount(
+			companyId, groupIds, classNameId, keywords, structureVersionId);
 	}
 
 	/**

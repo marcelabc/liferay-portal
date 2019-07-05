@@ -468,12 +468,35 @@ public class DDMStructureLayoutLocalServiceUtil {
 			orderByComparator);
 	}
 
+	public static java.util.List
+		<com.liferay.dynamic.data.mapping.model.DDMStructureLayout> search(
+				long companyId, long[] groupIds, long classNameId,
+				String keywords, long structureVersionId, int start, int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.dynamic.data.mapping.model.DDMStructureLayout>
+						orderByComparator)
+			throws com.liferay.portal.kernel.exception.PortalException {
+
+		return getService().search(
+			companyId, groupIds, classNameId, keywords, structureVersionId,
+			start, end, orderByComparator);
+	}
+
 	public static int searchCount(
 			long companyId, long[] groupIds, long classNameId, String keywords)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return getService().searchCount(
 			companyId, groupIds, classNameId, keywords);
+	}
+
+	public static int searchCount(
+			long companyId, long[] groupIds, long classNameId, String keywords,
+			long structureVersionId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return getService().searchCount(
+			companyId, groupIds, classNameId, keywords, structureVersionId);
 	}
 
 	/**
