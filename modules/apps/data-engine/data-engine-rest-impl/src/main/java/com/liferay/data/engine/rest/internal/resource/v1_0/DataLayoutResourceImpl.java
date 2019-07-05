@@ -94,8 +94,8 @@ public class DataLayoutResourceImpl extends BaseDataLayoutResourceImpl {
 				_ddmStructureLayoutLocalService.search(
 					ddmStructure.getCompanyId(),
 					new long[] {ddmStructure.getGroupId()}, _getClassNameId(),
-					keywords, pagination.getStartPosition(),
-					pagination.getEndPosition(),
+					keywords, _getDDMStructureVersionId(dataDefinitionId),
+					pagination.getStartPosition(), pagination.getEndPosition(),
 					new StructureLayoutNameComparator()),
 				this::_toDataLayout),
 			pagination,
