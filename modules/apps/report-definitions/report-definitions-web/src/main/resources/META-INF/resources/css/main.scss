@@ -1,0 +1,74 @@
+.report-definitions-form {
+	.liferay-ddm-form-field-fieldset {
+		border: none !important;
+		margin-bottom: 0 !important;
+
+		fieldset {
+			border: none !important;
+		}
+	}
+}
+
+.report-definitions-form-builder.modal {
+	display: none;
+
+	.modal-dialog {
+		height: 90vh;
+		margin: 0 auto;
+		overflow: hidden;
+		top: calc(50% - 45vh);
+		width: 90%;
+	}
+
+	.modal-content {
+		height: 100%;
+
+		.ddm-form-builder {
+			.ddm-form-builder-wrapper {
+				display: flex;
+				height: calc(100vh - 265px);
+				overflow-x: hidden;
+				overflow-y: auto;
+				padding: 20px;
+
+				.sheet {
+					margin-top: 0;
+				}
+			}
+
+			.sidebar-container {
+				min-width: 350px;
+				position: relative;
+				top: 0;
+				transform: translateX(0) !important;
+
+				.ddm-sidebar-body {
+					height: calc(100vh - 510px);
+				}
+
+				.sidebar-close {
+					display: none;
+				}
+
+				.tab-pane {
+					overflow: hidden;
+				}
+			}
+		}
+
+		.lfr-ddm-add-field {
+			display: none;
+		}
+
+		.modal-body {
+			overflow: hidden;
+			padding: 0;
+		}
+	}
+}
+
+#clay_dropdown_portal {
+	.dropdown-menu {
+		z-index: 5000;
+	}
+}

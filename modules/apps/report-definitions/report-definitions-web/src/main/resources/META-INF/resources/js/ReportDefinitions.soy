@@ -1,0 +1,40 @@
+{namespace ReportDefinitions}
+
+{template .render}
+	{@param spritemap: string}
+	{@param strings: [
+	cancel: string,
+	ok: string,
+	reportDefinitionParameters: string
+	]}
+	{@param? _handleModalButtonClicked: ?}
+	{@param? _handleModalRendered: ?}
+
+	{call ClayModal.render}
+		{param body kind="html"}
+		{/param}
+		{param elementClasses: 'report-definitions-form-builder' /}
+		{param events: [
+			'clickButton': $_handleModalButtonClicked,
+			'rendered': $_handleModalRendered
+		]/}
+		{param footerButtons: [
+		[
+			'alignment': 'right',
+			'label': $strings.cancel,
+			'style': 'primary',
+			'type': 'close'
+		],
+		[
+			'alignment': 'right',
+			'label': $strings.ok,
+			'style': 'primary',
+			'type': 'button'
+		]
+		] /}
+		{param ref: 'modal' /}
+		{param size: 'lg' /}
+		{param spritemap: $spritemap /}
+		{param title: $strings.reportDefinitionParameters /}
+	{/call}
+{/template}

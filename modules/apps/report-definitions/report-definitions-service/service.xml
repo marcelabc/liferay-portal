@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!DOCTYPE service-builder PUBLIC "-//Liferay//DTD Service Builder 7.1.0//EN" "http://www.liferay.com/dtd/liferay-service-builder_7_1_0.dtd">
+
+<service-builder auto-import-default-references="false" auto-namespace-tables="false" package-path="com.liferay.report.definitions">
+	<namespace>ReportDefinition</namespace>
+	<entity local-service="true" name="ReportDefinition" remote-service="false" uuid="true">
+
+		<!-- PK fields -->
+
+		<column name="reportDefinitionId" primary="true" type="long" />
+
+		<!-- Group instance -->
+
+		<column name="groupId" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="userId" type="long" />
+		<column name="userName" type="String" />
+		<column name="createDate" type="Date" />
+		<column name="modifiedDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="dataDefinitionId" type="long" />
+		<column name="name" type="String" />
+		<column name="description" type="String" />
+		<column name="availableColumns" type="String" />
+		<column name="sortColumns" type="String" />
+
+		<!-- Order -->
+
+		<order by="asc">
+			<order-column name="name" />
+		</order>
+
+		<!-- Finder methods -->
+
+		<finder name="GroupId" return-type="Collection">
+			<finder-column name="groupId" />
+		</finder>
+
+		<!-- References -->
+
+		<reference entity="User" package-path="com.liferay.portal" />
+	</entity>
+</service-builder>

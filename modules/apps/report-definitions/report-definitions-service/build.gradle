@@ -1,0 +1,19 @@
+apply plugin: "com.liferay.portal.tools.service.builder"
+
+dependencies {
+	compileOnly group: "biz.aQute.bnd", name: "biz.aQute.bndlib", version: "3.5.0"
+	compileOnly group: "com.liferay", name: "com.liferay.portal.spring.extender", version: "2.0.0"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compileOnly project(":apps:portal:portal-dao-orm-custom-sql-api")
+	compileOnly project(":apps:report-definitions:report-definitions-api")
+	compileOnly project(":core:petra:petra-function")
+	compileOnly project(":core:petra:petra-lang")
+	compileOnly project(":core:petra:petra-string")
+	compileOnly project(":core:registry-api")
+}
+
+buildService {
+	apiDir = "../report-definitions-api/src/main/java"
+}
+
+group = "report.definitions"

@@ -1,0 +1,9 @@
+Bundle-Name: Liferay Report Definitions API
+Bundle-SymbolicName: com.liferay.report.definitions.api
+Bundle-Version: 1.0.0
+Export-Package:\
+	com.liferay.report.definitions.exception,\
+	com.liferay.report.definitions.model,\
+	com.liferay.report.definitions.service,\
+	com.liferay.report.definitions.service.persistence,\
+	com.liferay.report.definitions.util.comparator

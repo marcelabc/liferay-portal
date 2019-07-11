@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<custom-sql>
+	<sql id="com.liferay.report.definitions.service.persistence.ReportDefinitionFinder.countByC_G_N_D">
+		<![CDATA[
+			SELECT
+				COUNT(DISTINCT ReportDefinition.reportDefinitionId) AS COUNT_VALUE
+			FROM
+				ReportDefinition
+			WHERE
+				(ReportDefinition.companyId = ?) AND
+				(ReportDefinition.groupId = ?) AND
+				(
+					(LOWER(ReportDefinition.name) LIKE ? [$AND_OR_NULL_CHECK$]) [$AND_OR_CONNECTOR$]
+					(ReportDefinition.description LIKE ? [$AND_OR_NULL_CHECK$])
+				)
+		]]>
+	</sql>
+	<sql id="com.liferay.report.definitions.service.persistence.ReportDefinitionFinder.findByC_G_N_D">
+		<![CDATA[
+			SELECT
+				{ReportDefinition.*}
+			FROM
+				(
+					SELECT
+						DISTINCT ReportDefinition.reportDefinitionId
+					FROM
+						ReportDefinition
+					WHERE
+						(ReportDefinition.companyId = ?) AND
+						(ReportDefinition.groupId = ?) AND
+						(
+							(LOWER(ReportDefinition.name) LIKE ? [$AND_OR_NULL_CHECK$]) [$AND_OR_CONNECTOR$]
+							(ReportDefinition.description LIKE ? [$AND_OR_NULL_CHECK$])
+						)
+				)
+				TEMP_TABLE
+					INNER JOIN
+						ReportDefinition ON
+							TEMP_TABLE.reportDefinitionId = ReportDefinition.reportDefinitionId
+			ORDER BY
+				ReportDefinition.reportDefinitionId DESC
+		]]>
+	</sql>
+</custom-sql>
