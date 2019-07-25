@@ -49,6 +49,62 @@ public class DataDefinitionResourceTest
 
 	@Override
 	@Test
+	public void testDeleteDataDefinition() throws Exception {
+		super.testDeleteDataDefinition();
+
+		DataDefinition dataDefinition =
+			testPostSiteDataDefinition_addDataDefinition(
+				DataDefinitionTestUtil.createDataDefinition(
+					"fieldName", RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(), testGroup.getGroupId()));
+
+		long dataDefinitionId = dataDefinition.getId();
+
+		DataLayout dataLayout = DataLayoutTestUtil.postDataDefinitionDataLayout(
+			dataDefinitionId,
+			DataLayoutTestUtil.createDataLayout(
+				testGroup.getGroupId(), dataDefinitionId,
+				RandomTestUtil.randomString()));
+
+		DataRecordCollection dataRecordCollection =
+			DataRecordCollectionTestUtil.postDataDefinitionDataRecordCollection(
+				dataDefinitionId,
+				DataRecordCollectionTestUtil.createDataRecordCollection(
+					dataDefinitionId, RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(), testGroup.getGroupId()));
+
+		DataRecord dataRecord =
+			DataRecordTestUtil.postDataRecordCollectionDataRecord(
+				dataRecordCollection.getId(),
+				DataRecordTestUtil.createDataRecord(
+					dataRecordCollection.getId(), "fieldName"));
+
+		assertHttpResponseStatusCode(
+			204,
+			dataDefinitionResource.deleteDataDefinitionHttpResponse(
+				dataDefinition.getId()));
+
+		assertHttpResponseStatusCode(
+			404,
+			dataDefinitionResource.getDataDefinitionHttpResponse(
+				dataDefinitionId));
+
+		assertHttpResponseStatusCode(
+			404,
+			DataLayoutTestUtil.getDataLayoutHttpResponse(dataLayout.getId()));
+
+		assertHttpResponseStatusCode(
+			404,
+			DataRecordCollectionTestUtil.getDataRecordCollectionHttpResponse(
+				dataRecordCollection.getId()));
+
+		assertHttpResponseStatusCode(
+			404,
+			DataRecordTestUtil.getDataRecordHttpResponse(dataRecord.getId()));
+	}
+
+	@Override
+	@Test
 	public void testGetSiteDataDefinitionsPage() throws Exception {
 		super.testGetSiteDataDefinitionsPage();
 
