@@ -43,9 +43,18 @@ public class DataRecordCollectionResourceTest
 	public void setUp() throws Exception {
 		super.setUp();
 
-		_ddmStructure = DataDefinitionTestUtil.addDDMStructure(testGroup);
-		_irrelevantDDMStructure = DataDefinitionTestUtil.addDDMStructure(
-			irrelevantGroup);
+		_dataDefinition = DataDefinitionTestUtil.postSiteDataDefinition(
+			testGroup.getGroupId(),
+			DataDefinitionTestUtil.createDataDefinition(
+				"MyText", RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), testGroup.getGroupId()));
+		_irrelevantDataDefinition =
+			DataDefinitionTestUtil.postSiteDataDefinition(
+				irrelevantGroup.getGroupId(),
+				DataDefinitionTestUtil.createDataDefinition(
+					"MyText", RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(),
+					irrelevantGroup.getGroupId()));
 	}
 
 	@Override
@@ -128,7 +137,7 @@ public class DataRecordCollectionResourceTest
 			super.randomIrrelevantDataRecordCollection();
 
 		randomIrrelevantDataRecordCollection.setDataDefinitionId(
-			_irrelevantDDMStructure.getStructureId());
+			_irrelevantDataDefinition.getId());
 
 		return randomIrrelevantDataRecordCollection;
 	}
@@ -140,7 +149,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	@Override
@@ -148,7 +157,7 @@ public class DataRecordCollectionResourceTest
 			testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId()
 		throws Exception {
 
-		return _ddmStructure.getStructureId();
+		return _dataDefinition.getId();
 	}
 
 	@Override
@@ -158,7 +167,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	@Override
@@ -168,7 +177,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	@Override
@@ -202,7 +211,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	private void _testGetDataDefinitionDataRecordCollectionsPage(
