@@ -156,6 +156,7 @@ public abstract class BaseFieldType implements FieldType {
 
 	@Override
 	public JSONObject toJSONObject(
+			FieldTypeTracker fieldTypeTracker,
 			SPIDataDefinitionField spiDataDefinitionField)
 		throws Exception {
 
@@ -180,6 +181,10 @@ public abstract class BaseFieldType implements FieldType {
 			"localizable", spiDataDefinitionField.getLocalizable()
 		).put(
 			"name", name
+		).put(
+			"nestedFields",
+			_nestedFieldsToJSONArray(
+				fieldTypeTracker, spiDataDefinitionField.getNestedFields())
 		).put(
 			"repeatable", spiDataDefinitionField.getRepeatable()
 		).put(
@@ -221,6 +226,35 @@ public abstract class BaseFieldType implements FieldType {
 
 		spiDataDefinitionField.setNestedFields(
 			spiDataDefinitionFields.toArray(new SPIDataDefinitionField[0]));
+	}
+
+	private JSONArray _nestedFieldsToJSONArray(
+			FieldTypeTracker fieldTypeTracker,
+			SPIDataDefinitionField[] nestedFields)
+		throws Exception {
+
+		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+
+		if (ListUtil.isEmpty(ListUtil.fromArray(nestedFields))) {
+			return jsonArray;
+		}
+
+		List<SPIDataDefinitionField> spiDataDefinitionFields =
+			ListUtil.fromArray(nestedFields);
+
+		for (SPIDataDefinitionField spiDataDefinitionField :
+				spiDataDefinitionFields) {
+
+			FieldType fieldType = fieldTypeTracker.getFieldType(
+				spiDataDefinitionField.getFieldType());
+
+			JSONObject jsonObject = fieldType.toJSONObject(
+				fieldTypeTracker, spiDataDefinitionField);
+
+			jsonArray.put(jsonObject);
+		}
+
+		return jsonArray;
 	}
 
 }
