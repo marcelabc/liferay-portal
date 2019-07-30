@@ -26,6 +26,31 @@ import java.util.stream.Stream;
  */
 public class DataDefinitionFieldUtil {
 
+	public static DataDefinitionField toDataDefinitionField(
+		SPIDataDefinitionField spiDataDefinitionField) {
+
+		DataDefinitionField dataDefinitionField = new DataDefinitionField();
+
+		dataDefinitionField.setCustomProperties(
+			spiDataDefinitionField.getCustomProperties());
+		dataDefinitionField.setDefaultValue(
+			spiDataDefinitionField.getDefaultValue());
+		dataDefinitionField.setFieldType(spiDataDefinitionField.getFieldType());
+		dataDefinitionField.setId(spiDataDefinitionField.getId());
+		dataDefinitionField.setIndexable(spiDataDefinitionField.getIndexable());
+		dataDefinitionField.setLabel(spiDataDefinitionField.getLabel());
+		dataDefinitionField.setLocalizable(
+			spiDataDefinitionField.getLocalizable());
+		dataDefinitionField.setName(spiDataDefinitionField.getName());
+		dataDefinitionField.setNestedFields(
+			_toDataDefinitionFields(spiDataDefinitionField.getNestedFields()));
+		dataDefinitionField.setRepeatable(
+			spiDataDefinitionField.getRepeatable());
+		dataDefinitionField.setTip(spiDataDefinitionField.getTip());
+
+		return dataDefinitionField;
+	}
+
 	public static SPIDataDefinitionField toSPIDataDefinitionField(
 		DataDefinitionField dataDefinitionField) {
 
@@ -54,6 +79,22 @@ public class DataDefinitionFieldUtil {
 		return spiDataDefinitionField;
 	}
 
+	private static DataDefinitionField[] _toDataDefinitionFields(
+		SPIDataDefinitionField[] spiDataDefinitionFields) {
+
+		if (spiDataDefinitionFields != null) {
+			Stream<SPIDataDefinitionField> stream = Arrays.stream(
+				spiDataDefinitionFields);
+
+			return stream.map(
+				DataDefinitionFieldUtil::toDataDefinitionField
+			).toArray(
+				DataDefinitionField[]::new
+			);
+		}
+
+		return new DataDefinitionField[0];
+	}
 
 	private static SPIDataDefinitionField[] _toSPIDataDefinitionFields(
 		DataDefinitionField[] dataDefinitionFields) {
