@@ -261,16 +261,14 @@ public class DDLRecordSetLocalServiceImpl
 	 * @param  recordSet the record set to be deleted
 	 * @throws PortalException if a portal exception occurred
 	 */
+	@Indexable(type = IndexableType.DELETE)
 	@Override
 	@SystemEvent(
 		action = SystemEventConstants.ACTION_SKIP,
 		type = SystemEventConstants.TYPE_DELETE
 	)
-	public void deleteRecordSet(DDLRecordSet recordSet) throws PortalException {
-
-		// Record set
-
-		ddlRecordSetPersistence.remove(recordSet);
+	public DDLRecordSet deleteRecordSet(DDLRecordSet recordSet)
+		throws PortalException {
 
 		// Resources
 
@@ -298,6 +296,8 @@ public class DDLRecordSetLocalServiceImpl
 		workflowDefinitionLinkLocalService.deleteWorkflowDefinitionLink(
 			recordSet.getCompanyId(), recordSet.getGroupId(),
 			DDLRecordSet.class.getName(), recordSet.getRecordSetId(), 0);
+
+		return ddlRecordSetPersistence.remove(recordSet);
 	}
 
 	/**
