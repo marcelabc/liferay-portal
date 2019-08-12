@@ -196,11 +196,13 @@ public interface DDLRecordSetLocalService
 	 * @param recordSet the record set to be deleted
 	 * @throws PortalException if a portal exception occurred
 	 */
+	@Indexable(type = IndexableType.DELETE)
 	@SystemEvent(
 		action = SystemEventConstants.ACTION_SKIP,
 		type = SystemEventConstants.TYPE_DELETE
 	)
-	public void deleteRecordSet(DDLRecordSet recordSet) throws PortalException;
+	public DDLRecordSet deleteRecordSet(DDLRecordSet recordSet)
+		throws PortalException;
 
 	/**
 	 * Deletes the record set and its resources.

@@ -207,11 +207,12 @@ public class DDLRecordSetLocalServiceUtil {
 	 * @param recordSet the record set to be deleted
 	 * @throws PortalException if a portal exception occurred
 	 */
-	public static void deleteRecordSet(
-			com.liferay.dynamic.data.lists.model.DDLRecordSet recordSet)
+	public static com.liferay.dynamic.data.lists.model.DDLRecordSet
+			deleteRecordSet(
+				com.liferay.dynamic.data.lists.model.DDLRecordSet recordSet)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		getService().deleteRecordSet(recordSet);
+		return getService().deleteRecordSet(recordSet);
 	}
 
 	/**
