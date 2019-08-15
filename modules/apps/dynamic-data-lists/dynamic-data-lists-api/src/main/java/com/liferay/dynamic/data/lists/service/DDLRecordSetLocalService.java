@@ -165,9 +165,15 @@ public interface DDLRecordSetLocalService
 	 *
 	 * @param ddlRecordSet the ddl record set
 	 * @return the ddl record set that was removed
+	 * @throws PortalException
 	 */
 	@Indexable(type = IndexableType.DELETE)
-	public DDLRecordSet deleteDDLRecordSet(DDLRecordSet ddlRecordSet);
+	@SystemEvent(
+		action = SystemEventConstants.ACTION_SKIP,
+		type = SystemEventConstants.TYPE_DELETE
+	)
+	public DDLRecordSet deleteDDLRecordSet(DDLRecordSet ddlRecordSet)
+		throws PortalException;
 
 	/**
 	 * Deletes the ddl record set with the primary key from the database. Also notifies the appropriate model listeners.
@@ -195,11 +201,9 @@ public interface DDLRecordSetLocalService
 	 *
 	 * @param recordSet the record set to be deleted
 	 * @throws PortalException if a portal exception occurred
+	 * @deprecated As of Mueller (7.2.x), replaced by {@link #deleteDDLRecordSet(DDLRecordSet)}
 	 */
-	@SystemEvent(
-		action = SystemEventConstants.ACTION_SKIP,
-		type = SystemEventConstants.TYPE_DELETE
-	)
+	@Deprecated
 	public void deleteRecordSet(DDLRecordSet recordSet) throws PortalException;
 
 	/**

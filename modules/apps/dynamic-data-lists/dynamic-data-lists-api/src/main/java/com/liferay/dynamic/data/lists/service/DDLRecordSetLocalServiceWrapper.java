@@ -162,10 +162,12 @@ public class DDLRecordSetLocalServiceWrapper
 	 *
 	 * @param ddlRecordSet the ddl record set
 	 * @return the ddl record set that was removed
+	 * @throws PortalException
 	 */
 	@Override
 	public com.liferay.dynamic.data.lists.model.DDLRecordSet deleteDDLRecordSet(
-		com.liferay.dynamic.data.lists.model.DDLRecordSet ddlRecordSet) {
+			com.liferay.dynamic.data.lists.model.DDLRecordSet ddlRecordSet)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _ddlRecordSetLocalService.deleteDDLRecordSet(ddlRecordSet);
 	}
@@ -208,7 +210,9 @@ public class DDLRecordSetLocalServiceWrapper
 	 *
 	 * @param recordSet the record set to be deleted
 	 * @throws PortalException if a portal exception occurred
+	 * @deprecated As of Mueller (7.2.x), replaced by {@link #deleteDDLRecordSet(DDLRecordSet)}
 	 */
+	@Deprecated
 	@Override
 	public void deleteRecordSet(
 			com.liferay.dynamic.data.lists.model.DDLRecordSet recordSet)

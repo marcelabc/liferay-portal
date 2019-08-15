@@ -102,7 +102,7 @@ public class DDLRecordSetServiceImpl extends DDLRecordSetServiceBaseImpl {
 		_ddlRecordSetModelResourcePermission.check(
 			getPermissionChecker(), recordSet, ActionKeys.DELETE);
 
-		ddlRecordSetLocalService.deleteRecordSet(recordSet);
+		ddlRecordSetLocalService.deleteDDLRecordSet(recordSet);
 	}
 
 	/**
