@@ -254,24 +254,12 @@ public class DDLRecordSetLocalServiceImpl
 			deleteRecordSet(ddlRecordSet);
 		}
 	}
-
-	/**
-	 * Deletes the record set and its resources.
-	 *
-	 * @param  recordSet the record set to be deleted
-	 * @throws PortalException if a portal exception occurred
-	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	@SystemEvent(
 		action = SystemEventConstants.ACTION_SKIP,
 		type = SystemEventConstants.TYPE_DELETE
 	)
-	public void deleteRecordSet(DDLRecordSet recordSet) throws PortalException {
-
-		// Record set
-
-		ddlRecordSetPersistence.remove(recordSet);
 	public DDLRecordSet deleteDDLRecordSet(DDLRecordSet recordSet)
 		throws PortalException {
 
@@ -304,6 +292,18 @@ public class DDLRecordSetLocalServiceImpl
 
 		return ddlRecordSetPersistence.remove(recordSet);
 	}
+
+	/**
+	 * Deletes the record set and its resources.
+	 *
+	 * @param  recordSet the record set to be deleted
+	 * @throws PortalException if a portal exception occurred
+	 * @deprecated As of Mueller (7.2.x), replaced by {@link #deleteDDLRecordSet(DDLRecordSet)}
+	 */
+	@Deprecated
+	@Override
+	public void deleteRecordSet(DDLRecordSet recordSet) throws PortalException {
+		deleteDDLRecordSet(recordSet);
 	}
 
 	/**
