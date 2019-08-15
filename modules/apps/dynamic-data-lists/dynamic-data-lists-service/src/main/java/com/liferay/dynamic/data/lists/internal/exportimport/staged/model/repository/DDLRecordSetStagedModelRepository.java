@@ -81,7 +81,7 @@ public class DDLRecordSetStagedModelRepository
 	public void deleteStagedModel(DDLRecordSet ddlRecordSet)
 		throws PortalException {
 
-		_ddlRecordSetLocalService.deleteRecordSet(ddlRecordSet);
+		_ddlRecordSetLocalService.deleteDDLRecordSet(ddlRecordSet);
 	}
 
 	@Override
@@ -128,7 +128,7 @@ public class DDLRecordSetStagedModelRepository
 				recordSetDDMStructureIds.add(recordSet.getDDMStructureId());
 			}
 
-			_ddlRecordSetLocalService.deleteRecordSet(recordSet);
+			_ddlRecordSetLocalService.deleteDDLRecordSet(recordSet);
 		}
 
 		deleteDDMStructures(recordSetDDMStructureIds);

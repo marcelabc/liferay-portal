@@ -243,17 +243,6 @@ public class DDLRecordSetLocalServiceImpl
 			recordSet.getRecordSetId(), groupPermissions, guestPermissions);
 	}
 
-	@Override
-	public void deleteDDMStructureRecordSets(long ddmStructureId)
-		throws PortalException {
-
-		List<DDLRecordSet> ddlRecordSets = getDDMStructureRecordSets(
-			ddmStructureId);
-
-		for (DDLRecordSet ddlRecordSet : ddlRecordSets) {
-			deleteRecordSet(ddlRecordSet);
-		}
-	}
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	@SystemEvent(
@@ -293,6 +282,18 @@ public class DDLRecordSetLocalServiceImpl
 		return ddlRecordSetPersistence.remove(recordSet);
 	}
 
+	@Override
+	public void deleteDDMStructureRecordSets(long ddmStructureId)
+		throws PortalException {
+
+		List<DDLRecordSet> ddlRecordSets = getDDMStructureRecordSets(
+			ddmStructureId);
+
+		for (DDLRecordSet ddlRecordSet : ddlRecordSets) {
+			deleteDDLRecordSet(ddlRecordSet);
+		}
+	}
+
 	/**
 	 * Deletes the record set and its resources.
 	 *
@@ -317,7 +318,7 @@ public class DDLRecordSetLocalServiceImpl
 		DDLRecordSet recordSet = ddlRecordSetPersistence.findByPrimaryKey(
 			recordSetId);
 
-		ddlRecordSetLocalService.deleteRecordSet(recordSet);
+		ddlRecordSetLocalService.deleteDDLRecordSet(recordSet);
 	}
 
 	/**
@@ -339,7 +340,7 @@ public class DDLRecordSetLocalServiceImpl
 		DDLRecordSet recordSet = ddlRecordSetPersistence.findByG_R(
 			groupId, recordSetKey);
 
-		ddlRecordSetLocalService.deleteRecordSet(recordSet);
+		ddlRecordSetLocalService.deleteDDLRecordSet(recordSet);
 	}
 
 	/**
@@ -354,7 +355,7 @@ public class DDLRecordSetLocalServiceImpl
 			groupId);
 
 		for (DDLRecordSet recordSet : recordSets) {
-			ddlRecordSetLocalService.deleteRecordSet(recordSet);
+			ddlRecordSetLocalService.deleteDDLRecordSet(recordSet);
 		}
 	}
 

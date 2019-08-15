@@ -125,10 +125,13 @@ public abstract class DDLRecordSetLocalServiceBaseImpl
 	 *
 	 * @param ddlRecordSet the ddl record set
 	 * @return the ddl record set that was removed
+	 * @throws PortalException
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	@Override
-	public DDLRecordSet deleteDDLRecordSet(DDLRecordSet ddlRecordSet) {
+	public DDLRecordSet deleteDDLRecordSet(DDLRecordSet ddlRecordSet)
+		throws PortalException {
+
 		return ddlRecordSetPersistence.remove(ddlRecordSet);
 	}
 
