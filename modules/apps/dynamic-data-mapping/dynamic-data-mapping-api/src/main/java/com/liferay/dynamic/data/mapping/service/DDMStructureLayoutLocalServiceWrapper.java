@@ -148,6 +148,17 @@ public class DDMStructureLayoutLocalServiceWrapper
 			structureLayoutId);
 	}
 
+	@Override
+	public void deleteDDMStructureLayouts(
+			long classNameId,
+			com.liferay.dynamic.data.mapping.model.DDMStructureVersion
+				ddmStructureVersion)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_ddmStructureLayoutLocalService.deleteDDMStructureLayouts(
+			classNameId, ddmStructureVersion);
+	}
+
 	/**
 	 * @throws PortalException
 	 */
@@ -160,6 +171,11 @@ public class DDMStructureLayoutLocalServiceWrapper
 			persistedModel);
 	}
 
+	/**
+	 * @deprecated As of Mueller (7.2.x), replaced by {@link
+	 #deleteDDMStructureLayout(DDMStructureLayout)}
+	 */
+	@Deprecated
 	@Override
 	public void deleteStructureLayout(
 		com.liferay.dynamic.data.mapping.model.DDMStructureLayout
