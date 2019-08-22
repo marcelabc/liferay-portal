@@ -15,15 +15,15 @@
 package com.liferay.data.engine.rest.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.data.engine.rest.client.dto.v1_0.DataDefinition;
 import com.liferay.data.engine.rest.client.dto.v1_0.DataRecordCollection;
 import com.liferay.data.engine.rest.client.pagination.Page;
 import com.liferay.data.engine.rest.client.pagination.Pagination;
 import com.liferay.data.engine.rest.resource.v1_0.test.util.DataDefinitionTestUtil;
-import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.data.engine.rest.resource.v1_0.test.util.DataRecordCollectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Assert;
@@ -43,9 +43,18 @@ public class DataRecordCollectionResourceTest
 	public void setUp() throws Exception {
 		super.setUp();
 
-		_ddmStructure = DataDefinitionTestUtil.addDDMStructure(testGroup);
-		_irrelevantDDMStructure = DataDefinitionTestUtil.addDDMStructure(
-			irrelevantGroup);
+		_dataDefinition = DataDefinitionTestUtil.postSiteDataDefinition(
+			testGroup.getGroupId(),
+			DataDefinitionTestUtil.createDataDefinition(
+				"MyText", RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), testGroup.getGroupId()));
+		_irrelevantDataDefinition =
+			DataDefinitionTestUtil.postSiteDataDefinition(
+				irrelevantGroup.getGroupId(),
+				DataDefinitionTestUtil.createDataDefinition(
+					"MyText", RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(),
+					irrelevantGroup.getGroupId()));
 	}
 
 	@Override
@@ -115,8 +124,9 @@ public class DataRecordCollectionResourceTest
 
 	@Override
 	protected DataRecordCollection randomDataRecordCollection() {
-		return _createDataRecordCollection(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+		return DataRecordCollectionTestUtil.createDataRecordCollection(
+			_dataDefinition.getId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), testGroup.getGroupId());
 	}
 
 	@Override
@@ -127,7 +137,7 @@ public class DataRecordCollectionResourceTest
 			super.randomIrrelevantDataRecordCollection();
 
 		randomIrrelevantDataRecordCollection.setDataDefinitionId(
-			_irrelevantDDMStructure.getStructureId());
+			_irrelevantDataDefinition.getId());
 
 		return randomIrrelevantDataRecordCollection;
 	}
@@ -139,7 +149,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	@Override
@@ -147,7 +157,7 @@ public class DataRecordCollectionResourceTest
 			testGetDataDefinitionDataRecordCollectionsPage_getDataDefinitionId()
 		throws Exception {
 
-		return _ddmStructure.getStructureId();
+		return _dataDefinition.getId();
 	}
 
 	@Override
@@ -157,7 +167,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	@Override
@@ -167,7 +177,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	@Override
@@ -201,34 +211,7 @@ public class DataRecordCollectionResourceTest
 
 		return dataRecordCollectionResource.
 			postDataDefinitionDataRecordCollection(
-				_ddmStructure.getStructureId(), randomDataRecordCollection());
-	}
-
-	private DataRecordCollection _createDataRecordCollection(
-		String description, String name) {
-
-		DataRecordCollection dataRecordCollection = new DataRecordCollection() {
-			{
-				dataDefinitionId = _ddmStructure.getStructureId();
-				dataRecordCollectionKey = RandomTestUtil.randomString();
-				siteId = testGroup.getGroupId();
-			}
-		};
-
-		dataRecordCollection.setDescription(
-			new HashMap<String, Object>() {
-				{
-					put("en_US", description);
-				}
-			});
-		dataRecordCollection.setName(
-			new HashMap<String, Object>() {
-				{
-					put("en_US", name);
-				}
-			});
-
-		return dataRecordCollection;
+				_dataDefinition.getId(), randomDataRecordCollection());
 	}
 
 	private void _testGetDataDefinitionDataRecordCollectionsPage(
@@ -241,7 +224,9 @@ public class DataRecordCollectionResourceTest
 		DataRecordCollection dataRecordCollection =
 			testGetDataDefinitionDataRecordCollectionsPage_addDataRecordCollection(
 				dataDefinitionId,
-				_createDataRecordCollection(description, name));
+				DataRecordCollectionTestUtil.createDataRecordCollection(
+					_dataDefinition.getId(), description, name,
+					testGroup.getGroupId()));
 
 		Page<DataRecordCollection> page =
 			dataRecordCollectionResource.
@@ -267,7 +252,10 @@ public class DataRecordCollectionResourceTest
 
 		DataRecordCollection dataRecordCollection =
 			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
-				siteId, _createDataRecordCollection(description, name));
+				siteId,
+				DataRecordCollectionTestUtil.createDataRecordCollection(
+					_dataDefinition.getId(), description, name,
+					testGroup.getGroupId()));
 
 		Page<DataRecordCollection> page =
 			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
@@ -284,7 +272,7 @@ public class DataRecordCollectionResourceTest
 			dataRecordCollection.getId());
 	}
 
-	private DDMStructure _ddmStructure;
-	private DDMStructure _irrelevantDDMStructure;
+	private DataDefinition _dataDefinition;
+	private DataDefinition _irrelevantDataDefinition;
 
 }

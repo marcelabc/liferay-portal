@@ -91,7 +91,10 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 		DataStorage dataStorage = _getDataStorage(
 			ddmStructure.getStorageType());
 
-		dataStorage.delete(dataRecordId);
+		dataStorage.delete(ddlRecord.getDDMStorageId());
+
+		_ddmStorageLinkLocalService.deleteClassStorageLink(
+			ddlRecord.getDDMStorageId());
 
 		_ddlRecordLocalService.deleteDDLRecord(dataRecordId);
 	}
@@ -203,14 +206,25 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 		DataStorage dataStorage = _getDataStorage(
 			ddmStructure.getStorageType());
 
+		long ddmStorageId = dataStorage.save(
+			ddlRecordSet.getRecordSetId(), dataRecord.getDataRecordValues(),
+			ddlRecordSet.getGroupId());
+
+		DDLRecordSetVersion ddlRecordSetVersion =
+			ddlRecordSet.getRecordSetVersion();
+
+		DDMStructureVersion ddmStructureVersion =
+			ddlRecordSetVersion.getDDMStructureVersion();
+
+		_ddmStorageLinkLocalService.addStorageLink(
+			_portal.getClassNameId(DataRecord.class.getName()), ddmStorageId,
+			ddmStructureVersion.getStructureVersionId(), new ServiceContext());
+
 		return _toDataRecord(
 			_ddlRecordLocalService.addRecord(
 				PrincipalThreadLocal.getUserId(), ddlRecordSet.getGroupId(),
-				dataStorage.save(
-					ddlRecordSet.getRecordSetId(),
-					dataRecord.getDataRecordValues(),
-					ddlRecordSet.getGroupId()),
-				dataRecord.getDataRecordCollectionId(), new ServiceContext()));
+				ddmStorageId, dataRecord.getDataRecordCollectionId(),
+				new ServiceContext()));
 	}
 
 	@Override
@@ -246,16 +260,6 @@ public class DataRecordResourceImpl extends BaseDataRecordResourceImpl {
 		_ddlRecordLocalService.updateRecord(
 			PrincipalThreadLocal.getUserId(), dataRecordId, ddmStorageId,
 			new ServiceContext());
-
-		DDLRecordSetVersion ddlRecordSetVersion =
-			ddlRecordSet.getRecordSetVersion();
-
-		DDMStructureVersion ddmStructureVersion =
-			ddlRecordSetVersion.getDDMStructureVersion();
-
-		_ddmStorageLinkLocalService.addStorageLink(
-			_portal.getClassNameId(DataRecord.class.getName()), ddmStorageId,
-			ddmStructureVersion.getStructureVersionId(), new ServiceContext());
 
 		return dataRecord;
 	}

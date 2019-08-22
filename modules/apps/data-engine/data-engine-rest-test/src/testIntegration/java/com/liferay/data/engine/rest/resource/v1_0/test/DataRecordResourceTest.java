@@ -15,16 +15,15 @@
 package com.liferay.data.engine.rest.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.data.engine.rest.client.dto.v1_0.DataDefinition;
 import com.liferay.data.engine.rest.client.dto.v1_0.DataRecord;
+import com.liferay.data.engine.rest.client.dto.v1_0.DataRecordCollection;
 import com.liferay.data.engine.rest.resource.v1_0.test.util.DataDefinitionTestUtil;
 import com.liferay.data.engine.rest.resource.v1_0.test.util.DataRecordCollectionTestUtil;
-import com.liferay.dynamic.data.lists.model.DDLRecordSet;
-import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.data.engine.rest.resource.v1_0.test.util.DataRecordTestUtil;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.Inject;
-
-import java.util.HashMap;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -41,12 +40,25 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		_ddmStructure = DataDefinitionTestUtil.addDDMStructure(testGroup);
+		_dataDefinition = DataDefinitionTestUtil.postSiteDataDefinition(
+			testGroup.getGroupId(),
+			DataDefinitionTestUtil.createDataDefinition(
+				"MyText", RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), testGroup.getGroupId()));
 
-		_ddlRecordSet = DataRecordCollectionTestUtil.addRecordSet(
-			_ddmStructure, testGroup, _resourceLocalService);
-		_irrelevantDDLRecordSet = DataRecordCollectionTestUtil.addRecordSet(
-			_ddmStructure, irrelevantGroup, _resourceLocalService);
+		_dataRecordCollection =
+			DataRecordCollectionTestUtil.postDataDefinitionDataRecordCollection(
+				_dataDefinition.getId(),
+				DataRecordCollectionTestUtil.createDataRecordCollection(
+					_dataDefinition.getId(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(), testGroup.getGroupId()));
+		_irrelevantDataRecordCollection =
+			DataRecordCollectionTestUtil.postDataDefinitionDataRecordCollection(
+				_dataDefinition.getId(),
+				DataRecordCollectionTestUtil.createDataRecordCollection(
+					_dataDefinition.getId(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(),
+					irrelevantGroup.getGroupId()));
 	}
 
 	@Ignore
@@ -54,6 +66,23 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 	@Test
 	public void testGetDataRecordCollectionDataRecordExport() throws Exception {
 		super.testGetDataRecordCollectionDataRecordExport();
+	}
+
+	@Override
+	@Test
+	public void testPostDataDefinitionDataRecord() throws Exception {
+		DataRecordCollection dataRecordCollection =
+			DataRecordCollectionTestUtil.getSiteDataRecordCollection(
+				testGroup.getGroupId(), _dataDefinition.getDataDefinitionKey());
+
+		DataRecord randomDataRecord = DataRecordTestUtil.createDataRecord(
+			dataRecordCollection.getId(), "MyText");
+
+		DataRecord postDataRecord =
+			testPostDataDefinitionDataRecord_addDataRecord(randomDataRecord);
+
+		assertEquals(randomDataRecord, postDataRecord);
+		assertValid(postDataRecord);
 	}
 
 	@Override
@@ -66,8 +95,8 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 			dataRecordResource.postDataRecordCollectionDataRecordHttpResponse(
 				RandomTestUtil.randomLong(), randomDataRecord()));
 
-		DataRecord dataRecord = _createDataRecord(
-			RandomTestUtil.randomString());
+		DataRecord dataRecord = DataRecordTestUtil.createDataRecord(
+			_dataRecordCollection.getId(), RandomTestUtil.randomString());
 
 		assertHttpResponseStatusCode(
 			400,
@@ -82,7 +111,8 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 
 	@Override
 	protected DataRecord randomDataRecord() {
-		return _createDataRecord("MyText");
+		return DataRecordTestUtil.createDataRecord(
+			_dataRecordCollection.getId(), "MyText");
 	}
 
 	@Override
@@ -91,7 +121,7 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 			super.randomIrrelevantDataRecord();
 
 		randomIrrelevantDataRecord.setDataRecordCollectionId(
-			_irrelevantDDLRecordSet.getRecordSetId());
+			_irrelevantDataRecordCollection.getId());
 
 		return randomIrrelevantDataRecord;
 	}
@@ -99,20 +129,20 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 	@Override
 	protected DataRecord testDeleteDataRecord_addDataRecord() throws Exception {
 		return dataRecordResource.postDataRecordCollectionDataRecord(
-			_ddlRecordSet.getRecordSetId(), randomDataRecord());
+			_dataRecordCollection.getId(), randomDataRecord());
 	}
 
 	@Override
 	protected Long testGetDataDefinitionDataRecordsPage_getDataDefinitionId()
 		throws Exception {
 
-		return _ddmStructure.getStructureId();
+		return _dataDefinition.getId();
 	}
 
 	@Override
 	protected DataRecord testGetDataRecord_addDataRecord() throws Exception {
 		return dataRecordResource.postDataRecordCollectionDataRecord(
-			_ddlRecordSet.getRecordSetId(), randomDataRecord());
+			_dataRecordCollection.getId(), randomDataRecord());
 	}
 
 	@Override
@@ -130,7 +160,7 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 			testGetDataRecordCollectionDataRecordsPage_getDataRecordCollectionId()
 		throws Exception {
 
-		return _ddlRecordSet.getRecordSetId();
+		return _dataRecordCollection.getId();
 	}
 
 	@Override
@@ -145,25 +175,12 @@ public class DataRecordResourceTest extends BaseDataRecordResourceTestCase {
 	@Override
 	protected DataRecord testPutDataRecord_addDataRecord() throws Exception {
 		return dataRecordResource.postDataRecordCollectionDataRecord(
-			_ddlRecordSet.getRecordSetId(), randomDataRecord());
+			_dataRecordCollection.getId(), randomDataRecord());
 	}
 
-	private DataRecord _createDataRecord(String fieldName) {
-		return new DataRecord() {
-			{
-				dataRecordCollectionId = _ddlRecordSet.getRecordSetId();
-				dataRecordValues = new HashMap<String, Object>() {
-					{
-						put(fieldName, RandomTestUtil.randomString());
-					}
-				};
-			}
-		};
-	}
-
-	private DDLRecordSet _ddlRecordSet;
-	private DDMStructure _ddmStructure;
-	private DDLRecordSet _irrelevantDDLRecordSet;
+	private DataDefinition _dataDefinition;
+	private DataRecordCollection _dataRecordCollection;
+	private DataRecordCollection _irrelevantDataRecordCollection;
 
 	@Inject
 	private ResourceLocalService _resourceLocalService;
