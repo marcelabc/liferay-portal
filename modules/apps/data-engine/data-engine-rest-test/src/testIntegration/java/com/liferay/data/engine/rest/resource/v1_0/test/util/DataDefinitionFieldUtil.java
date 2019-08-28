@@ -120,6 +120,7 @@ public class DataDefinitionFieldUtil {
 				put(
 					"placeholder",
 					_createLocalizedValues(RandomTestUtil.randomString()));
+				put("showLabel", true);
 				put(
 					"tooltip",
 					_createLocalizedValues(RandomTestUtil.randomString()));
@@ -179,9 +180,9 @@ public class DataDefinitionFieldUtil {
 
 		customProperties = new HashMap<String, Object>() {
 			{
-				put("dataSourceType", "manual");
 				put("multiple", true);
 				put("showLabel", true);
+				put("dataSourceType", "manual");
 			}
 		};
 
@@ -193,9 +194,11 @@ public class DataDefinitionFieldUtil {
 
 		customProperties = new HashMap<String, Object>() {
 			{
+				put("autocompleteEnabled", false);
 				put(
 					"placeholder",
 					_createLocalizedValues(RandomTestUtil.randomString()));
+				put("showLabel", true);
 				put(
 					"tooltip",
 					_createLocalizedValues(RandomTestUtil.randomString()));
