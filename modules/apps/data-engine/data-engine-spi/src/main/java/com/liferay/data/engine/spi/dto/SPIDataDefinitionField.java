@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * @author Leonardo Barros
@@ -61,7 +62,7 @@ public class SPIDataDefinitionField {
 		return false;
 	}
 
-	public Map<String, Object> getCustomProperties() {
+	public TreeMap<String, Object> getCustomProperties() {
 		return _customProperties;
 	}
 
@@ -122,7 +123,7 @@ public class SPIDataDefinitionField {
 		return HashUtil.hash(hash, _tip);
 	}
 
-	public void setCustomProperties(Map<String, Object> customProperties) {
+	public void setCustomProperties(TreeMap<String, Object> customProperties) {
 		if (customProperties != null) {
 			_customProperties.putAll(customProperties);
 		}
@@ -178,7 +179,7 @@ public class SPIDataDefinitionField {
 		}
 	}
 
-	private final Map<String, Object> _customProperties = new HashMap<>();
+	private final TreeMap<String, Object> _customProperties = new TreeMap<>();
 	private final Map<String, Object> _defaultValue = new HashMap<>();
 	private String _fieldType;
 	private long _id;

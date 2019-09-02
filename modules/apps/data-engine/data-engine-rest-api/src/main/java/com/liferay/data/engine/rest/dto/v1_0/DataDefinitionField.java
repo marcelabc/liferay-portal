@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.annotation.Generated;
 
@@ -45,17 +46,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class DataDefinitionField {
 
 	@Schema
-	public Map<String, Object> getCustomProperties() {
+	public TreeMap<String, Object> getCustomProperties() {
 		return customProperties;
 	}
 
-	public void setCustomProperties(Map<String, Object> customProperties) {
+	public void setCustomProperties(TreeMap<String, Object> customProperties) {
 		this.customProperties = customProperties;
 	}
 
 	@JsonIgnore
 	public void setCustomProperties(
-		UnsafeSupplier<Map<String, Object>, Exception>
+		UnsafeSupplier<TreeMap<String, Object>, Exception>
 			customPropertiesUnsafeSupplier) {
 
 		try {
@@ -71,7 +72,7 @@ public class DataDefinitionField {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Map<String, Object> customProperties;
+	protected TreeMap<String, Object> customProperties;
 
 	@Schema
 	public Map<String, Object> getDefaultValue() {

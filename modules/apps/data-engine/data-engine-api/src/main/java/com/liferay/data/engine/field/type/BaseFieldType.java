@@ -30,6 +30,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -56,7 +57,7 @@ public abstract class BaseFieldType implements FieldType {
 			new SPIDataDefinitionField();
 
 		spiDataDefinitionField.setCustomProperties(
-			new HashMap<String, Object>() {
+			new TreeMap<String, Object>() {
 				{
 					put("showLabel", jsonObject.getBoolean("showLabel"));
 				}
