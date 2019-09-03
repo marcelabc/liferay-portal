@@ -18,7 +18,7 @@ import com.liferay.data.engine.rest.client.dto.v1_0.DataDefinitionField;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +32,7 @@ public class DataDefinitionFieldUtil {
 
 		List<DataDefinitionField> dataDefinitionFields = new ArrayList<>();
 
-		Map<String, Object> customProperties = new HashMap<String, Object>() {
+		Map<String, Object> customProperties = new TreeMap<String, Object>() {
 			{
 				put("showAsSwitcher", true);
 				put("showLabel", true);
@@ -45,7 +45,7 @@ public class DataDefinitionFieldUtil {
 				_createLocalizedValues(RandomTestUtil.randomBoolean()),
 				"checkbox"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("inline", true);
 				put("showAsSwitcher", true);
@@ -58,7 +58,7 @@ public class DataDefinitionFieldUtil {
 				customProperties, _createLocalizedValues("Option 1"),
 				"checkbox_multiple"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("showLabel", true);
 			}
@@ -69,7 +69,7 @@ public class DataDefinitionFieldUtil {
 				customProperties,
 				_createLocalizedValues(RandomTestUtil.nextDate()), "date"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("groupId", RandomTestUtil.randomLong());
 				put("itemSelectorAuthToken", RandomTestUtil.randomString());
@@ -84,7 +84,7 @@ public class DataDefinitionFieldUtil {
 				_createLocalizedValues(RandomTestUtil.randomString()),
 				"document_library"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put(
 					"placeholder",
@@ -99,7 +99,7 @@ public class DataDefinitionFieldUtil {
 				_createLocalizedValues(RandomTestUtil.randomString()),
 				"editor"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("orientation", "vertical");
 				put("showLabel", true);
@@ -114,7 +114,7 @@ public class DataDefinitionFieldUtil {
 
 		dataDefinitionFields.add(fieldSetField);
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("dataType", "integer");
 				put(
@@ -132,7 +132,7 @@ public class DataDefinitionFieldUtil {
 				customProperties,
 				_createLocalizedValues(RandomTestUtil.nextInt()), "numeric"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("showLabel", true);
 				put(
@@ -147,7 +147,7 @@ public class DataDefinitionFieldUtil {
 				_createLocalizedValues(RandomTestUtil.randomString()),
 				"paragraph"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put(
 					"placeholder",
@@ -165,7 +165,7 @@ public class DataDefinitionFieldUtil {
 				_createLocalizedValues(RandomTestUtil.randomString()),
 				"password"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("inline", true);
 				put("showLabel", true);
@@ -178,11 +178,11 @@ public class DataDefinitionFieldUtil {
 				_createLocalizedValues(RandomTestUtil.randomString()),
 				"radio"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
+				put("dataSourceType", "manual");
 				put("multiple", true);
 				put("showLabel", true);
-				put("dataSourceType", "manual");
 			}
 		};
 
@@ -192,7 +192,7 @@ public class DataDefinitionFieldUtil {
 				_createLocalizedValues(RandomTestUtil.randomString()),
 				"select"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("autocompleteEnabled", false);
 				put(
@@ -220,7 +220,7 @@ public class DataDefinitionFieldUtil {
 		DataDefinitionField dataDefinitionField = new DataDefinitionField() {
 			{
 				indexable = true;
-				label = new HashMap<String, Object>() {
+				label = new TreeMap<String, Object>() {
 					{
 						put("en_US", RandomTestUtil.randomString());
 					}
@@ -228,7 +228,7 @@ public class DataDefinitionFieldUtil {
 				localizable = false;
 				name = RandomTestUtil.randomString();
 				repeatable = false;
-				tip = new HashMap<String, Object>() {
+				tip = new TreeMap<String, Object>() {
 					{
 						put("en_US", RandomTestUtil.randomString());
 					}
@@ -245,7 +245,7 @@ public class DataDefinitionFieldUtil {
 	}
 
 	private static Map<String, Object> _createLocalizedValues(Object value) {
-		return new HashMap<String, Object>() {
+		return new TreeMap<String, Object>() {
 			{
 				put("en_US", value);
 			}
@@ -255,7 +255,7 @@ public class DataDefinitionFieldUtil {
 	private static DataDefinitionField[] _createNestedFields() {
 		List<DataDefinitionField> dataDefinitionFields = new ArrayList<>();
 
-		Map<String, Object> customProperties = new HashMap<String, Object>() {
+		Map<String, Object> customProperties = new TreeMap<String, Object>() {
 			{
 				put("showLabel", true);
 			}
@@ -266,7 +266,7 @@ public class DataDefinitionFieldUtil {
 				customProperties,
 				_createLocalizedValues(RandomTestUtil.nextDate()), "date"));
 
-		customProperties = new HashMap<String, Object>() {
+		customProperties = new TreeMap<String, Object>() {
 			{
 				put("showAsSwitcher", true);
 				put("showLabel", true);
