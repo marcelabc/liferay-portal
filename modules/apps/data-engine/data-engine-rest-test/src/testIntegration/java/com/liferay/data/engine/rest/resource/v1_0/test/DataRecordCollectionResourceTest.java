@@ -21,10 +21,12 @@ import com.liferay.data.engine.rest.client.pagination.Pagination;
 import com.liferay.data.engine.rest.resource.v1_0.test.util.DataDefinitionTestUtil;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.search.test.util.IdempotentRetryAssert;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -267,12 +269,18 @@ public class DataRecordCollectionResourceTest
 				dataDefinitionId,
 				_createDataRecordCollection(description, name));
 
-		Page<DataRecordCollection> page =
-			dataRecordCollectionResource.
-				getDataDefinitionDataRecordCollectionsPage(
-					dataDefinitionId, keywords, Pagination.of(1, 2));
+		Page<DataRecordCollection> page = IdempotentRetryAssert.retryAssert(
+			10, TimeUnit.SECONDS,
+			() -> {
+				Page<DataRecordCollection> page1 =
+					dataRecordCollectionResource.
+						getDataDefinitionDataRecordCollectionsPage(
+							dataDefinitionId, keywords, Pagination.of(1, 2));
 
-		Assert.assertEquals(1, page.getTotalCount());
+				Assert.assertEquals(1, page1.getTotalCount());
+
+				return page1;
+			});
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(dataRecordCollection),
@@ -293,11 +301,18 @@ public class DataRecordCollectionResourceTest
 			testGetSiteDataRecordCollectionsPage_addDataRecordCollection(
 				siteId, _createDataRecordCollection(description, name));
 
-		Page<DataRecordCollection> page =
-			dataRecordCollectionResource.getSiteDataRecordCollectionsPage(
-				siteId, keywords, Pagination.of(1, 2));
+		Page<DataRecordCollection> page = IdempotentRetryAssert.retryAssert(
+			10, TimeUnit.SECONDS,
+			() -> {
+				Page<DataRecordCollection> page1 =
+					dataRecordCollectionResource.
+						getSiteDataRecordCollectionsPage(
+							siteId, keywords, Pagination.of(1, 2));
 
-		Assert.assertEquals(1, page.getTotalCount());
+				Assert.assertEquals(1, page1.getTotalCount());
+
+				return page1;
+			});
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(dataRecordCollection),

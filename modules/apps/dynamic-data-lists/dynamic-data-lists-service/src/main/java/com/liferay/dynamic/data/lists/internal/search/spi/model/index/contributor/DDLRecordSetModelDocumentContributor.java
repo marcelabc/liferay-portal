@@ -65,6 +65,12 @@ public class DDLRecordSetModelDocumentContributor
 
 		document.addKeyword(Field.VERSION, ddlRecordSet.getVersion());
 		document.addKeyword("DDMStructureId", ddlRecordSet.getDDMStructureId());
+		document.addLocalizedKeyword(
+			"localized_name",
+			LocalizationUtil.populateLocalizationMap(
+				ddlRecordSet.getNameMap(), ddlRecordSet.getDefaultLanguageId(),
+				ddlRecordSet.getGroupId()),
+			true, true);
 		document.addKeyword("scope", ddlRecordSet.getScope());
 	}
 
