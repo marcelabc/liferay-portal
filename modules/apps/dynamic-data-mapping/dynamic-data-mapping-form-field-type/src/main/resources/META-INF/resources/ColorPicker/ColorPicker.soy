@@ -1,0 +1,60 @@
+{namespace ColorPicker}
+
+{template .render}
+    {@param name: string}
+    {@param value: ?}
+    {@param? _handleOnChange: any}
+    {@param? displayErrors: bool}
+    {@param? errorMessage: string}
+    {@param? id: string}
+    {@param? label: string}
+    {@param? predefinedValue: string}
+    {@param? readOnly: bool}
+    {@param? repeatable: bool}
+    {@param? required: bool}
+    {@param? showLabel: bool}
+    {@param? spritemap: string}
+    {@param? tip: string}
+    {@param? valid: bool}
+    {@param? visible: bool}
+
+    {call FieldBase.render}
+        {param contentRenderer kind="html"}
+            {call .content}
+                {param _handleOnChange: $_handleOnChange /}
+                {param predefinedValue: $predefinedValue /}
+                {param value: $value /}
+            {/call}
+        {/param}
+        {param displayErrors: $displayErrors /}
+        {param errorMessage: $errorMessage /}
+        {param id: $id /}
+        {param label: $label /}
+        {param name: $name /}
+        {param readOnly: $readOnly /}
+        {param repeatable: $repeatable /}
+        {param required: $required /}
+        {param showLabel: $showLabel /}
+        {param spritemap: $spritemap /}
+        {param tip: $tip /}
+        {param valid: $valid /}
+        {param ref: 'fieldBase' /}
+        {param visible: $visible /}
+    {/call}
+{/template}
+
+{template .content}
+    {@param? _handleOnChange: any}
+    {@param? predefinedValue: string}
+    {@param? value: string}
+
+    {let $inputValue: $value ?: $predefinedValue /}
+
+	<div class="liferay-ddm-form-field-grid table-responsive">
+        {call ColorPickerComponent.render}
+            {param value: $inputValue /}
+            {param events: ['onchange': $_handleOnChange] /}
+            {param ref: 'colorPicker' /}
+        {/call}
+	</div>
+{/template}
