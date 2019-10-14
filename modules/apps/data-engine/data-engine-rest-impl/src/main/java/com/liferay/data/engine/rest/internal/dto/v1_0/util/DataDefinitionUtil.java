@@ -256,8 +256,10 @@ public class DataDefinitionUtil {
 			FieldType fieldType = fieldTypeTracker.getFieldType(
 				jsonObject.getString("type"));
 
-			return DataDefinitionFieldUtil.toDataDefinitionField(
-				fieldType.deserialize(fieldTypeTracker, jsonObject));
+			if (Validator.isNotNull(fieldType)) {
+				return DataDefinitionFieldUtil.toDataDefinitionField(
+					fieldType.deserialize(fieldTypeTracker, jsonObject));
+			}
 		}
 
 		return new DataDefinitionField();
