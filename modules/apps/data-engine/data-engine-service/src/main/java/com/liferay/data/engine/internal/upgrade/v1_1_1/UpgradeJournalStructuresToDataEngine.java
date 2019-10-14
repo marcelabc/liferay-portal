@@ -122,6 +122,56 @@ public class UpgradeJournalStructuresToDataEngine extends UpgradeProcess {
 		}
 	}
 
+	protected void addDDMStructureLayout(
+			long ddmStructureVersionId, long newDDMStructureVersionId)
+		throws Exception {
+
+		String sql1 =
+			"select * from DDMStructureLayout where structureVersionId = ?";
+
+		StringBundler sb = new StringBundler(5);
+
+		sb.append("insert into DDMStructureLayout (uuid_, structureLayoutId, ");
+		sb.append("groupId, companyId, userId, userName, createDate, ");
+		sb.append("modifiedDate, classNameId, structureLayoutKey, ");
+		sb.append("structureVersionId, name, description, definition) values ");
+		sb.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+		String sql2 = sb.toString();
+
+		try (PreparedStatement ps1 = connection.prepareStatement(sql1);
+			PreparedStatement ps2 =
+				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+					connection, sql2)) {
+
+			ps1.setLong(1, ddmStructureVersionId);
+
+			try (ResultSet rs = ps1.executeQuery()) {
+				while (rs.next()) {
+					ps2.setString(1, PortalUUIDUtil.generate());
+					ps2.setLong(2, _counterLocalService.increment());
+					ps2.setLong(3, rs.getLong("groupId"));
+					ps2.setLong(4, rs.getLong("companyId"));
+					ps2.setLong(5, rs.getLong("userId"));
+					ps2.setString(6, rs.getString("userName"));
+					ps2.setTimestamp(7, rs.getTimestamp("createDate"));
+					ps2.setTimestamp(8, rs.getTimestamp("modifiedDate"));
+					ps2.setLong(9, rs.getLong("classNameId"));
+					ps2.setString(
+						10, String.valueOf(_counterLocalService.increment()));
+					ps2.setLong(11, newDDMStructureVersionId);
+					ps2.setString(12, rs.getString("name"));
+					ps2.setString(13, rs.getString("description"));
+					ps2.setString(14, rs.getString("definition"));
+
+					ps2.addBatch();
+				}
+
+				ps2.executeBatch();
+			}
+		}
+	}
+
 	protected void addDDMStructureLink(long companyId, long newDDMStructureId)
 		throws Exception {
 
@@ -139,6 +189,73 @@ public class UpgradeJournalStructuresToDataEngine extends UpgradeProcess {
 			ps.setLong(4, newDDMStructureId);
 
 			ps.executeUpdate();
+		}
+	}
+
+	protected void addDDMStructureVersion() throws Exception {
+		StringBundler sb = new StringBundler(6);
+
+		sb.append("insert into DDMStructureVersion (structureVersionId, ");
+		sb.append("groupId, companyId, userId, userName, createDate, ");
+		sb.append("structureId, version, parentStructureId, name, ");
+		sb.append("description, definition, storageType, type_, status, ");
+		sb.append("statusByUserId, statusByUserName, statusDate) values (?, ");
+		sb.append("?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+		String sql = sb.toString();
+
+		for (Long ddmStructureId : _ddmStructureIds.keySet()) {
+			try (PreparedStatement ps1 = connection.prepareStatement(
+					"select * from DDMStructureVersion where structureId = ?");
+				PreparedStatement ps2 =
+					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+						connection, sql)) {
+
+				ps1.setLong(1, ddmStructureId);
+
+				try (ResultSet rs = ps1.executeQuery()) {
+					while (rs.next()) {
+						long newDDMStructureVersionId =
+							_counterLocalService.increment();
+
+						ps2.setLong(1, newDDMStructureVersionId);
+
+						ps2.setLong(2, rs.getLong("groupId"));
+						ps2.setLong(3, rs.getLong("companyId"));
+						ps2.setLong(4, rs.getLong("userId"));
+						ps2.setString(5, rs.getString("userName"));
+						ps2.setTimestamp(6, rs.getTimestamp("createDate"));
+						ps2.setLong(
+							7,
+							_ddmStructureIds.getOrDefault(
+								ddmStructureId, ddmStructureId));
+						ps2.setString(8, rs.getString("version"));
+						ps2.setLong(
+							9,
+							_ddmStructureIds.getOrDefault(
+								rs.getLong("parentStructureId"),
+								rs.getLong("parentStructureId")));
+						ps2.setString(10, rs.getString("name"));
+						ps2.setString(11, rs.getString("description"));
+						ps2.setString(
+							12, adaptDefinition(rs.getString("definition")));
+						ps2.setString(13, rs.getString("storageType"));
+						ps2.setInt(14, rs.getInt("type_"));
+						ps2.setInt(15, rs.getInt("status"));
+						ps2.setLong(16, rs.getLong("statusByUserId"));
+						ps2.setString(17, rs.getString("statusByUserName"));
+						ps2.setTimestamp(18, rs.getTimestamp("statusDate"));
+
+						ps2.addBatch();
+
+						addDDMStructureLayout(
+							rs.getLong("structureVersionId"),
+							newDDMStructureVersionId);
+					}
+
+					ps2.executeBatch();
+				}
+			}
 		}
 	}
 
