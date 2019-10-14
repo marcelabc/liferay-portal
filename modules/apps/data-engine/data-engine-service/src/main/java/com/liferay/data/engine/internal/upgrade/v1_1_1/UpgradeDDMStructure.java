@@ -94,6 +94,30 @@ public class UpgradeDDMStructure extends UpgradeProcess {
 		}
 	}
 
+	protected void addDDMStructureChildren(
+			long parentStructureId, long newParentStructureId)
+		throws Exception {
+
+		try (PreparedStatement ps = connection.prepareStatement(
+				"select * from DDMStructure where parentStructureId = ?")) {
+
+			ps.setLong(1, parentStructureId);
+
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					long ddmStructureId = rs.getLong("structureId");
+
+					long newDDMStructureId = _counterLocalService.increment();
+
+					addDDMStructure(
+						rs, newDDMStructureId, newParentStructureId);
+
+					addDDMStructureChildren(ddmStructureId, newDDMStructureId);
+				}
+			}
+		}
+	}
+
 	protected void addDDMStructureLink(long companyId, long newDDMStructureId)
 		throws Exception {
 
