@@ -259,7 +259,30 @@ public class UpgradeDDMStructure extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		
+		StringBundler sb = new StringBundler(2);
+
+		sb.append("select * from DDMStructure where classNameId = ? and ");
+		sb.append("parentStructureId = 0");
+
+		String sql = sb.toString();
+
+		try (PreparedStatement ps1 = connection.prepareStatement(sql)) {
+			ps1.setLong(1, _JOURNAL_ARTICLE_NAME_ID);
+
+			try (ResultSet rs = ps1.executeQuery()) {
+				while (rs.next()) {
+					long ddmStructureId = rs.getLong("structureId");
+
+					long newDDMStructureId = _counterLocalService.increment();
+
+					addDDMStructure(rs, newDDMStructureId, 0);
+
+					addDDMStructureChildren(ddmStructureId, newDDMStructureId);
+				}
+			}
+		}
+
+		addDDMStructureVersion();
 	}
 
 	private static final Long _DATA_DEFINITION_INTERNAL_NAME_ID =
