@@ -98,6 +98,30 @@ public class UpgradeJournalStructuresToDataEngine extends UpgradeProcess {
 		}
 	}
 
+	protected void addDDMStructureChildren(
+			long newParentStructureId, long parentStructureId)
+		throws Exception {
+
+		try (PreparedStatement ps = connection.prepareStatement(
+				"select * from DDMStructure where parentStructureId = ?")) {
+
+			ps.setLong(1, parentStructureId);
+
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					long ddmStructureId = rs.getLong("structureId");
+
+					long newDDMStructureId = _counterLocalService.increment();
+
+					addDDMStructure(
+						newDDMStructureId, newParentStructureId, rs);
+
+					addDDMStructureChildren(newDDMStructureId, ddmStructureId);
+				}
+			}
+		}
+	}
+
 	protected void addDDMStructureLink(long companyId, long newDDMStructureId)
 		throws Exception {
 
