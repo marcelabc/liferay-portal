@@ -199,6 +199,20 @@ public class DataLayoutSerDes {
 			sb.append(dataLayout.getUserId());
 		}
 
+		if (dataLayout.getVersion() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"version\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(dataLayout.getVersion()));
+
+			sb.append("\"");
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -298,6 +312,13 @@ public class DataLayoutSerDes {
 			map.put("userId", String.valueOf(dataLayout.getUserId()));
 		}
 
+		if (dataLayout.getVersion() == null) {
+			map.put("version", null);
+		}
+		else {
+			map.put("version", String.valueOf(dataLayout.getVersion()));
+		}
+
 		return map;
 	}
 
@@ -389,6 +410,11 @@ public class DataLayoutSerDes {
 				if (jsonParserFieldValue != null) {
 					dataLayout.setUserId(
 						Long.valueOf((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "version")) {
+				if (jsonParserFieldValue != null) {
+					dataLayout.setVersion((String)jsonParserFieldValue);
 				}
 			}
 			else {
