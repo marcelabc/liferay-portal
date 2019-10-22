@@ -142,6 +142,7 @@ public class DataDefinitionUtil {
 				siteId = ddmStructure.getGroupId();
 				storageType = ddmStructure.getStorageType();
 				userId = ddmStructure.getUserId();
+				version = jsonObject.getString("version");
 			}
 		};
 	}
@@ -168,6 +169,8 @@ public class DataDefinitionUtil {
 			JSONUtil.toJSONArray(
 				dataDefinition.getDataDefinitionRules(),
 				dataDefinitionRule -> _toJSONObject(dataDefinitionRule))
+		).put(
+			"version", GetterUtil.getString(dataDefinition.getVersion(), "1.0")
 		).toString();
 	}
 
