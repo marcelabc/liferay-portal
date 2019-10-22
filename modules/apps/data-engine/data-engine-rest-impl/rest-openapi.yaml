@@ -45,6 +45,8 @@ components:
                 userId:
                     format: int64
                     type: integer
+                version:
+                    type: string
             type: object
         DataDefinitionField:
             properties:
@@ -165,6 +167,8 @@ components:
                 userId:
                     format: int64
                     type: integer
+                version:
+                    type: string
             type: object
         DataLayoutColumn:
             properties:
