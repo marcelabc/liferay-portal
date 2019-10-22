@@ -22,6 +22,7 @@ import com.liferay.data.engine.rest.dto.v1_0.DataLayoutRow;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 
 import java.util.Objects;
@@ -41,6 +42,7 @@ public class DataLayoutUtil {
 					pageJSONObject -> _toDataLayoutPage(pageJSONObject),
 					DataLayoutPage.class);
 				paginationMode = jsonObject.getString("paginationMode");
+				version = jsonObject.getString("version");
 			}
 		};
 	}
@@ -60,6 +62,9 @@ public class DataLayoutUtil {
 				dataLayoutPage -> _toJSONObject(dataLayoutPage))
 		).put(
 			"paginationMode", dataLayout.getPaginationMode()
+		).put(
+			"version",
+			GetterUtil.getString(dataLayout.getVersion(), _VERSION_DEFAULT)
 		).toString();
 	}
 
@@ -142,5 +147,7 @@ public class DataLayoutUtil {
 				dataLayoutRow.getDataLayoutColumns(),
 				dataLayoutColumn -> _toJSONObject(dataLayoutColumn)));
 	}
+
+	private static final String _VERSION_DEFAULT = "2.0";
 
 }

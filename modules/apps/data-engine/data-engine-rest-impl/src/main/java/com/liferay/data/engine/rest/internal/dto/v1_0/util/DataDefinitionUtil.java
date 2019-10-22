@@ -142,6 +142,7 @@ public class DataDefinitionUtil {
 				siteId = ddmStructure.getGroupId();
 				storageType = ddmStructure.getStorageType();
 				userId = ddmStructure.getUserId();
+				version = jsonObject.getString("version");
 			}
 		};
 	}
@@ -168,6 +169,9 @@ public class DataDefinitionUtil {
 			JSONUtil.toJSONArray(
 				dataDefinition.getDataDefinitionRules(),
 				dataDefinitionRule -> _toJSONObject(dataDefinitionRule))
+		).put(
+			"version",
+			GetterUtil.getString(dataDefinition.getVersion(), _VERSION_DEFAULT)
 		).toString();
 	}
 
@@ -323,6 +327,8 @@ public class DataDefinitionUtil {
 		return GetterUtil.getString(
 			ResourceBundleUtil.getString(resourceBundle, key), key);
 	}
+
+	private static final String _VERSION_DEFAULT = "2.0";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DataDefinitionUtil.class);
