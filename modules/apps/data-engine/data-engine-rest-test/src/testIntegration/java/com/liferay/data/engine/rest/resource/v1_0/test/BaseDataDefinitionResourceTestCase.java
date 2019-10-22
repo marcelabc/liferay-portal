@@ -191,6 +191,7 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		dataDefinition.setDataDefinitionKey(regex);
 		dataDefinition.setDefaultLanguageId(regex);
 		dataDefinition.setStorageType(regex);
+		dataDefinition.setVersion(regex);
 
 		String json = DataDefinitionSerDes.toJSON(dataDefinition);
 
@@ -201,6 +202,7 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		Assert.assertEquals(regex, dataDefinition.getDataDefinitionKey());
 		Assert.assertEquals(regex, dataDefinition.getDefaultLanguageId());
 		Assert.assertEquals(regex, dataDefinition.getStorageType());
+		Assert.assertEquals(regex, dataDefinition.getVersion());
 	}
 
 	@Test
@@ -911,6 +913,24 @@ public abstract class BaseDataDefinitionResourceTestCase {
 
 				sb.append(", ");
 			}
+
+			if (Objects.equals("version", additionalAssertFieldName)) {
+				sb.append(additionalAssertFieldName);
+				sb.append(": ");
+
+				Object value = dataDefinition.getVersion();
+
+				if (value instanceof String) {
+					sb.append("\"");
+					sb.append(value);
+					sb.append("\"");
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append(", ");
+			}
 		}
 
 		sb.append("}");
@@ -1124,6 +1144,14 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("version", additionalAssertFieldName)) {
+				if (dataDefinition.getVersion() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			throw new IllegalArgumentException(
 				"Invalid additional assert field name " +
 					additionalAssertFieldName);
@@ -1325,6 +1353,17 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("version", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						dataDefinition1.getVersion(),
+						dataDefinition2.getVersion())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			throw new IllegalArgumentException(
 				"Invalid additional assert field name " +
 					additionalAssertFieldName);
@@ -1384,6 +1423,17 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						dataDefinition.getUserId(),
 						jsonObject.getLong("userId"))) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("version", fieldName)) {
+				if (!Objects.deepEquals(
+						dataDefinition.getVersion(),
+						jsonObject.getString("version"))) {
 
 					return false;
 				}
@@ -1579,6 +1629,14 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("version")) {
+			sb.append("'");
+			sb.append(String.valueOf(dataDefinition.getVersion()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		throw new IllegalArgumentException(
 			"Invalid entity field " + entityFieldName);
 	}
@@ -1611,6 +1669,7 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				siteId = testGroup.getGroupId();
 				storageType = RandomTestUtil.randomString();
 				userId = RandomTestUtil.randomLong();
+				version = RandomTestUtil.randomString();
 			}
 		};
 	}
