@@ -19,6 +19,7 @@ import './GeolocationRegister.soy.js';
 import L from 'leaflet';
 import MapGoogleMaps from 'map-google-maps/js/MapGoogleMaps.es.js';
 import Component from 'metal-component';
+
 import Soy from 'metal-soy';
 import {Config} from 'metal-state';
 
@@ -153,6 +154,8 @@ class Geolocation extends Component {
 	}
 
 	prepareStateForRender(state) {
+		console.log('prepareStateForRender--> 654321', {readOnly: state.readOnly});
+
 		const {predefinedValue} = state;
 		const predefinedValueArray = this._getArrayValue(predefinedValue);
 
