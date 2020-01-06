@@ -17,9 +17,8 @@ import '../FieldBase/FieldBase.es';
 import './GeolocationRegister.soy.js';
 
 import L from 'leaflet';
-import MapGoogleMaps from 'map-google-maps/js/MapGoogleMaps.es.js';
+import MapGoogleMaps from 'map-google-maps/js/MapGoogleMaps.es';
 import Component from 'metal-component';
-
 import Soy from 'metal-soy';
 import {Config} from 'metal-state';
 
@@ -46,7 +45,6 @@ const MAP_PROVIDER = {
 const {CONTROLS} = Liferay.MapBase;
 
 const MAP_CONFIG = {
-	boundingBox: '#targetGeo1',
 	controls: [
 		CONTROLS.HOME,
 		CONTROLS.PAN,
@@ -70,8 +68,10 @@ class Geolocation extends Component {
 
 		this.setState(GEOLOCATE_CONFIG);
 
+		MAP_CONFIG.boundingBox = `#${this.instanceId}`;
+
 		if (!readOnly) {
-			switch (this.mapProvider) {
+			switch (this.mapProviderKey) {
 				case MAP_PROVIDER.openStreetMap:
 					this._createMapOpenStreetMaps(MAP_CONFIG);
 					break;
@@ -96,20 +96,35 @@ class Geolocation extends Component {
 
 		Liferay.Loader.require(
 			'map-openstreetmap@5.0.0/js/MapOpenStreetMap.es',
-			_MapOpenStreetMap => {
-				this._mapComponent = new _MapOpenStreetMap.default(mapConfig);
+			_MapProvide => {
+				this._mapComponent = new _MapProvide.default(mapConfig);
 
-				this._mapComponent.on('positionChange', () => {
-					// console.log(data, 1);
-				});
+				this._mapComponent.on(
+					'positionChange',
+					this._eventHandlerPositionChange.bind(this)
+				);
 
 				Liferay.MapBase.register(
 					this.name,
 					this._mapComponent,
-					'#targetGeo1'
+					`#${this.instanceId}`
 				);
 			}
 		);
+	}
+
+	_eventHandlerPositionChange({newVal: {location}}) {
+		const value = {
+			latitude: location.lat,
+			longitude: location.lng
+		};
+
+		document.getElementById(`${this.instanceId}_input_value`).setAttribute(
+			'value',
+			JSON.stringify(value)
+		);
+
+		this.setState({value});
 	}
 
 	_createGoogleMaps(mapConfig) {
@@ -118,12 +133,13 @@ class Geolocation extends Component {
 			Liferay.MapBase.register(
 				this.name,
 				this._mapComponent,
-				'#targetGeo1'
+				`#${this.instanceId}`
 			);
 
-			this._mapComponent.on('positionChange', () => {
-				// console.log(data, 2);
-			});
+			this._mapComponent.on(
+				'positionChange',
+				this._eventHandlerPositionChange.bind(this)
+			);
 		};
 
 		if (
@@ -154,9 +170,8 @@ class Geolocation extends Component {
 	}
 
 	prepareStateForRender(state) {
-		console.log('prepareStateForRender--> 654321', {readOnly: state.readOnly});
-
 		const {predefinedValue} = state;
+
 		const predefinedValueArray = this._getArrayValue(predefinedValue);
 
 		return {
@@ -239,10 +254,10 @@ Geolocation.STATE = {
 	label: Config.string(),
 
 	/**
-	 * @default 'mapProvider'
+	 * @default 'mapProviderKey'
 	 * TODO - Falta esse JSDOC aaa
 	 */
-	mapProvider: Config.string().value(MAP_PROVIDER.googleMaps),
+	mapProviderKey: Config.string().value(MAP_PROVIDER.openStreetMap),
 
 	/**
 	 * @default undefined
