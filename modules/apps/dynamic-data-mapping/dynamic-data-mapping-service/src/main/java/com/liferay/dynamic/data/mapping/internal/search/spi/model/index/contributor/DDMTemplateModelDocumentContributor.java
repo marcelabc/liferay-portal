@@ -75,6 +75,18 @@ public class DDMTemplateModelDocumentContributor
 			}
 		}
 
+		try {
+			document.addKeyword(
+				"resourcePermissionName",
+				_ddmPermissionSupport.getTemplateModelResourceName(
+					ddmTemplate.getResourceClassNameId()));
+		}
+		catch (PortalException pe) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(pe, pe);
+			}
+		}
+
 		document.addKeyword("type", ddmTemplate.getType());
 		document.addLocalizedText(
 			Field.DESCRIPTION,
