@@ -26,7 +26,8 @@ const ReactImagePicker = ({
 	itemSelectorURL,
 	name,
 	portletNamespace,
-	readOnly
+	readOnly,
+	valid
 }) => {
 	const [imageDescription, setImageDescription] = useState('');
 	const [imageTitle, setImageTitle] = useState('');
@@ -141,7 +142,7 @@ const ReactImagePicker = ({
 						src={imageURL}
 					/>
 
-					<ClayForm.Group>
+					<ClayForm.Group className={valid ? '' : 'has-error'}>
 						<ClayInput
 							disabled={readOnly}
 							name={`${name}-description`}
