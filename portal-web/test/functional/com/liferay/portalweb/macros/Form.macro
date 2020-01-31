@@ -28,6 +28,10 @@ definition {
 			value1 = "Add Success Page");
 	}
 
+	macro addTextField {
+		Form.gotoAddField(fieldType = "Text");
+	}
+
 	macro addTranslation {
 		Click(locator1 = "Translation#ADD");
 
@@ -281,10 +285,6 @@ definition {
 			value1 = "${fieldType}");
 
 		AssertElementPresent(locator1 = "Form#SIDEBAR_BASIC_TAB");
-	}
-
-	macro addTextField {
-		Form.gotoAddField(fieldType = "Text");
 	}
 
 	macro gotoAdvancedTab {
