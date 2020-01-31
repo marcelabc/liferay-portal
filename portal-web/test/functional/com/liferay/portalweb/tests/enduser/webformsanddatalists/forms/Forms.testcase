@@ -4151,7 +4151,7 @@ definition {
 
 		FormFields.viewFieldLabel(
 			fieldName = "label",
-			fieldValue = "Text Field");
+			fieldValue = "Text");
 	}
 
 	@description = "This is a use case for LPS-69214."
