@@ -4212,7 +4212,7 @@ definition {
 			fieldName = "label",
 			fieldValue = ",-+!@#$%^*()=.?/;:{}[]\|");
 
-		FormFields.viewFieldName(fieldName = "TextField");
+		FormFields.viewFieldName(fieldName = "Text");
 
 		FormFields.editFieldName(fieldValue = "_,-+!@#$%^*()=.?/;:{}[]\|");
 
