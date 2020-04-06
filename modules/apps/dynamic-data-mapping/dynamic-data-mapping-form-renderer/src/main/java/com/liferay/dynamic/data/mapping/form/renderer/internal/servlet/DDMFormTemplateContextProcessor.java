@@ -39,6 +39,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -117,6 +118,8 @@ public class DDMFormTemplateContextProcessor {
 		setDDMFormFieldOptions(
 			jsonObject.getJSONArray("options"), ddmFormField);
 		setDDMFormFieldOptionsProperty(jsonObject, ddmFormField, "columns");
+		setDDMFormFieldOptionsProperty(jsonObject, ddmFormField, "rows");
+		setDDMFormFieldParentStructureProperties(jsonObject, ddmFormField);
 		setDDMFormFieldPlaceholder(
 			jsonObject.getString("placeholder"), ddmFormField);
 		setDDMFormFieldReadOnly(
@@ -323,6 +326,19 @@ public class DDMFormTemplateContextProcessor {
 		}
 
 		ddmFormField.setProperty(property, getDDMFormFieldOptions(jsonArray));
+	}
+
+	protected void setDDMFormFieldParentStructureProperties(
+		JSONObject jsonObject, DDMFormField ddmFormField) {
+
+		if (!Objects.equals(ddmFormField.getType(), "fieldset")) {
+			return;
+		}
+
+		ddmFormField.setProperty(
+			"ddmStructureId", jsonObject.getLong("ddmStructureId"));
+		ddmFormField.setProperty(
+			"ddmStructureLayoutId", jsonObject.getLong("ddmStructureLayoutId"));
 	}
 
 	protected void setDDMFormFieldPlaceholder(

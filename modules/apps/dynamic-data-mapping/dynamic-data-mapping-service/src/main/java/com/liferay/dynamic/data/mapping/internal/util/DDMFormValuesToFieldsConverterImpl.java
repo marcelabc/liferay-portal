@@ -37,6 +37,7 @@ import java.text.ParseException;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -100,9 +101,11 @@ public class DDMFormValuesToFieldsConverterImpl
 		DDMFormField ddmFormField = ddmFormFieldsMap.get(
 			ddmFormFieldValue.getName());
 
-		addDDMField(
-			ddmStructureId, ddmFormField, ddmFormFieldValue, ddmFields,
-			defaultLocale);
+		if (!Objects.equals(ddmFormField.getType(), "fieldset")) {
+			addDDMField(
+				ddmStructureId, ddmFormField, ddmFormFieldValue, ddmFields,
+				defaultLocale);
+		}
 
 		addFieldDisplayValue(
 			ddmFields.get(DDMImpl.FIELDS_DISPLAY_NAME),

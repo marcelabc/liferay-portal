@@ -15,17 +15,34 @@
 package com.liferay.dynamic.data.mapping.form.field.type.internal.fieldset;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
-import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFieldTypeUtil;
+import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
+import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
+import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
+import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializer;
+import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeRequest;
+import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeResponse;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
+import com.liferay.dynamic.data.mapping.model.DDMFormLayoutColumn;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLayoutLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -34,6 +51,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,34 +81,46 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 			(Map<String, List<Object>>)ddmFormFieldRenderingContext.getProperty(
 				"nestedFields");
 
+		List<Object> nestedFields = new ArrayList<>();
+
 		if (nestedFieldsMap == null) {
-			nestedFieldsMap = new HashMap<>();
+			nestedFields.addAll(
+				getNestedFields(
+					(List<Object>)ddmFormFieldRenderingContext.getProperty(
+						"fields")));
+		}
+		else {
+			nestedFields = getNestedFields(
+				nestedFieldsMap,
+				getNestedFieldNames(
+					GetterUtil.getString(
+						ddmFormField.getProperty("nestedFieldNames")),
+					nestedFieldsMap.keySet()));
 		}
 
-		List<Object> nestedFields = getNestedFields(
-			nestedFieldsMap,
-			getNestedFieldNames(
-				GetterUtil.getString(
-					ddmFormField.getProperty("nestedFieldNames")),
-				nestedFieldsMap.keySet()));
+		JSONArray rows = getJSONArray(
+			GetterUtil.getString(ddmFormField.getProperty("rows")));
+
+		if (rows.length() == 0) {
+			rows = getRows(
+				getLayoutDefinition(
+					GetterUtil.getLong(
+						ddmFormField.getProperty("ddmStructureId")),
+					GetterUtil.getLong(
+						ddmFormField.getProperty("ddmStructureLayoutId"))));
+		}
 
 		return HashMapBuilder.<String, Object>put(
-			"dataDefinitionId",
-			DDMFormFieldTypeUtil.getPropertyValue(
-				ddmFormFieldRenderingContext, "dataDefinitionId")
+			"columnSize", DDMFormLayoutColumn.FULL
+		).put(
+			"ddmStructureId", ddmFormField.getProperty("ddmStructureId")
+		).put(
+			"ddmStructureLayoutId",
+			ddmFormField.getProperty("ddmStructureLayoutId")
 		).put(
 			"nestedFields", nestedFields
 		).put(
-			"predefinedValue",
-			DDMFormFieldTypeUtil.getPropertyValue(
-				ddmFormField, ddmFormFieldRenderingContext.getLocale(),
-				"predefinedValue")
-		).put(
-			"rows", getRowsJSONArray(ddmFormField, nestedFields)
-		).put(
-			"value",
-			DDMFormFieldTypeUtil.getPropertyValue(
-				ddmFormFieldRenderingContext, "value")
+			"rows", rows
 		).build();
 	}
 
@@ -133,6 +163,31 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 		return rowJSONObject;
 	}
 
+	protected DDMForm getDDMForm(DDMStructure ddmStructure) {
+		DDMFormDeserializerDeserializeResponse
+			ddmFormDeserializerDeserializeResponse =
+				jsonDDMFormDeserializer.deserialize(
+					DDMFormDeserializerDeserializeRequest.Builder.newBuilder(
+						ddmStructure.getDefinition()
+					).build());
+
+		return ddmFormDeserializerDeserializeResponse.getDDMForm();
+	}
+
+	protected DDMFormLayout getDDMFormLayout(
+		DDMStructureLayout ddmStructureLayout) {
+
+		DDMFormLayoutDeserializerDeserializeResponse
+			ddmFormLayoutDeserializerDeserializeResponse =
+				ddmFormLayoutDeserializer.deserialize(
+					DDMFormLayoutDeserializerDeserializeRequest.Builder.
+						newBuilder(
+							ddmStructureLayout.getDefinition()
+						).build());
+
+		return ddmFormLayoutDeserializerDeserializeResponse.getDDMFormLayout();
+	}
+
 	protected JSONArray getJSONArray(String rows) {
 		try {
 			return jsonFactory.createJSONArray(rows);
@@ -146,6 +201,51 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 		return jsonFactory.createJSONArray();
 	}
 
+	protected String getLayoutDefinition(
+		Long ddmStructureId, Long ddmStructureLayoutId) {
+
+		try {
+			DDMStructure ddmStructure = ddmStructureLocalService.getStructure(
+				ddmStructureId);
+
+			DDMForm ddmForm = ddmStructureLocalService.getStructureDDMForm(
+				ddmStructure);
+
+			List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
+
+			ddmFormFields = ListUtil.filter(
+				ddmFormFields,
+				ddmFormField -> Validator.isNotNull(
+					ddmFormField.getProperty("ddmStructureId")));
+
+			String layoutDefinition = StringPool.BLANK;
+
+			if (!ddmFormFields.isEmpty()) {
+				DDMFormField ddmFormField = ddmFormFields.get(0);
+
+				layoutDefinition = getLayoutDefinition(
+					GetterUtil.getLong(
+						ddmFormField.getProperty("ddmStructureId")),
+					GetterUtil.getLong(
+						ddmFormField.getProperty("ddmStructureLayoutId")));
+			}
+
+			DDMStructureLayout ddmStructureLayout =
+				ddmStructureLayoutLocalService.getStructureLayout(
+					ddmStructureLayoutId);
+
+			return mergeLayoutsDefinitions(
+				ddmStructureLayout.getDefinition(), layoutDefinition);
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException, portalException);
+			}
+		}
+
+		return StringPool.BLANK;
+	}
+
 	protected String[] getNestedFieldNames(
 		String nestedFieldNames, Set<String> defaultNestedFieldNames) {
 
@@ -154,6 +254,24 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 		}
 
 		return defaultNestedFieldNames.toArray(new String[0]);
+	}
+
+	protected List<Object> getNestedFields(List<Object> fields) {
+		List<Object> nestedFields = new ArrayList<>();
+
+		for (int i = 0; i < fields.size(); i++) {
+			HashMap<String, Object> field = (HashMap<String, Object>)fields.get(
+				i);
+
+			if (!Objects.equals(field.get("type"), "fieldset")) {
+				nestedFields.add(field);
+			}
+			else if (Validator.isNotNull(field.get("nestedFields"))) {
+				nestedFields.addAll((List<Object>)field.get("nestedFields"));
+			}
+		}
+
+		return nestedFields;
 	}
 
 	protected List<Object> getNestedFields(
@@ -166,6 +284,57 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 		}
 
 		return nestedFields;
+	}
+
+	protected JSONArray getRows(String layoutDefinition) {
+		try {
+			JSONObject definition = JSONFactoryUtil.createJSONObject(
+				layoutDefinition);
+
+			JSONArray pagesJSONArray = definition.getJSONArray("pages");
+
+			JSONObject pageJSONObject = pagesJSONArray.getJSONObject(0);
+
+			JSONArray rowsJSONArray = pageJSONObject.getJSONArray("rows");
+
+			JSONArray rows = JSONFactoryUtil.createJSONArray();
+
+			if (rowsJSONArray != null) {
+				for (int i = 0; i < rowsJSONArray.length(); i++) {
+					JSONObject rowJSONObject = rowsJSONArray.getJSONObject(i);
+
+					JSONArray columnsJSONArray = rowJSONObject.getJSONArray(
+						"columns");
+
+					JSONArray columns = JSONFactoryUtil.createJSONArray();
+
+					if (columnsJSONArray != null) {
+						for (int j = 0; j < columnsJSONArray.length(); j++) {
+							JSONObject columnJSONObject =
+								columnsJSONArray.getJSONObject(j);
+
+							columns.put(
+								JSONUtil.put(
+									"fields", columnJSONObject.get("fieldNames")
+								).put(
+									"size", columnJSONObject.get("size")
+								));
+						}
+					}
+
+					rows.put(JSONUtil.put("columns", columns));
+				}
+			}
+
+			return rows;
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException, jsonException);
+			}
+		}
+
+		return jsonFactory.createJSONArray();
 	}
 
 	protected JSONArray getRowsJSONArray(
@@ -205,6 +374,76 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 
 		return rowsJSONArray;
 	}
+
+	protected String mergeLayoutsDefinitions(
+		String definition, String parentDefinition) {
+
+		if (!parentDefinition.isEmpty()) {
+			try {
+				JSONObject definitionJSONObject =
+					JSONFactoryUtil.createJSONObject(definition);
+
+				JSONObject parentDefinitionJSONObject =
+					JSONFactoryUtil.createJSONObject(parentDefinition);
+
+				JSONArray pagesJSONArray = definitionJSONObject.getJSONArray(
+					"pages");
+
+				JSONArray parentPagesJSONArray =
+					parentDefinitionJSONObject.getJSONArray("pages");
+
+				JSONObject parentPageJSONObject =
+					parentPagesJSONArray.getJSONObject(0);
+
+				JSONArray parentRowsJSONArray =
+					parentPageJSONObject.getJSONArray("rows");
+
+				if (pagesJSONArray != null) {
+					JSONObject pageJSONObject = pagesJSONArray.getJSONObject(0);
+
+					JSONArray rowsJSONArray = pageJSONObject.getJSONArray(
+						"rows");
+
+					if (rowsJSONArray != null) {
+						for (int i = 1; i < rowsJSONArray.length(); i++) {
+							parentRowsJSONArray.put(
+								rowsJSONArray.getJSONObject(i));
+						}
+					}
+
+					pageJSONObject.put("rows", parentRowsJSONArray);
+
+					JSONArray upgradedPagesJSONArray =
+						jsonFactory.createJSONArray();
+
+					upgradedPagesJSONArray.put(pageJSONObject);
+
+					definitionJSONObject.put("pages", upgradedPagesJSONArray);
+				}
+
+				return definitionJSONObject.toString();
+			}
+			catch (JSONException jsonException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(jsonException, jsonException);
+				}
+			}
+		}
+
+		return definition;
+	}
+
+	@Reference
+	protected DDMFormLayoutDeserializer ddmFormLayoutDeserializer;
+
+	@Reference
+	protected DDMStructureLayoutLocalService ddmStructureLayoutLocalService;
+
+	@Reference
+	protected DDMStructureLocalService ddmStructureLocalService;
+
+	@Reference(target = "(ddm.form.deserializer.type=json)")
+	protected DDMFormDeserializer jsonDDMFormDeserializer;
 
 	@Reference
 	protected JSONFactory jsonFactory;
