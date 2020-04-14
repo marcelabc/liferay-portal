@@ -14,24 +14,34 @@
 
 package com.liferay.dynamic.data.mapping.form.renderer.internal;
 
+import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluator;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorFieldContextKey;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRendererConstants;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidationExpression;
+import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLayoutLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageConstants;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.KeyValuePair;
@@ -53,16 +63,24 @@ import java.util.Map;
 public class DDMFormFieldTemplateContextFactory {
 
 	public DDMFormFieldTemplateContextFactory(
+		DDMFormEvaluator ddmFormEvaluator, String ddmFormFieldName,
 		Map<String, DDMFormField> ddmFormFieldsMap,
 		Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 			ddmFormFieldsPropertyChanges,
 		List<DDMFormFieldValue> ddmFormFieldValues,
-		DDMFormRenderingContext ddmFormRenderingContext, boolean pageEnabled) {
+		DDMFormRenderingContext ddmFormRenderingContext,
+		DDMStructureLayoutLocalService ddmStructureLayoutLocalService,
+		DDMStructureLocalService ddmStructureLocalService,
+		boolean pageEnabled) {
 
+		_ddmFormEvaluator = ddmFormEvaluator;
+		_ddmFormFieldName = ddmFormFieldName;
 		_ddmFormFieldsMap = ddmFormFieldsMap;
 		_ddmFormFieldsPropertyChanges = ddmFormFieldsPropertyChanges;
 		_ddmFormFieldValues = ddmFormFieldValues;
 		_ddmFormRenderingContext = ddmFormRenderingContext;
+		_ddmStructureLayoutLocalService = ddmStructureLayoutLocalService;
+		_ddmStructureLocalService = ddmStructureLocalService;
 		_pageEnabled = pageEnabled;
 
 		_locale = ddmFormRenderingContext.getLocale();
@@ -751,12 +769,20 @@ public class DDMFormFieldTemplateContextFactory {
 			ddmFormFieldTemplateContext, changedProperties, true);
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		DDMFormFieldTemplateContextFactory.class);
+
+	private final DDMFormEvaluator _ddmFormEvaluator;
+	private final String _ddmFormFieldName;
 	private final Map<String, DDMFormField> _ddmFormFieldsMap;
 	private final Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 		_ddmFormFieldsPropertyChanges;
 	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
 	private final List<DDMFormFieldValue> _ddmFormFieldValues;
 	private final DDMFormRenderingContext _ddmFormRenderingContext;
+	private final DDMStructureLayoutLocalService
+		_ddmStructureLayoutLocalService;
+	private final DDMStructureLocalService _ddmStructureLocalService;
 	private final Locale _locale;
 	private final boolean _pageEnabled;
 
