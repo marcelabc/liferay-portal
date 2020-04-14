@@ -75,11 +75,6 @@ public class DDMFormPagesTemplateContextFactory {
 
 			ddmFormValues = defaultDDMFormValuesFactory.create();
 		}
-		else {
-			removeStaleDDMFormFieldValues(
-				ddmForm.getDDMFormFieldsMap(true),
-				ddmFormValues.getDDMFormFieldValues());
-		}
 
 		_ddmFormValues = ddmFormValues;
 
