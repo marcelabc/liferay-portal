@@ -28,7 +28,14 @@ import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldTypeS
  */
 @DDMForm(
 	rules = {
-		@DDMFormRule(actions = "setVisible('name', FALSE)", condition = "TRUE")
+		@DDMFormRule(
+			actions = {
+				"setVisible('ddmStructureId', FALSE)",
+				"setVisible('ddmStructureLayoutId', FALSE)",
+				"setVisible('name', FALSE)", "setVisible('rows', FALSE)"
+			},
+			condition = "TRUE"
+		)
 	}
 )
 @DDMFormLayout(
@@ -60,9 +67,7 @@ public interface FieldSetDDMFormFieldTypeSettings
 	@DDMFormField(dataType = "numeric")
 	public long ddmStructureLayoutId();
 
-	@DDMFormField(
-		dataType = "json", type = "text", visibilityExpression = "FALSE"
-	)
+	@DDMFormField(dataType = "json", type = "text")
 	public String rows();
 
 }
