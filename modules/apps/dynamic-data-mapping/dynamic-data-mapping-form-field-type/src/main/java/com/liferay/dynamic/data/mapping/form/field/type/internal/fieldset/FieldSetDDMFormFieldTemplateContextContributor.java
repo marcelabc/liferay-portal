@@ -68,6 +68,18 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 			nestedFieldsMap = new HashMap<>();
 		}
 
+		JSONArray rows;
+
+		if (isFieldSetField(ddmFormField)) {
+			rows = getRows(
+				getDDMStructureLayoutDefinition(
+					GetterUtil.getLong(
+						ddmFormField.getProperty("ddmStructureLayoutId"))));
+		}
+		else {
+			rows = getJSONArray(
+				GetterUtil.getString(ddmFormField.getProperty("rows")));
+		}
 
 		return HashMapBuilder.<String, Object>put(
 		).put(
@@ -80,13 +92,25 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 						ddmFormField.getProperty("nestedFieldNames")),
 					nestedFieldsMap.keySet()))
 		).put(
-			"rows", getRowsJSONArray(ddmFormField, nestedFields)
+			"rows", rows
 		).build();
 	}
 
+	protected String getDDMStructureLayoutDefinition(long structureLayoutId) {
+		try {
+			DDMStructureLayout ddmStructureLayout =
+				ddmStructureLayoutLocalService.getStructureLayout(
+					structureLayoutId);
 
+			return ddmStructureLayout.getDefinition();
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException, portalException);
+			}
 		}
 
+		return StringPool.BLANK;
 	}
 
 	protected JSONArray getJSONArray(String rows) {
@@ -124,19 +148,46 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 		return nestedFields;
 	}
 
+	protected JSONArray getRows(String layoutDefinition) {
+		try {
+			JSONObject layoutDefinitionJSONObject =
+				JSONFactoryUtil.createJSONObject(
+					StringUtil.replace(
+						layoutDefinition, "fieldNames", "fields"));
 
+			JSONArray pagesJSONArray = layoutDefinitionJSONObject.getJSONArray(
+				"pages");
 
+			JSONObject pageJSONObject = pagesJSONArray.getJSONObject(0);
 
+			return pageJSONObject.getJSONArray("rows");
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException, jsonException);
+			}
 		}
 
+		return jsonFactory.createJSONArray();
+	}
 
+	protected boolean isFieldSetField(DDMFormField ddmFormField) {
+		if (StringUtil.equals(ddmFormField.getType(), "fieldset") &&
+			Validator.isNotNull(ddmFormField.getProperty("ddmStructureId")) &&
+			Validator.isNotNull(
+				ddmFormField.getProperty("ddmStructureLayoutId"))) {
 
+			return true;
 		}
 
+		return false;
 	}
 
 	@Reference
+	protected DDMStructureLayoutLocalService ddmStructureLayoutLocalService;
 
+	@Reference
+	protected JSONFactory jsonFactory;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		FieldSetDDMFormFieldTemplateContextContributor.class);
