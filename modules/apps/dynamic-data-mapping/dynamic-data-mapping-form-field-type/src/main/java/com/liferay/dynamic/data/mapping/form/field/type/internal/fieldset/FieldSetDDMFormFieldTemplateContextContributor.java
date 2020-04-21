@@ -16,10 +16,15 @@ package com.liferay.dynamic.data.mapping.form.field.type.internal.fieldset;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLayoutLocalService;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -55,25 +60,25 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 		DDMFormField ddmFormField,
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
-		Map<String, List<Object>> nestedFieldsMap =
-			(Map<String, List<Object>>)ddmFormFieldRenderingContext.getProperty(
+		Map<String, Object> nestedFieldsMap =
+			(Map<String, Object>)ddmFormFieldRenderingContext.getProperty(
 				"nestedFields");
 
 		if (nestedFieldsMap == null) {
 			nestedFieldsMap = new HashMap<>();
 		}
 
-		List<Object> nestedFields = getNestedFields(
-			nestedFieldsMap,
-			getNestedFieldNames(
-				GetterUtil.getString(
-					ddmFormField.getProperty("nestedFieldNames")),
-				nestedFieldsMap.keySet()));
 
 		return HashMapBuilder.<String, Object>put(
 		).put(
-			"nestedFields", nestedFields
 		).put(
+			"nestedFields",
+			getNestedFields(
+				nestedFieldsMap,
+				getNestedFieldNames(
+					GetterUtil.getString(
+						ddmFormField.getProperty("nestedFieldNames")),
+					nestedFieldsMap.keySet()))
 		).put(
 			"rows", getRowsJSONArray(ddmFormField, nestedFields)
 		).build();
@@ -108,12 +113,12 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 	}
 
 	protected List<Object> getNestedFields(
-		Map<String, List<Object>> nestedFieldsMap, String[] nestedFieldNames) {
+		Map<String, Object> nestedFieldsMap, String[] nestedFieldNames) {
 
 		List<Object> nestedFields = new ArrayList<>();
 
 		for (String nestedFieldName : nestedFieldNames) {
-			nestedFields.addAll(nestedFieldsMap.get(nestedFieldName));
+			nestedFields.add(nestedFieldsMap.get(nestedFieldName));
 		}
 
 		return nestedFields;
