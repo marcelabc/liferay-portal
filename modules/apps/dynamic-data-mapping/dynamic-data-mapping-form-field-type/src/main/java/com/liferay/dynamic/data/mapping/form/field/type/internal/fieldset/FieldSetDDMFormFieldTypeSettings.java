@@ -54,6 +54,11 @@ import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldTypeS
 public interface FieldSetDDMFormFieldTypeSettings
 	extends DefaultDDMFormFieldTypeSettings {
 
+	@DDMFormField(dataType = "numeric")
+	public long ddmStructureId();
+
+	@DDMFormField(dataType = "numeric")
+	public long ddmStructureLayoutId();
 
 	@DDMFormField(
 		dataType = "json", type = "text", visibilityExpression = "FALSE"

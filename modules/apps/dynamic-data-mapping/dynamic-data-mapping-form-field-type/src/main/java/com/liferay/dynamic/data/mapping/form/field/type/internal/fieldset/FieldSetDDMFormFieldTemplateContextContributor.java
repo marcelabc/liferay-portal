@@ -82,7 +82,10 @@ public class FieldSetDDMFormFieldTemplateContextContributor
 		}
 
 		return HashMapBuilder.<String, Object>put(
+			"ddmStructureId", ddmFormField.getProperty("ddmStructureId")
 		).put(
+			"ddmStructureLayoutId",
+			ddmFormField.getProperty("ddmStructureLayoutId")
 		).put(
 			"nestedFields",
 			getNestedFields(
