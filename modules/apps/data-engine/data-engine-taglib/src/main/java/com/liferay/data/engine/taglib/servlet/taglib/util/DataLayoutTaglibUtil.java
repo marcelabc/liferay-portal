@@ -31,8 +31,6 @@ import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
-import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
-import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeResponse;
@@ -74,6 +72,7 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -721,18 +720,6 @@ public class DataLayoutTaglibUtil {
 			return new UnlocalizedValue(jsonObject.toString());
 		}
 
-		private DDMForm _deserializeDDMForm(String content) {
-			DDMFormDeserializerDeserializeRequest.Builder builder =
-				DDMFormDeserializerDeserializeRequest.Builder.newBuilder(
-					content);
-
-			DDMFormDeserializerDeserializeResponse
-				ddmFormDeserializerDeserializeResponse =
-					_jsonDDMFormDeserializer.deserialize(builder.build());
-
-			return ddmFormDeserializerDeserializeResponse.getDDMForm();
-		}
-
 		private DDMFormLayout _deserializeDDMFormLayout(String content) {
 			DDMFormLayoutDeserializerDeserializeRequest.Builder builder =
 				DDMFormLayoutDeserializerDeserializeRequest.Builder.newBuilder(
@@ -800,7 +787,9 @@ public class DataLayoutTaglibUtil {
 				"defaultLanguageId", ddmStructure.getDefaultLanguageId()
 			);
 
-			return _deserializeDDMForm(jsonObject.toJSONString());
+			ddmStructure.setDefinition(jsonObject.toJSONString());
+
+			return ddmStructure.getDDMForm();
 		}
 
 		private DDMFormLayout _getDDMFormLayout() throws Exception {
@@ -820,6 +809,35 @@ public class DataLayoutTaglibUtil {
 			return _deserializeDDMFormLayout(jsonObject.toJSONString());
 		}
 
+		private List<Map<String, Object>> _getNestedFields(
+			Map<String, Object> field) {
+
+			List<Map<String, Object>> nestedFields =
+				(List<Map<String, Object>>)field.get("nestedFields");
+
+			List<Map<String, Object>> nestedFieldsList = new ArrayList<>();
+
+			if (nestedFields != null) {
+				for (Map<String, Object> nestedField : nestedFields) {
+					if (_isFieldSet(nestedField)) {
+						nestedFieldsList.addAll(_getNestedFields(nestedField));
+					}
+
+					nestedFieldsList.add(nestedField);
+				}
+			}
+
+			return nestedFieldsList;
+		}
+
+		private boolean _isFieldSet(Map<String, Object> field) {
+			if (Objects.equals(field.get("type"), "fieldset")) {
+				return true;
+			}
+
+			return false;
+		}
+
 		private void _populateDDMFormFieldSettingsContext(
 				Map<String, DDMFormField> ddmFormFieldsMap,
 				Map<String, Object> ddmFormTemplateContext)
@@ -827,12 +845,16 @@ public class DataLayoutTaglibUtil {
 
 			UnsafeConsumer<Map<String, Object>, Exception> unsafeConsumer =
 				field -> {
-					String fieldName = MapUtil.getString(field, "fieldName");
+					DDMFormField ddmFormField = ddmFormFieldsMap.get(
+						MapUtil.getString(field, "fieldName"));
+
+					if (_isFieldSet(field)) {
+						ddmFormField.setProperty("rows", field.get("rows"));
+					}
 
 					field.put(
 						"settingsContext",
-						_createDDMFormFieldSettingContext(
-							ddmFormFieldsMap.get(fieldName)));
+						_createDDMFormFieldSettingContext(ddmFormField));
 				};
 
 			List<Map<String, Object>> pages =
@@ -854,15 +876,12 @@ public class DataLayoutTaglibUtil {
 							unsafeConsumer.accept(field);
 
 							List<Map<String, Object>> nestedFields =
-								(List<Map<String, Object>>)field.get(
-									"nestedFields");
+								_getNestedFields(field);
 
-							if (nestedFields != null) {
-								for (Map<String, Object> nestedField :
-										nestedFields) {
+							for (Map<String, Object> nestedField :
+									nestedFields) {
 
-									unsafeConsumer.accept(nestedField);
-								}
+								unsafeConsumer.accept(nestedField);
 							}
 						}
 					}

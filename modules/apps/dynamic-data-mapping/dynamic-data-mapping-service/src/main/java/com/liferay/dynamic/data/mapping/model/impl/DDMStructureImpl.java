@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.cache.CacheField;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -508,6 +510,32 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 						builder.build());
 
 			_ddmForm = ddmFormDeserializerDeserializeResponse.getDDMForm();
+
+			for (DDMFormField ddmFormField : _ddmForm.getDDMFormFields()) {
+				if (Objects.equals(ddmFormField.getType(), "fieldset") &&
+					Validator.isNotNull(
+						ddmFormField.getProperty("ddmStructureId"))) {
+
+					try {
+						DDMStructure ddmStructure =
+							DDMStructureLocalServiceUtil.getStructure(
+								GetterUtil.getLong(
+									ddmFormField.getProperty(
+										"ddmStructureId")));
+
+						DDMForm ddmForm =
+							ddmStructure.createFullHierarchyDDMForm();
+
+						ddmFormField.setNestedDDMFormFields(
+							ddmForm.getDDMFormFields());
+					}
+					catch (PortalException portalException) {
+						if (_log.isDebugEnabled()) {
+							_log.debug(portalException, portalException);
+						}
+					}
+				}
+			}
 		}
 
 		return _ddmForm;

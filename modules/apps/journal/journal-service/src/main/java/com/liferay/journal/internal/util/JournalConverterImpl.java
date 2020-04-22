@@ -15,8 +15,11 @@
 package com.liferay.journal.internal.util;
 
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
+import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.storage.Field;
 import com.liferay.dynamic.data.mapping.storage.FieldConstants;
@@ -175,19 +178,26 @@ public class JournalConverterImpl implements JournalConverter {
 
 		DDMFieldsCounter ddmFieldsCounter = new DDMFieldsCounter();
 
+		DDMForm ddmForm = ddmStructure.getDDMForm();
+
+		Map<String, DDMFormField> ddmFormFieldsMap =
+			ddmForm.getDDMFormFieldsMap(true);
+
 		for (String fieldName : ddmStructure.getRootFieldNames()) {
-			int repetitions = countFieldRepetition(
-				ddmFields, fieldName, null, -1);
+			if (!isFieldSetField(ddmFormFieldsMap, fieldName)) {
+				int repetitions = countFieldRepetition(
+					ddmFields, fieldName, null, -1);
 
-			for (int i = 0; i < repetitions; i++) {
-				Element dynamicElementElement = rootElement.addElement(
-					"dynamic-element");
+				for (int i = 0; i < repetitions; i++) {
+					Element dynamicElementElement = rootElement.addElement(
+						"dynamic-element");
 
-				dynamicElementElement.addAttribute("name", fieldName);
+					dynamicElementElement.addAttribute("name", fieldName);
 
-				updateContentDynamicElement(
-					dynamicElementElement, ddmStructure, ddmFields,
-					ddmFieldsCounter);
+					updateContentDynamicElement(
+						dynamicElementElement, ddmStructure, ddmFields,
+						ddmFieldsCounter);
+				}
 			}
 		}
 
@@ -726,6 +736,20 @@ public class JournalConverterImpl implements JournalConverter {
 		}
 	}
 
+	protected boolean isFieldSetField(
+		Map<String, DDMFormField> ddmFormFieldMap, String fieldName) {
+
+		DDMFormField ddmFormField = ddmFormFieldMap.get(fieldName);
+
+		if ((ddmFormField != null) &&
+			Objects.equals(ddmFormField.getType(), "fieldset")) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	protected void removeAttribute(Element element, String attributeName) {
 		Attribute attribute = element.attribute(attributeName);
 
@@ -1194,6 +1218,10 @@ public class JournalConverterImpl implements JournalConverter {
 
 	private final Map<String, String> _ddmDataTypes;
 	private final Map<String, String> _ddmMetadataAttributes;
+
+	@Reference
+	private DDMStructureLocalService _ddmStructureLocalService;
+
 	private final Map<String, String> _ddmTypesToJournalTypes;
 
 	@Reference
