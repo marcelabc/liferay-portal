@@ -15,6 +15,8 @@
 package com.liferay.journal.internal.util;
 
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.dynamic.data.mapping.model.DDMForm;
+import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldType;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
@@ -175,19 +177,26 @@ public class JournalConverterImpl implements JournalConverter {
 
 		DDMFieldsCounter ddmFieldsCounter = new DDMFieldsCounter();
 
-		for (String fieldName : ddmStructure.getRootFieldNames()) {
-			int repetitions = countFieldRepetition(
-				ddmFields, fieldName, null, -1);
+		DDMForm ddmForm = ddmStructure.getDDMForm();
 
-			for (int i = 0; i < repetitions; i++) {
-				Element dynamicElementElement = rootElement.addElement(
-					"dynamic-element");
+		Map<String, DDMFormField> ddmFormFieldsMap =
+			ddmForm.getDDMFormFieldsMap(true);
 
-				dynamicElementElement.addAttribute("name", fieldName);
+		for (String fieldName : ddmStructure.getFieldNames()) {
+			if (!_isFieldSet(ddmFormFieldsMap, fieldName)) {
+				int repetitions = countFieldRepetition(
+					ddmFields, fieldName, null, -1);
 
-				updateContentDynamicElement(
-					dynamicElementElement, ddmStructure, ddmFields,
-					ddmFieldsCounter);
+				for (int i = 0; i < repetitions; i++) {
+					Element dynamicElementElement = rootElement.addElement(
+						"dynamic-element");
+
+					dynamicElementElement.addAttribute("name", fieldName);
+
+					updateContentDynamicElement(
+						dynamicElementElement, ddmStructure, ddmFields,
+						ddmFieldsCounter);
+				}
 			}
 		}
 
@@ -1187,6 +1196,20 @@ public class JournalConverterImpl implements JournalConverter {
 
 		return new AggregateResourceBundle(
 			classResourceBundle, _portal.getResourceBundle(locale));
+	}
+
+	private boolean _isFieldSet(
+		Map<String, DDMFormField> ddmFormFieldMap, String fieldName) {
+
+		DDMFormField ddmFormField = ddmFormFieldMap.get(fieldName);
+
+		if ((ddmFormField != null) &&
+			Objects.equals(ddmFormField.getType(), "fieldset")) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

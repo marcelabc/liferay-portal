@@ -64,9 +64,7 @@ public class FieldsToDDMFormValuesConverterImpl
 
 		DDMFieldsCounter ddmFieldsCounter = new DDMFieldsCounter();
 
-		for (String fieldName :
-				getDDMFormFieldNames(ddmForm.getDDMFormFields())) {
-
+		for (String fieldName : ddmStructure.getFieldNames()) {
 			int repetitions = countDDMFieldRepetitions(
 				ddmFormFieldsMap, fields, fieldName, null, -1);
 

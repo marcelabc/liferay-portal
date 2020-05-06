@@ -74,13 +74,17 @@ public class DataRecordValuesUtil {
 			true);
 
 		for (Map.Entry<String, DDMFormField> entry : ddmFormFields.entrySet()) {
-			List<DDMFormFieldValue> ddmFormFieldValues =
-				createDDMFormFieldValues(
-					dataRecordValues, entry.getValue(), locale);
+			if ((dataRecordValues != null) &&
+				dataRecordValues.containsKey(entry.getKey())) {
 
-			Stream<DDMFormFieldValue> stream = ddmFormFieldValues.stream();
+				List<DDMFormFieldValue> ddmFormFieldValues =
+					createDDMFormFieldValues(
+						dataRecordValues, entry.getValue(), locale);
 
-			stream.forEach(ddmFormValues::addDDMFormFieldValue);
+				Stream<DDMFormFieldValue> stream = ddmFormFieldValues.stream();
+
+				stream.forEach(ddmFormValues::addDDMFormFieldValue);
+			}
 		}
 
 		return ddmFormValues;

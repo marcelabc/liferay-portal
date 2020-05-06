@@ -50,7 +50,8 @@ import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldTypeS
 							size = 12,
 							value = {
 								"label", "name", "collapsible", "repeatable",
-								"rows", "type"
+								"rows", "type", "ddmStructureId",
+								"ddmStructureLayoutId"
 							}
 						)
 					}
