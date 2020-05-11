@@ -82,6 +82,16 @@ public class DDMStructureImpl extends DDMStructureBaseImpl {
 				fullHierarchyDDMForm.getDDMFormFields();
 
 			ddmFormFields.addAll(0, ancestorsDDMFormFields);
+
+			ddmFormFields.removeIf(
+				ddmFormField ->
+					Objects.equals(ddmFormField.getType(), "fieldset") &&
+					Objects.equals(
+						GetterUtil.getLong(
+							ddmFormField.getProperty("ddmStructureId")),
+						parentDDMStructure.getStructureId()));
+
+			fullHierarchyDDMForm.setDDMFormFields(ddmFormFields);
 		}
 
 		return fullHierarchyDDMForm;
