@@ -36,6 +36,7 @@ import java.text.NumberFormat;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -232,13 +233,21 @@ public class FieldsToDDMFormValuesConverterImpl
 	protected List<String> getDDMFormFieldNames(
 		List<DDMFormField> ddmFormFields) {
 
-		List<String> fieldNames = new ArrayList<>();
+		Set<String> fieldNames = new HashSet<>();
 
 		for (DDMFormField ddmFormField : ddmFormFields) {
-			fieldNames.add(ddmFormField.getName());
+			List<DDMFormField> nestedDDMFormFields =
+				ddmFormField.getNestedDDMFormFields();
+
+			if (nestedDDMFormFields.isEmpty()) {
+				fieldNames.add(ddmFormField.getName());
+			}
+
+			fieldNames.addAll(
+				getDDMFormFieldNames(ddmFormField.getNestedDDMFormFields()));
 		}
 
-		return fieldNames;
+		return new ArrayList<>(fieldNames);
 	}
 
 	protected void setDDMFormFieldValueInstanceId(
