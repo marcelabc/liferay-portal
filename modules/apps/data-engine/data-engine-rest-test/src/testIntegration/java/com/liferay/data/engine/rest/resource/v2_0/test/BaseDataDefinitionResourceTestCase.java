@@ -195,6 +195,7 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		dataDefinition.setContentType(regex);
 		dataDefinition.setDataDefinitionKey(regex);
 		dataDefinition.setDefaultLanguageId(regex);
+		dataDefinition.setSchemaVersion(regex);
 		dataDefinition.setStorageType(regex);
 
 		String json = DataDefinitionSerDes.toJSON(dataDefinition);
@@ -206,6 +207,7 @@ public abstract class BaseDataDefinitionResourceTestCase {
 		Assert.assertEquals(regex, dataDefinition.getContentType());
 		Assert.assertEquals(regex, dataDefinition.getDataDefinitionKey());
 		Assert.assertEquals(regex, dataDefinition.getDefaultLanguageId());
+		Assert.assertEquals(regex, dataDefinition.getSchemaVersion());
 		Assert.assertEquals(regex, dataDefinition.getStorageType());
 	}
 
@@ -1294,6 +1296,14 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("schemaVersion", additionalAssertFieldName)) {
+				if (dataDefinition.getSchemaVersion() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("storageType", additionalAssertFieldName)) {
 				if (dataDefinition.getStorageType() == null) {
 					valid = false;
@@ -1551,6 +1561,17 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("schemaVersion", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						dataDefinition1.getSchemaVersion(),
+						dataDefinition2.getSchemaVersion())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("storageType", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						dataDefinition1.getStorageType(),
@@ -1781,6 +1802,14 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("schemaVersion")) {
+			sb.append("'");
+			sb.append(String.valueOf(dataDefinition.getSchemaVersion()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("siteId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1852,6 +1881,8 @@ public abstract class BaseDataDefinitionResourceTestCase {
 				defaultLanguageId = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
+				schemaVersion = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				siteId = testGroup.getGroupId();
 				storageType = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());

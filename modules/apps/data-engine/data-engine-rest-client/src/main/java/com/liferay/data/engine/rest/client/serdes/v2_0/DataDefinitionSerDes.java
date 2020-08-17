@@ -248,6 +248,20 @@ public class DataDefinitionSerDes {
 			sb.append(_toJSON(dataDefinition.getName()));
 		}
 
+		if (dataDefinition.getSchemaVersion() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemaVersion\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(dataDefinition.getSchemaVersion()));
+
+			sb.append("\"");
+		}
+
 		if (dataDefinition.getSiteId() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -406,6 +420,15 @@ public class DataDefinitionSerDes {
 			map.put("name", String.valueOf(dataDefinition.getName()));
 		}
 
+		if (dataDefinition.getSchemaVersion() == null) {
+			map.put("schemaVersion", null);
+		}
+		else {
+			map.put(
+				"schemaVersion",
+				String.valueOf(dataDefinition.getSchemaVersion()));
+		}
+
 		if (dataDefinition.getSiteId() == null) {
 			map.put("siteId", null);
 		}
@@ -535,6 +558,12 @@ public class DataDefinitionSerDes {
 					dataDefinition.setName(
 						(Map)DataDefinitionSerDes.toMap(
 							(String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemaVersion")) {
+				if (jsonParserFieldValue != null) {
+					dataDefinition.setSchemaVersion(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "siteId")) {
