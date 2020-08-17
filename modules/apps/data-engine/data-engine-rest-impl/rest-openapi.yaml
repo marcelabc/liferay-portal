@@ -43,6 +43,8 @@ components:
                     additionalProperties:
                         type: object
                     type: object
+                schemaVersion:
+                    type: string
                 siteId:
                     format: int64
                     type: integer
@@ -159,6 +161,8 @@ components:
                         type: object
                     type: object
                 paginationMode:
+                    type: string
+                schemaVersion:
                     type: string
                 siteId:
                     format: int64
