@@ -81,6 +81,11 @@ public class DDMFormLayoutJSONDeserializer
 					DDMFormLayout.WIZARD_MODE, ddmFormLayout);
 			}
 
+			if (Validator.isNotNull(jsonObject.getString("schemaVersion"))) {
+				ddmFormLayout.setSchemaVersion(
+					jsonObject.getString("schemaVersion"));
+			}
+
 			setDDMFormRules(jsonObject.getJSONArray("rules"), ddmFormLayout);
 
 			return builder.build();
