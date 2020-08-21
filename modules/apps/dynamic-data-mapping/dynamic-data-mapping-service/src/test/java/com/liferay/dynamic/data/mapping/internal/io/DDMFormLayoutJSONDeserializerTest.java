@@ -48,19 +48,8 @@ public class DDMFormLayoutJSONDeserializerTest extends BaseDDMTestCase {
 
 	@Test
 	public void testDDMFormLayoutDeserialization() throws Exception {
-		String serializedDDMFormLayout = read(
-			"ddm-form-layout-json-deserializer-test-data.json");
-
-		DDMFormLayoutDeserializerDeserializeRequest.Builder builder =
-			DDMFormLayoutDeserializerDeserializeRequest.Builder.newBuilder(
-				serializedDDMFormLayout);
-
-		DDMFormLayoutDeserializerDeserializeResponse
-			ddmFormLayoutDeserializerDeserializeResponse =
-				_ddmFormLayoutJSONDeserializer.deserialize(builder.build());
-
-		DDMFormLayout ddmFormLayout =
-			ddmFormLayoutDeserializerDeserializeResponse.getDDMFormLayout();
+		DDMFormLayout ddmFormLayout = deserialize(
+			read("ddm-form-layout-json-deserializer-test-data.json"));
 
 		Assert.assertEquals(LocaleUtil.US, ddmFormLayout.getDefaultLocale());
 
@@ -94,6 +83,16 @@ public class DDMFormLayoutJSONDeserializerTest extends BaseDDMTestCase {
 			ddmFormLayoutRows.get(3));
 	}
 
+	@Test
+	public void testDDMFormLayoutDeserializationWithSchemaVersion()
+		throws Exception {
+
+		DDMFormLayout ddmFormLayout = deserialize(
+			read("ddm-form-layout-json-deserializer-with-schema-version.json"));
+
+		Assert.assertEquals("2.0", ddmFormLayout.getSchemaVersion());
+	}
+
 	protected void assertEquals(
 		DDMFormLayoutColumn expectedDDMFormLayoutColumn,
 		DDMFormLayoutColumn actualDDMFormLayoutColumn) {
@@ -121,6 +120,18 @@ public class DDMFormLayoutJSONDeserializerTest extends BaseDDMTestCase {
 				expectedDDMFormLayoutColumn,
 				actualDDMFormLayoutRow.getDDMFormLayoutColumn(i));
 		}
+	}
+
+	protected DDMFormLayout deserialize(String serializedDDMFormLayout) {
+		DDMFormLayoutDeserializerDeserializeRequest.Builder builder =
+			DDMFormLayoutDeserializerDeserializeRequest.Builder.newBuilder(
+				serializedDDMFormLayout);
+
+		DDMFormLayoutDeserializerDeserializeResponse
+			ddmFormLayoutDeserializerDeserializeResponse =
+				_ddmFormLayoutJSONDeserializer.deserialize(builder.build());
+
+		return ddmFormLayoutDeserializerDeserializeResponse.getDDMFormLayout();
 	}
 
 	protected void setUpDDMFormLayoutJSONDeserializer() throws Exception {

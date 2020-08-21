@@ -55,6 +55,22 @@ public class DDMFormLayoutJSONSerializerTest extends BaseDDMTestCase {
 		JSONAssert.assertEquals(expectedJSON, actualJSON, false);
 	}
 
+	@Test
+	public void testDDMFormLayoutSerializationWithSchemaVersion()
+		throws Exception {
+
+		String expectedJSON = read(
+			"ddm-form-layout-json-serializer-with-schema-version.json");
+
+		DDMFormLayout ddmFormLayout = createDDMFormLayout();
+
+		ddmFormLayout.setSchemaVersion("2.0");
+
+		String actualJSON = serialize(ddmFormLayout);
+
+		JSONAssert.assertEquals(expectedJSON, actualJSON, false);
+	}
+
 	protected DDMFormLayout createDDMFormLayout() {
 		DDMFormLayout ddmFormLayout = new DDMFormLayout();
 
