@@ -50,6 +50,8 @@ import com.liferay.dynamic.data.mapping.util.comparator.StructureLayoutNameCompa
 import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidationException;
 import com.liferay.dynamic.data.mapping.validator.DDMFormLayoutValidator;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
@@ -193,6 +195,8 @@ public class DataLayoutResourceImpl
 			PermissionThreadLocal.getPermissionChecker(), ddmStructure,
 			DataActionKeys.ADD_DATA_DEFINITION);
 
+		dataLayout.setSchemaVersion("2.0");
+
 		_validate(dataLayout, ddmStructure);
 
 		return _addDataLayout(
@@ -282,6 +286,12 @@ public class DataLayoutResourceImpl
 		_dataDefinitionModelResourcePermission.check(
 			PermissionThreadLocal.getPermissionChecker(),
 			ddmStructureLayout.getDDMStructureId(), ActionKeys.UPDATE);
+
+		JSONObject definitionJSONObject = JSONFactoryUtil.createJSONObject(
+			ddmStructureLayout.getDefinition());
+
+		dataLayout.setSchemaVersion(
+			definitionJSONObject.getString("schemaVersion"));
 
 		_validate(dataLayout, ddmStructureLayout.getDDMStructure());
 

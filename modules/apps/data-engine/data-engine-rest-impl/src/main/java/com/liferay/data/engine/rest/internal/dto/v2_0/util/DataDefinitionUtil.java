@@ -104,6 +104,8 @@ public class DataDefinitionUtil {
 				id = ddmStructure.getStructureId();
 				name = LocalizedValueUtil.toStringObjectMap(
 					ddmStructure.getNameMap());
+				schemaVersion = GetterUtil.getString(
+					ddmForm.getSchemaVersion());
 				siteId = ddmStructure.getGroupId();
 				storageType = ddmStructure.getStorageType();
 				userId = ddmStructure.getUserId();
@@ -130,6 +132,10 @@ public class DataDefinitionUtil {
 				dataDefinition.getDefaultLanguageId()));
 		ddmForm.setDefaultLocale(
 			LocaleUtil.fromLanguageId(dataDefinition.getDefaultLanguageId()));
+
+		if (Validator.isNotNull(dataDefinition.getSchemaVersion())) {
+			ddmForm.setSchemaVersion(dataDefinition.getSchemaVersion());
+		}
 
 		return ddmForm;
 	}

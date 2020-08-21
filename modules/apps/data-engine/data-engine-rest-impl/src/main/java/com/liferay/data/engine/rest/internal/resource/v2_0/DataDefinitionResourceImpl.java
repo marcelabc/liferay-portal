@@ -464,6 +464,8 @@ public class DataDefinitionResourceImpl
 			PermissionThreadLocal.getPermissionChecker(), contentType, siteId,
 			DataActionKeys.ADD_DATA_DEFINITION);
 
+		dataDefinition.setSchemaVersion("2.0");
+
 		DDMForm ddmForm = DataDefinitionUtil.toDDMForm(
 			dataDefinition, _ddmFormFieldTypeServicesTracker);
 
@@ -575,6 +577,13 @@ public class DataDefinitionResourceImpl
 
 		DDMStructure ddmStructure = _ddmStructureLocalService.getDDMStructure(
 			dataDefinitionId);
+
+		JSONObject definitionJSONObject = _jsonFactory.createJSONObject(
+			ddmStructure.getDefinition());
+
+		dataDefinition.setSchemaVersion(
+			definitionJSONObject.getString("schemaVersion"));
+
 		DDMForm ddmForm = DataDefinitionUtil.toDDMForm(
 			dataDefinition, _ddmFormFieldTypeServicesTracker);
 

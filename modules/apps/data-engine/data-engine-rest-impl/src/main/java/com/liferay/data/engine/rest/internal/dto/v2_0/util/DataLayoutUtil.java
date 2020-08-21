@@ -40,7 +40,9 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -85,6 +87,8 @@ public class DataLayoutUtil {
 				dataRules = _toDataRules(
 					ddmFormLayout.getDDMFormRules(), spiDDMFormRuleConverter);
 				paginationMode = ddmFormLayout.getPaginationMode();
+				schemaVersion = GetterUtil.getString(
+					ddmFormLayout.getSchemaVersion());
 			}
 		};
 	}
@@ -130,6 +134,10 @@ public class DataLayoutUtil {
 				dataLayout.getDataLayoutPages(), ddmForm.getDefaultLocale()));
 		ddmFormLayout.setDefaultLocale(ddmForm.getDefaultLocale());
 		ddmFormLayout.setPaginationMode(dataLayout.getPaginationMode());
+
+		if (Validator.isNotNull(dataLayout.getSchemaVersion())) {
+			ddmFormLayout.setSchemaVersion(dataLayout.getSchemaVersion());
+		}
 
 		ddmFormLayout.setDDMFormRules(
 			ddmFormRuleDeserializer.deserialize(
