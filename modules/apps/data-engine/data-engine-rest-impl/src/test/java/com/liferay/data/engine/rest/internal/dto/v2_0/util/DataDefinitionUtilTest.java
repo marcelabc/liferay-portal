@@ -55,6 +55,8 @@ public class DataDefinitionUtilTest extends PowerMockito {
 			SetUtil.fromArray(new Locale[] {LocaleUtil.BRAZIL, LocaleUtil.US}),
 			LocaleUtil.US);
 
+		ddmForm.setSchemaVersion("2.0");
+
 		Locale defaultLocale = ddmForm.getDefaultLocale();
 
 		ddmForm.addDDMFormField(
@@ -203,6 +205,7 @@ public class DataDefinitionUtilTest extends PowerMockito {
 								}
 							});
 						setDefaultLanguageId("en_US");
+						setSchemaVersion("2.0");
 					}
 				},
 				_ddmFormFieldTypeServicesTracker));
