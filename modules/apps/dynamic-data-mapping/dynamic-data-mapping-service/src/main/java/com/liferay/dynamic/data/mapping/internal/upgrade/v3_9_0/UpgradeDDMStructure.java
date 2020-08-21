@@ -163,6 +163,8 @@ public class UpgradeDDMStructure extends UpgradeProcess {
 
 		ddmFormLayout.setPaginationMode(DDMFormLayout.SINGLE_PAGE_MODE);
 
+		ddmFormLayout.setSchemaVersion("2.0");
+
 		for (DDMFormLayoutPage ddmFormLayoutPage :
 				ddmFormLayout.getDDMFormLayoutPages()) {
 
@@ -301,7 +303,10 @@ public class UpgradeDDMStructure extends UpgradeProcess {
 
 		jsonObject.put(
 			"fields",
-			_upgradeFields(companyId, jsonObject.getJSONArray("fields")));
+			_upgradeFields(companyId, jsonObject.getJSONArray("fields"))
+		).put(
+			"schemaVersion", "2.0"
+		);
 
 		return jsonObject.toString();
 	}
