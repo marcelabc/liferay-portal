@@ -14,12 +14,15 @@
 
 package com.liferay.dynamic.data.mapping.model;
 
+import com.liferay.petra.lang.HashUtil;
+
 import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -62,6 +65,33 @@ public class DDMFormLayout implements Serializable {
 		_ddmFormRules.add(ddmFormRule);
 	}
 
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+
+		if (!(object instanceof DDMFormLayout)) {
+			return false;
+		}
+
+		DDMFormLayout ddmFormLayout = (DDMFormLayout)object;
+
+		if (Objects.equals(
+				_availableLocales, ddmFormLayout._availableLocales) &&
+			Objects.equals(
+				_ddmFormLayoutPages, ddmFormLayout._ddmFormLayoutPages) &&
+			Objects.equals(_ddmFormRules, ddmFormLayout._ddmFormRules) &&
+			Objects.equals(_defaultLocale, ddmFormLayout._defaultLocale) &&
+			Objects.equals(_paginationMode, ddmFormLayout._paginationMode) &&
+			Objects.equals(_schemaVersion, ddmFormLayout._schemaVersion)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	public Set<Locale> getAvailableLocales() {
 		return _availableLocales;
 	}
@@ -88,6 +118,21 @@ public class DDMFormLayout implements Serializable {
 
 	public String getSchemaVersion() {
 		return _schemaVersion;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = HashUtil.hash(0, _availableLocales);
+
+		hash = HashUtil.hash(hash, _ddmFormLayoutPages);
+
+		hash = HashUtil.hash(hash, _ddmFormRules);
+
+		hash = HashUtil.hash(hash, _defaultLocale);
+
+		hash = HashUtil.hash(hash, _paginationMode);
+
+		return HashUtil.hash(hash, _schemaVersion);
 	}
 
 	public void setAvailableLocales(Set<Locale> availableLocales) {
