@@ -24,7 +24,7 @@ public class ColorDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.COLOR;
+		return DDMFormFieldType.DDM_COLOR;
 	}
 
 }

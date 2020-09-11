@@ -198,7 +198,7 @@ public class DDMFormValuesInfoFieldValuesProviderImpl
 
 		try {
 			if (Objects.equals(
-					ddmFormFieldValue.getType(), DDMFormFieldType.DATE) ||
+					ddmFormFieldValue.getType(), DDMFormFieldType.DDM_DATE) ||
 				Objects.equals(ddmFormFieldValue.getType(), "date")) {
 
 				if (Validator.isNull(valueString)) {
@@ -215,7 +215,7 @@ public class DDMFormValuesInfoFieldValuesProviderImpl
 			}
 			else if (Objects.equals(
 						ddmFormFieldValue.getType(),
-						DDMFormFieldType.DECIMAL) ||
+						DDMFormFieldType.DDM_DECIMAL) ||
 					 Objects.equals(
 						 ddmFormFieldValue.getType(),
 						 DDMFormFieldType.NUMERIC)) {
@@ -240,7 +240,8 @@ public class DDMFormValuesInfoFieldValuesProviderImpl
 				return numberFormat.format(numberFormat.parse(valueString));
 			}
 			else if (Objects.equals(
-						ddmFormFieldValue.getType(), DDMFormFieldType.IMAGE) ||
+						ddmFormFieldValue.getType(),
+						DDMFormFieldType.DDM_IMAGE) ||
 					 Objects.equals(ddmFormFieldValue.getType(), "image")) {
 
 				return _getWebImage(

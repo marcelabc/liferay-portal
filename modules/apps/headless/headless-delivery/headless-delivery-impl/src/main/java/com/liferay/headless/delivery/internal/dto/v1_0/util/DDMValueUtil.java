@@ -75,13 +75,15 @@ public class DDMValueUtil {
 			Map<String, ContentFieldValue> localizedContentFieldValues =
 				contentField.getContentFieldValue_i18n();
 
-			if (Objects.equals(DDMFormFieldType.DATE, ddmFormField.getType())) {
+			if (Objects.equals(
+					DDMFormFieldType.DDM_DATE, ddmFormField.getType())) {
+
 				return _toLocalizedValue(
 					contentFieldValue, localizedContentFieldValues,
 					DDMValueUtil::_toLocalizedDateString, preferredLocale);
 			}
 			else if (Objects.equals(
-						DDMFormFieldType.DOCUMENT_LIBRARY,
+						DDMFormFieldType.DDM_DOCUMENT_LIBRARY,
 						ddmFormField.getType())) {
 
 				return _toLocalizedValue(
@@ -92,7 +94,7 @@ public class DDMValueUtil {
 					preferredLocale);
 			}
 			else if (Objects.equals(
-						DDMFormFieldType.IMAGE, ddmFormField.getType())) {
+						DDMFormFieldType.DDM_IMAGE, ddmFormField.getType())) {
 
 				return _toLocalizedValue(
 					contentFieldValue, localizedContentFieldValues,
@@ -101,7 +103,7 @@ public class DDMValueUtil {
 					preferredLocale);
 			}
 			else if (Objects.equals(
-						DDMFormFieldType.JOURNAL_ARTICLE,
+						DDMFormFieldType.DDM_JOURNAL_ARTICLE,
 						ddmFormField.getType())) {
 
 				return _toLocalizedValue(
@@ -113,7 +115,7 @@ public class DDMValueUtil {
 					preferredLocale);
 			}
 			else if (Objects.equals(
-						DDMFormFieldType.LINK_TO_PAGE,
+						DDMFormFieldType.DDM_LINK_TO_PAGE,
 						ddmFormField.getType())) {
 
 				return _toLocalizedValue(
@@ -135,7 +137,7 @@ public class DDMValueUtil {
 		}
 
 		if (Objects.equals(
-				DDMFormFieldType.GEOLOCATION, ddmFormField.getType())) {
+				DDMFormFieldType.DDM_GEOLOCATION, ddmFormField.getType())) {
 
 			Geo geo = contentFieldValue.getGeo();
 

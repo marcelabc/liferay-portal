@@ -75,7 +75,9 @@ public class DDMFormFieldInfoFieldConverterImpl
 			finalStep.attribute(SelectInfoFieldType.MULTIPLE, true);
 		}
 
-		if (Objects.equals(ddmFormField.getType(), DDMFormFieldType.DECIMAL)) {
+		if (Objects.equals(
+				ddmFormField.getType(), DDMFormFieldType.DDM_DECIMAL)) {
+
 			finalStep.attribute(NumberInfoFieldType.DECIMAL, true);
 		}
 
@@ -99,7 +101,7 @@ public class DDMFormFieldInfoFieldConverterImpl
 		}
 
 		if (Objects.equals(
-				ddmFormField.getType(), DDMFormFieldType.TEXT_HTML)) {
+				ddmFormField.getType(), DDMFormFieldType.DDM_TEXT_HTML)) {
 
 			finalStep.attribute(TextInfoFieldType.HTML, true);
 			finalStep.attribute(TextInfoFieldType.MULTILINE, true);
@@ -125,7 +127,7 @@ public class DDMFormFieldInfoFieldConverterImpl
 
 			return SelectInfoFieldType.INSTANCE;
 		}
-		else if (Objects.equals(ddmFormFieldType, DDMFormFieldType.DATE) ||
+		else if (Objects.equals(ddmFormFieldType, DDMFormFieldType.DDM_DATE) ||
 				 Objects.equals(ddmFormFieldType, "date")) {
 
 			return DateInfoFieldType.INSTANCE;
@@ -135,10 +137,13 @@ public class DDMFormFieldInfoFieldConverterImpl
 
 			return ImageInfoFieldType.INSTANCE;
 		}
-		else if (Objects.equals(ddmFormFieldType, DDMFormFieldType.DECIMAL) ||
-				 Objects.equals(ddmFormFieldType, DDMFormFieldType.INTEGER) ||
+		else if (Objects.equals(
+					ddmFormFieldType, DDMFormFieldType.DDM_DECIMAL) ||
+				 Objects.equals(
+					 ddmFormFieldType, DDMFormFieldType.DDM_INTEGER) ||
 				 Objects.equals(ddmFormFieldType, DDMFormFieldType.NUMERIC) ||
-				 Objects.equals(ddmFormFieldType, DDMFormFieldType.NUMBER)) {
+				 Objects.equals(
+					 ddmFormFieldType, DDMFormFieldType.DDM_NUMBER)) {
 
 			return NumberInfoFieldType.INSTANCE;
 		}

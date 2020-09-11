@@ -24,7 +24,7 @@ public class NumberDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.NUMBER;
+		return DDMFormFieldType.DDM_NUMBER;
 	}
 
 }

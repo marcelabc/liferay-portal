@@ -91,35 +91,35 @@ public abstract class TestOrderHelper {
 		testOrderByDDMField(
 			new String[] {"20160417192501", "20160417192510", "20160417192503"},
 			new String[] {"20160417192501", "20160417192503", "20160417192510"},
-			FieldConstants.DATE, DDMFormFieldType.DATE);
+			FieldConstants.DATE, DDMFormFieldType.DDM_DATE);
 	}
 
 	public void testOrderByDDMIntegerField() throws Exception {
 		testOrderByDDMField(
 			new String[] {"1", "10", "3", "2"},
 			new String[] {"1", "2", "3", "10"}, FieldConstants.INTEGER,
-			DDMFormFieldType.INTEGER);
+			DDMFormFieldType.DDM_INTEGER);
 	}
 
 	public void testOrderByDDMIntegerFieldRepeatable() throws Exception {
 		testOrderByDDMFieldRepeatable(
 			new String[] {"50", "707|25", "1|99|42"},
 			new String[] {"1|99|42", "707|25", "50"}, FieldConstants.INTEGER,
-			DDMFormFieldType.INTEGER);
+			DDMFormFieldType.DDM_INTEGER);
 	}
 
 	public void testOrderByDDMNumberField() throws Exception {
 		testOrderByDDMField(
 			new String[] {"3", "3.14", "12.34", "2.72", "1.41", "23.45", "20"},
 			new String[] {"1.41", "2.72", "3", "3.14", "12.34", "20", "23.45"},
-			FieldConstants.NUMBER, DDMFormFieldType.NUMBER);
+			FieldConstants.NUMBER, DDMFormFieldType.DDM_NUMBER);
 	}
 
 	public void testOrderByDDMNumberFieldRepeatable() throws Exception {
 		testOrderByDDMFieldRepeatable(
 			new String[] {"20|12.34", "16.0", "3.14"},
 			new String[] {"3.14", "20|12.34", "16.0"}, FieldConstants.NUMBER,
-			DDMFormFieldType.NUMBER);
+			DDMFormFieldType.DDM_NUMBER);
 	}
 
 	public void testOrderByDDMRadioField() throws Exception {

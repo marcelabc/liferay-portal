@@ -53,7 +53,7 @@ public class ImageExportDDMFormFieldValueTransformer
 
 	@Override
 	public String getFieldType() {
-		return DDMFormFieldType.IMAGE;
+		return DDMFormFieldType.DDM_IMAGE;
 	}
 
 	@Override

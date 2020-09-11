@@ -483,7 +483,7 @@ public class DDMIndexerImpl implements DDMIndexer {
 
 			String type = field.getType();
 
-			if (type.equals(DDMFormFieldType.GEOLOCATION)) {
+			if (type.equals(DDMFormFieldType.DDM_GEOLOCATION)) {
 				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 					valueString);
 

@@ -231,8 +231,8 @@ public class DDLRecordStagedModelDataHandlerTest
 
 		DDMFormField fileEntryFormField = DDMFormTestUtil.createDDMFormField(
 			documentLibraryFieldName, documentLibraryFieldName,
-			DDMFormFieldType.DOCUMENT_LIBRARY, "document-library", true, false,
-			false);
+			DDMFormFieldType.DDM_DOCUMENT_LIBRARY, "document-library", true,
+			false, false);
 
 		ddmForm.addDDMFormField(fileEntryFormField);
 

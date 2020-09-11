@@ -40,7 +40,7 @@ public class GeolocationDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.GEOLOCATION;
+		return DDMFormFieldType.DDM_GEOLOCATION;
 	}
 
 	@Override

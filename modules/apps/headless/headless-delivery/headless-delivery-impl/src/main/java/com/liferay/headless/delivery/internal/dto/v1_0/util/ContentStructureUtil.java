@@ -84,13 +84,13 @@ public class ContentStructureUtil {
 	public static String toDataType(DDMFormField ddmFormField) {
 		String type = ddmFormField.getType();
 
-		if (DDMFormFieldType.DOCUMENT_LIBRARY.equals(type)) {
+		if (DDMFormFieldType.DDM_DOCUMENT_LIBRARY.equals(type)) {
 			return "document";
 		}
-		else if (DDMFormFieldType.JOURNAL_ARTICLE.equals(type)) {
+		else if (DDMFormFieldType.DDM_JOURNAL_ARTICLE.equals(type)) {
 			return "structuredContent";
 		}
-		else if (DDMFormFieldType.LINK_TO_PAGE.equals(type)) {
+		else if (DDMFormFieldType.DDM_LINK_TO_PAGE.equals(type)) {
 			return "url";
 		}
 		else if (DDMFormFieldType.RADIO.equals(type)) {

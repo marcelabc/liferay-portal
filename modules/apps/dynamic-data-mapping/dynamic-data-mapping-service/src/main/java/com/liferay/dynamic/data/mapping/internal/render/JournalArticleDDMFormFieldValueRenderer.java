@@ -39,7 +39,7 @@ public class JournalArticleDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.JOURNAL_ARTICLE;
+		return DDMFormFieldType.DDM_JOURNAL_ARTICLE;
 	}
 
 	@Override

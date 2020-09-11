@@ -159,7 +159,9 @@ public abstract class BaseDDLExporter implements DDLExporter {
 			String ddmFormFieldType =
 				ddmFormFieldValueRenderer.getSupportedDDMFormFieldType();
 
-			if (Objects.equals(DDMFormFieldType.TEXT_HTML, ddmFormFieldType)) {
+			if (Objects.equals(
+					DDMFormFieldType.DDM_TEXT_HTML, ddmFormFieldType)) {
+
 				Value value = ddmFormFieldValue.getValue();
 
 				valueString = HtmlUtil.escape(value.getString(getLocale()));

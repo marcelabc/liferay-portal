@@ -32,7 +32,7 @@ public class TextHTMLDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.TEXT_HTML;
+		return DDMFormFieldType.DDM_TEXT_HTML;
 	}
 
 	@Override

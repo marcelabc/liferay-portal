@@ -400,7 +400,7 @@ public class UpgradePortletPreferencesTest {
 		ddmForm.addDDMFormField(ddmFormFieldText);
 
 		DDMFormField ddmFormFieldDate = DDMFormTestUtil.createDDMFormField(
-			"Birthday", "Birthday", DDMFormFieldType.DATE, "string", false,
+			"Birthday", "Birthday", DDMFormFieldType.DDM_DATE, "string", false,
 			false, false);
 
 		ddmForm.addDDMFormField(ddmFormFieldDate);

@@ -126,7 +126,7 @@ public class AMJournalArticleExportImportContentProcessor
 
 		for (DDMFormField ddmFormField : ddmFormFields) {
 			if (Objects.equals(
-					ddmFormField.getType(), DDMFormFieldType.TEXT_HTML) ||
+					ddmFormField.getType(), DDMFormFieldType.DDM_TEXT_HTML) ||
 				Objects.equals(ddmFormField.getType(), "text_area")) {
 
 				return true;

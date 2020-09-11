@@ -169,7 +169,7 @@ public class DDMFormValuesExportImportContentProcessor
 
 		@Override
 		public String getFieldType() {
-			return DDMFormFieldType.DOCUMENT_LIBRARY;
+			return DDMFormFieldType.DDM_DOCUMENT_LIBRARY;
 		}
 
 		@Override
@@ -263,7 +263,7 @@ public class DDMFormValuesExportImportContentProcessor
 
 		@Override
 		public String getFieldType() {
-			return DDMFormFieldType.DOCUMENT_LIBRARY;
+			return DDMFormFieldType.DDM_DOCUMENT_LIBRARY;
 		}
 
 		@Override
@@ -388,7 +388,7 @@ public class DDMFormValuesExportImportContentProcessor
 
 		@Override
 		public String getFieldType() {
-			return DDMFormFieldType.JOURNAL_ARTICLE;
+			return DDMFormFieldType.DDM_JOURNAL_ARTICLE;
 		}
 
 		@Override
@@ -484,7 +484,7 @@ public class DDMFormValuesExportImportContentProcessor
 
 		@Override
 		public String getFieldType() {
-			return DDMFormFieldType.JOURNAL_ARTICLE;
+			return DDMFormFieldType.DDM_JOURNAL_ARTICLE;
 		}
 
 		@Override
@@ -579,7 +579,7 @@ public class DDMFormValuesExportImportContentProcessor
 
 		@Override
 		public String getFieldType() {
-			return DDMFormFieldType.LINK_TO_PAGE;
+			return DDMFormFieldType.DDM_LINK_TO_PAGE;
 		}
 
 		@Override
@@ -645,7 +645,7 @@ public class DDMFormValuesExportImportContentProcessor
 
 		@Override
 		public String getFieldType() {
-			return DDMFormFieldType.LINK_TO_PAGE;
+			return DDMFormFieldType.DDM_LINK_TO_PAGE;
 		}
 
 		@Override

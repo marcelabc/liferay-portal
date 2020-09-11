@@ -24,7 +24,7 @@ public class DecimalDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.DECIMAL;
+		return DDMFormFieldType.DDM_DECIMAL;
 	}
 
 }

@@ -139,7 +139,7 @@ public class DDMFormValuesToFieldsConverterTest extends BaseDDMTestCase {
 			LocaleUtil.US);
 
 		DDMFormField ddmFormField = new DDMFormField(
-			"Integer", DDMFormFieldType.INTEGER);
+			"Integer", DDMFormFieldType.DDM_INTEGER);
 
 		ddmFormField.setDataType("integer");
 

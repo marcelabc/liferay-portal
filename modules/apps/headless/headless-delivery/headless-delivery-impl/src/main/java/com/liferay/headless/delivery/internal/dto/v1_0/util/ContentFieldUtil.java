@@ -148,7 +148,9 @@ public class ContentFieldUtil {
 			Optional<UriInfo> uriInfoOptional =
 				dtoConverterContext.getUriInfoOptional();
 
-			if (Objects.equals(DDMFormFieldType.DATE, ddmFormField.getType())) {
+			if (Objects.equals(
+					DDMFormFieldType.DDM_DATE, ddmFormField.getType())) {
+
 				return new ContentFieldValue() {
 					{
 						data = _toDateString(locale, valueString);
@@ -156,7 +158,7 @@ public class ContentFieldUtil {
 				};
 			}
 			else if (Objects.equals(
-						DDMFormFieldType.DOCUMENT_LIBRARY,
+						DDMFormFieldType.DDM_DOCUMENT_LIBRARY,
 						ddmFormField.getType())) {
 
 				FileEntry fileEntry = _getFileEntry(dlAppService, valueString);
@@ -176,7 +178,7 @@ public class ContentFieldUtil {
 			}
 
 			if (Objects.equals(
-					DDMFormFieldType.GEOLOCATION, ddmFormField.getType())) {
+					DDMFormFieldType.DDM_GEOLOCATION, ddmFormField.getType())) {
 
 				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 					valueString);
@@ -194,7 +196,7 @@ public class ContentFieldUtil {
 			}
 
 			if (Objects.equals(
-					DDMFormFieldType.IMAGE, ddmFormField.getType())) {
+					DDMFormFieldType.DDM_IMAGE, ddmFormField.getType())) {
 
 				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 					valueString);
@@ -219,7 +221,8 @@ public class ContentFieldUtil {
 			}
 
 			if (Objects.equals(
-					DDMFormFieldType.JOURNAL_ARTICLE, ddmFormField.getType())) {
+					DDMFormFieldType.DDM_JOURNAL_ARTICLE,
+					ddmFormField.getType())) {
 
 				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 					valueString);
@@ -250,7 +253,8 @@ public class ContentFieldUtil {
 			}
 
 			if (Objects.equals(
-					DDMFormFieldType.LINK_TO_PAGE, ddmFormField.getType())) {
+					DDMFormFieldType.DDM_LINK_TO_PAGE,
+					ddmFormField.getType())) {
 
 				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 					valueString);

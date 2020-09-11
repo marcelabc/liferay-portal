@@ -280,7 +280,7 @@ public class JournalArticleExportImportContentProcessor
 
 		for (Field field : fields) {
 			if (!Objects.equals(
-					field.getType(), DDMFormFieldType.JOURNAL_ARTICLE)) {
+					field.getType(), DDMFormFieldType.DDM_JOURNAL_ARTICLE)) {
 
 				continue;
 			}
@@ -389,7 +389,7 @@ public class JournalArticleExportImportContentProcessor
 
 		for (Field field : fields) {
 			if (!Objects.equals(
-					field.getType(), DDMFormFieldType.JOURNAL_ARTICLE)) {
+					field.getType(), DDMFormFieldType.DDM_JOURNAL_ARTICLE)) {
 
 				continue;
 			}

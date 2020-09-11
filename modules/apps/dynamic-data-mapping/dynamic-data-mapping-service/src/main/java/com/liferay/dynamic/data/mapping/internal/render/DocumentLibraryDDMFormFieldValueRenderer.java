@@ -40,7 +40,7 @@ public class DocumentLibraryDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.DOCUMENT_LIBRARY;
+		return DDMFormFieldType.DDM_DOCUMENT_LIBRARY;
 	}
 
 	@Override

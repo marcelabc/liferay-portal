@@ -40,7 +40,7 @@ public class LinkToPageDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.LINK_TO_PAGE;
+		return DDMFormFieldType.DDM_LINK_TO_PAGE;
 	}
 
 	@Override

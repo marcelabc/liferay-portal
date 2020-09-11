@@ -171,7 +171,7 @@ public class DDMFormValuesUtil {
 
 	private static Value _toValue(DDMFormField ddmFormField, Locale locale) {
 		if (Objects.equals(
-				DDMFormFieldType.SEPARATOR, ddmFormField.getType())) {
+				DDMFormFieldType.DDM_SEPARATOR, ddmFormField.getType())) {
 
 			return null;
 		}

@@ -108,7 +108,7 @@ public class DDLImpl implements DDL {
 
 			Stream<Object> fieldValuesStream = Arrays.stream(fieldValues);
 
-			if (fieldType.equals(DDMFormFieldType.DOCUMENT_LIBRARY)) {
+			if (fieldType.equals(DDMFormFieldType.DDM_DOCUMENT_LIBRARY)) {
 				Stream<String> fieldValuesStringStream = fieldValuesStream.map(
 					fieldValue -> getDocumentLibraryFieldValue(fieldValue));
 
@@ -119,7 +119,7 @@ public class DDLImpl implements DDL {
 
 				jsonObject.put(fieldName, fieldJSONObject.toString());
 			}
-			else if (fieldType.equals(DDMFormFieldType.LINK_TO_PAGE)) {
+			else if (fieldType.equals(DDMFormFieldType.DDM_LINK_TO_PAGE)) {
 				Stream<String> fieldValuesStringStream = fieldValuesStream.map(
 					fieldValue -> getLinkToPageFieldValue(fieldValue, locale));
 

@@ -42,7 +42,7 @@ public class DateDDMFormFieldValueRenderer
 
 	@Override
 	public String getSupportedDDMFormFieldType() {
-		return DDMFormFieldType.DATE;
+		return DDMFormFieldType.DDM_DATE;
 	}
 
 	@Override
