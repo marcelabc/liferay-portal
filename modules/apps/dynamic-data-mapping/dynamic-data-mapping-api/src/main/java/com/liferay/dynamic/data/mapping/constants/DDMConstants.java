@@ -36,17 +36,21 @@ public class DDMConstants {
 
 	public static final String[] SUPPORTED_DDM_FORM_FIELD_TYPES = {
 		DDMFormFieldType.CHECKBOX, DDMFormFieldType.CHECKBOX_MULTIPLE,
+		DDMFormFieldType.COLOR, DDMFormFieldType.DATE,
 		DDMFormFieldType.DDM_COLOR, DDMFormFieldType.DDM_DATE,
 		DDMFormFieldType.DDM_DECIMAL, DDMFormFieldType.DDM_DOCUMENT_LIBRARY,
-		DDMFormFieldType.FIELDSET, DDMFormFieldType.DDM_GEOLOCATION,
-		DDMFormFieldType.GRID, DDMFormFieldType.DDM_IMAGE,
+		DDMFormFieldType.DDM_GEOLOCATION, DDMFormFieldType.DDM_IMAGE,
 		DDMFormFieldType.DDM_INTEGER, DDMFormFieldType.DDM_JOURNAL_ARTICLE,
-		DDMFormFieldType.DDM_LINK_TO_PAGE, DDMFormFieldType.LOCALIZABLE_TEXT,
-		DDMFormFieldType.DDM_NUMBER, DDMFormFieldType.NUMERIC,
-		DDMFormFieldType.PASSWORD, DDMFormFieldType.RADIO,
-		DDMFormFieldType.SELECT, DDMFormFieldType.DDM_SEPARATOR,
-		DDMFormFieldType.TEXT, DDMFormFieldType.TEXT_AREA,
-		DDMFormFieldType.DDM_TEXT_HTML
+		DDMFormFieldType.DDM_LINK_TO_PAGE, DDMFormFieldType.DDM_NUMBER,
+		DDMFormFieldType.DDM_SEPARATOR, DDMFormFieldType.DDM_TEXT_HTML,
+		DDMFormFieldType.DOCUMENT_LIBRARY, DDMFormFieldType.FIELDSET,
+		DDMFormFieldType.GEOLOCATION, DDMFormFieldType.GRID,
+		DDMFormFieldType.IMAGE, DDMFormFieldType.JOURNAL_ARTICLE,
+		DDMFormFieldType.LINK_TO_LAYOUT, DDMFormFieldType.LOCALIZABLE_TEXT,
+		DDMFormFieldType.NUMERIC, DDMFormFieldType.PASSWORD,
+		DDMFormFieldType.RADIO, DDMFormFieldType.RICH_TEXT,
+		DDMFormFieldType.SELECT, DDMFormFieldType.SEPARATOR,
+		DDMFormFieldType.TEXT, DDMFormFieldType.TEXT_AREA
 	};
 
 }

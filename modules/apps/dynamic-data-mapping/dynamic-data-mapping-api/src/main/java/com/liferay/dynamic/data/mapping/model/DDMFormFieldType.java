@@ -23,6 +23,10 @@ public class DDMFormFieldType {
 
 	public static final String CHECKBOX_MULTIPLE = "checkbox_multiple";
 
+	public static final String COLOR = "color";
+
+	public static final String DATE = "date";
+
 	public static final String DDM_COLOR = "ddm-color";
 
 	public static final String DDM_DATE = "ddm-date";
@@ -47,9 +51,19 @@ public class DDMFormFieldType {
 
 	public static final String DDM_TEXT_HTML = "ddm-text-html";
 
+	public static final String DOCUMENT_LIBRARY = "document_library";
+
 	public static final String FIELDSET = "fieldset";
 
+	public static final String GEOLOCATION = "geolocation";
+
 	public static final String GRID = "grid";
+
+	public static final String IMAGE = "image";
+
+	public static final String JOURNAL_ARTICLE = "journal_article";
+
+	public static final String LINK_TO_LAYOUT = "link_to_layout";
 
 	public static final String LOCALIZABLE_TEXT = "localizable_text";
 
@@ -59,7 +73,11 @@ public class DDMFormFieldType {
 
 	public static final String RADIO = "radio";
 
+	public static final String RICH_TEXT = "rich_text";
+
 	public static final String SELECT = "select";
+
+	public static final String SEPARATOR = "separator";
 
 	public static final String TEXT = "text";
 
