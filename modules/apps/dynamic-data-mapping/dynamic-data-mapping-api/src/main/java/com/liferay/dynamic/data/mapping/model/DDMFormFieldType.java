@@ -23,31 +23,35 @@ public class DDMFormFieldType {
 
 	public static final String CHECKBOX_MULTIPLE = "checkbox_multiple";
 
-	public static final String COLOR = "ddm-color";
+	public static final String DDM_COLOR = "ddm-color";
 
-	public static final String DATE = "ddm-date";
+	public static final String DDM_DATE = "ddm-date";
 
-	public static final String DECIMAL = "ddm-decimal";
+	public static final String DDM_DECIMAL = "ddm-decimal";
 
-	public static final String DOCUMENT_LIBRARY = "ddm-documentlibrary";
+	public static final String DDM_DOCUMENT_LIBRARY = "ddm-documentlibrary";
+
+	public static final String DDM_GEOLOCATION = "ddm-geolocation";
+
+	public static final String DDM_IMAGE = "ddm-image";
+
+	public static final String DDM_INTEGER = "ddm-integer";
+
+	public static final String DDM_JOURNAL_ARTICLE = "ddm-journal-article";
+
+	public static final String DDM_LINK_TO_PAGE = "ddm-link-to-page";
+
+	public static final String DDM_NUMBER = "ddm-number";
+
+	public static final String DDM_SEPARATOR = "ddm-separator";
+
+	public static final String DDM_TEXT_HTML = "ddm-text-html";
 
 	public static final String FIELDSET = "fieldset";
 
-	public static final String GEOLOCATION = "ddm-geolocation";
-
 	public static final String GRID = "grid";
 
-	public static final String IMAGE = "ddm-image";
-
-	public static final String INTEGER = "ddm-integer";
-
-	public static final String JOURNAL_ARTICLE = "ddm-journal-article";
-
-	public static final String LINK_TO_PAGE = "ddm-link-to-page";
-
 	public static final String LOCALIZABLE_TEXT = "localizable_text";
-
-	public static final String NUMBER = "ddm-number";
 
 	public static final String NUMERIC = "numeric";
 
@@ -57,12 +61,8 @@ public class DDMFormFieldType {
 
 	public static final String SELECT = "select";
 
-	public static final String SEPARATOR = "ddm-separator";
-
 	public static final String TEXT = "text";
 
 	public static final String TEXT_AREA = "textarea";
-
-	public static final String TEXT_HTML = "ddm-text-html";
 
 }
