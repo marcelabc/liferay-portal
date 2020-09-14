@@ -1553,20 +1553,6 @@ public class DataDefinitionResourceImpl
 		}
 
 		if (ddmFormValidationException instanceof
-				DDMFormValidationException.MustSetValidCharactersForFieldType) {
-
-			DDMFormValidationException.MustSetValidCharactersForFieldType
-				mustSetValidCharactersForFieldType =
-					(DDMFormValidationException.
-						MustSetValidCharactersForFieldType)
-							ddmFormValidationException;
-
-			return new DataDefinitionValidationException.
-				MustSetValidCharactersForFieldType(
-					mustSetValidCharactersForFieldType.getFieldType());
-		}
-
-		if (ddmFormValidationException instanceof
 				DDMFormValidationException.
 					MustSetValidDefaultLocaleForProperty) {
 
