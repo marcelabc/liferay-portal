@@ -220,25 +220,6 @@ public class DataDefinitionValidationException extends RuntimeException {
 
 	}
 
-	public static class MustSetValidCharactersForFieldType
-		extends DataDefinitionValidationException {
-
-		public MustSetValidCharactersForFieldType(String fieldType) {
-			super(
-				String.format(
-					"Invalid characters entered for field type %s", fieldType));
-
-			_fieldType = fieldType;
-		}
-
-		public String getFieldType() {
-			return _fieldType;
-		}
-
-		private final String _fieldType;
-
-	}
-
 	public static class MustSetValidContentType
 		extends DataDefinitionValidationException {
 
