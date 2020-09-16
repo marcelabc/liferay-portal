@@ -454,6 +454,26 @@ public class DataDefinitionResourceTest
 			Assert.assertEquals("MustSetValidContentType", problem.getType());
 		}
 
+		// MustSetValidFieldType
+
+		try {
+			dataDefinitionResource.postDataDefinitionByContentType(
+				_CONTENT_TYPE,
+				DataDefinition.toDTO(
+					DataDefinitionTestUtil.read(
+						"data-definition-must-set-valid-characters-for-field-" +
+							"type.json")));
+
+			Assert.fail("An exception must be thrown");
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("text$#", problem.getDetail());
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+			Assert.assertEquals("MustSetValidFieldType", problem.getType());
+		}
+
 		// MustSetValidName
 
 		try {
