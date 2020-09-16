@@ -38,7 +38,6 @@ import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.Mus
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetOptionsForField;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidAvailableLocalesForProperty;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidCharactersForFieldName;
-import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidCharactersForFieldType;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidDefaultLocaleForProperty;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidFormRuleExpression;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetValidIndexType;
@@ -298,14 +297,6 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 		if (!ddmFormFieldTypeNames.contains(ddmFormField.getType())) {
 			throw new MustSetValidType(ddmFormField.getType());
 		}
-
-		Matcher matcher = _ddmFormFieldTypePattern.matcher(
-			ddmFormField.getType());
-
-		if (!matcher.matches()) {
-			throw new MustSetValidCharactersForFieldType(
-				ddmFormField.getType());
-		}
 	}
 
 	protected void validateDDMFormFieldValidationExpression(
@@ -448,8 +439,6 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 
 	private static final Pattern _ddmFormFieldNamePattern = Pattern.compile(
 		"([^\\p{Punct}|\\p{Space}$]|_)+");
-	private static final Pattern _ddmFormFieldTypePattern = Pattern.compile(
-		"([^\\p{Punct}|\\p{Space}$]|[-_])+");
 
 	private DDMExpressionFactory _ddmExpressionFactory;
 	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
