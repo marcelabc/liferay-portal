@@ -157,11 +157,11 @@ class LayoutProvider extends Component {
 	}
 
 	getLocalizedPages(pages) {
-		const {defaultLanguageId, editingLanguageId} = this.props;
+		const {defaultLanguageId, editingLanguageId, localizationMap} = this.props;
 		const settingsVisitor = new PagesVisitor(pages);
 
 		return settingsVisitor.mapFields((field) =>
-			localizeField(field, defaultLanguageId, editingLanguageId)
+			localizeField(field, defaultLanguageId, editingLanguageId, localizationMap)
 		);
 	}
 
@@ -895,6 +895,14 @@ LayoutProvider.PROPS = {
 		enabled: Config.bool(),
 		title: Config.object(),
 	}),
+
+	/**
+	 * @default undefined
+	 * @instance
+	 * @memberof LayoutProvider
+	 * @type {!object}
+	 */
+	localizationMap: Config.object(),
 
 	/**
 	 * @default undefined

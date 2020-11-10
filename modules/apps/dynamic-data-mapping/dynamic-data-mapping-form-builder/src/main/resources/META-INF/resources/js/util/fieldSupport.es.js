@@ -281,7 +281,7 @@ export const isFieldSetChild = (pages, fieldName) => {
 	return !!getParentFieldSet(pages, fieldName);
 };
 
-export const localizeField = (field, defaultLanguageId, editingLanguageId) => {
+export const localizeField = (field, defaultLanguageId, editingLanguageId, localizationMap) => {
 	let value = field.value;
 
 	if (field.dataType === 'json' && typeof value === 'object') {
