@@ -12,7 +12,7 @@
  * details.
  */
 
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useState} from 'react';
 
 /**
  * Use Sync Value to synchronize the initial value with the current internal
@@ -25,18 +25,12 @@ export const useSyncValue = (newValue, isDelay = true) => {
 	// value is new or keeps the same, it covers cases where the value typed by
 	// the user is sent to LayoutProvider but it does not descend with the new changes.
 
-	const previousValueRef = useRef(newValue);
-
 	const [value, setValue] = useState(newValue);
 
 	useEffect(() => {
 		const handler = setTimeout(
 			() => {
-				if (
-					value !== newValue &&
-					previousValueRef.current !== newValue
-				) {
-					previousValueRef.current = newValue;
+				if (value !== newValue) {
 					setValue(newValue);
 				}
 			},
