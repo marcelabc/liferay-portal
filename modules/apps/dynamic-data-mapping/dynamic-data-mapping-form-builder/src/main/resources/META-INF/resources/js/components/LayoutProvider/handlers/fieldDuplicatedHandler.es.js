@@ -123,9 +123,15 @@ export const createDuplicatedField = (originalField, props, blacklist = []) => {
 
 				blacklist.push(newDuplicatedNestedField.fieldName);
 
+				let duplicatedRows = duplicatedField.rows;
+
+				if (typeof duplicatedRows === 'string') {
+					duplicatedRows = JSON.parse(duplicatedRows);
+				}
+
 				const visitor = new PagesVisitor([
 					{
-						rows: duplicatedField.rows ?? [],
+						rows: duplicatedRows ?? [],
 					},
 				]);
 
