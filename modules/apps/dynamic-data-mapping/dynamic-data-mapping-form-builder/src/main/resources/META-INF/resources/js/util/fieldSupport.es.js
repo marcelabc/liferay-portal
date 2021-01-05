@@ -157,7 +157,7 @@ export const normalizeSettingsContextPages = (
 						...field.value,
 						[editingLanguageId]:
 							field.value[editingLanguageId] ??
-							field.value[defaultLanguageId],
+							field.value[field.defaultLanguageId],
 					},
 				};
 			}
@@ -170,7 +170,7 @@ export const normalizeSettingsContextPages = (
 					if (
 						availableLocale !== defaultLanguageId &&
 						availableLocale !== editingLanguageId &&
-						localizedValue[availableLocale] === ''
+						!localizedValue[availableLocale]
 					) {
 						delete localizedValue[availableLocale];
 					}
