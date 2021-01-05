@@ -62,6 +62,7 @@ const initialState = {
 	dataDefinition: {
 		availableLanguageIds: [],
 		dataDefinitionFields: [],
+		defaultLanguageId: themeDisplay.getLanguageId(),
 		name: {},
 	},
 	dataDefinitionId: 0,

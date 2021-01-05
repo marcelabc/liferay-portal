@@ -30,7 +30,7 @@ export default (state, action) => {
 				return {
 					...action.payload,
 					pages: visitor.mapFields(
-						({localizedValue, localizedValueEdited}) => {
+						({localizedValue, localizedValueEdited, fieldName}) => {
 							let value;
 
 							const defaultValue =
