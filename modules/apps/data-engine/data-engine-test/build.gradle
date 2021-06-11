@@ -1,0 +1,3 @@
+dependencies {
+	testIntegrationCompile project(":apps:data-engine:data-engine-taglib")
+}
