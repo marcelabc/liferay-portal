@@ -20,6 +20,8 @@ import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.json.JSONFactoryImpl;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletURL;
@@ -58,6 +60,7 @@ public class CheckboxDDMFormFieldTemplateContextContributorTest
 	public void setUp() throws Exception {
 		super.setUp();
 
+		setUpJSONFactoryUtil();
 		setUpRequestBackedPortletURLFactoryUtil();
 	}
 
@@ -195,6 +198,12 @@ public class CheckboxDDMFormFieldTemplateContextContributorTest
 		);
 
 		return requestBackedPortletURLFactory;
+	}
+
+	protected void setUpJSONFactoryUtil() {
+		JSONFactoryUtil jsonFactoryUtil = new JSONFactoryUtil();
+
+		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
 	}
 
 	protected void setUpRequestBackedPortletURLFactoryUtil() {
