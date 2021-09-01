@@ -16,6 +16,11 @@ package com.liferay.dynamic.data.mapping.form.field.type.internal.checkbox;
 
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRequestParameterRetriever;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,10 +47,28 @@ public class CheckboxDDMFormFieldValueRequestParameterRetriever
 			ddmFormFieldParameterName);
 
 		if (parameterValue == null) {
-			return defaultDDMFormFieldParameterValue;
+			return getValue(defaultDDMFormFieldParameterValue);
 		}
 
-		return String.valueOf(GetterUtil.getBoolean(parameterValue));
+		return String.valueOf(GetterUtil.getBoolean(getValue(parameterValue)));
 	}
+
+	protected String getValue(String valueString) {
+		try {
+			JSONArray jsonArray = JSONFactoryUtil.createJSONArray(valueString);
+
+			return GetterUtil.getString(jsonArray.get(0));
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException, jsonException);
+			}
+		}
+
+		return valueString;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		CheckboxDDMFormFieldValueRequestParameterRetriever.class);
 
 }

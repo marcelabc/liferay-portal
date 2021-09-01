@@ -19,10 +19,14 @@ import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateCont
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFieldTypeUtil;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
-import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
 import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -56,7 +60,9 @@ public class CheckboxDDMFormFieldTemplateContextContributor
 		return HashMapBuilder.<String, Object>put(
 			"predefinedValue",
 			GetterUtil.getBoolean(
-				getPredefinedValue(ddmFormField, ddmFormFieldRenderingContext))
+				getValue(
+					DDMFormFieldTypeUtil.getPredefinedValue(
+						ddmFormField, ddmFormFieldRenderingContext)))
 		).put(
 			"showAsSwitcher",
 			GetterUtil.getBoolean(ddmFormField.getProperty("showAsSwitcher"))
@@ -84,22 +90,24 @@ public class CheckboxDDMFormFieldTemplateContextContributor
 				"tooltip")
 		).put(
 			"value",
-			GetterUtil.getBoolean(ddmFormFieldRenderingContext.getValue())
+			GetterUtil.getBoolean(
+				getValue(ddmFormFieldRenderingContext.getValue()))
 		).build();
 	}
 
-	protected String getPredefinedValue(
-		DDMFormField ddmFormField,
-		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
+	protected String getValue(String valueString) {
+		try {
+			JSONArray jsonArray = JSONFactoryUtil.createJSONArray(valueString);
 
-		LocalizedValue predefinedValue = ddmFormField.getPredefinedValue();
-
-		if (predefinedValue == null) {
-			return null;
+			return GetterUtil.getString(jsonArray.get(0));
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException, jsonException);
+			}
 		}
 
-		return predefinedValue.getString(
-			ddmFormFieldRenderingContext.getLocale());
+		return valueString;
 	}
 
 	private String _getSystemSettingsURL(
@@ -119,5 +127,8 @@ public class CheckboxDDMFormFieldTemplateContextContributor
 				"configuration.DDMFormWebConfiguration"
 		).buildString();
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		CheckboxDDMFormFieldTemplateContextContributor.class);
 
 }
