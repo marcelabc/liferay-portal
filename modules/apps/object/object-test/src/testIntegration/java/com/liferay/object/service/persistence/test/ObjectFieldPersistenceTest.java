@@ -138,6 +138,8 @@ public class ObjectFieldPersistenceTest {
 
 		newObjectField.setModifiedDate(RandomTestUtil.nextDate());
 
+		newObjectField.setListTypeDefinitionId(RandomTestUtil.nextLong());
+
 		newObjectField.setObjectDefinitionId(RandomTestUtil.nextLong());
 
 		newObjectField.setDBColumnName(RandomTestUtil.randomString());
@@ -154,7 +156,7 @@ public class ObjectFieldPersistenceTest {
 
 		newObjectField.setName(RandomTestUtil.randomString());
 
-		newObjectField.setPluralLabel(RandomTestUtil.randomString());
+		newObjectField.setRelationshipType(RandomTestUtil.randomString());
 
 		newObjectField.setRequired(RandomTestUtil.randomBoolean());
 
@@ -186,6 +188,9 @@ public class ObjectFieldPersistenceTest {
 			Time.getShortTimestamp(existingObjectField.getModifiedDate()),
 			Time.getShortTimestamp(newObjectField.getModifiedDate()));
 		Assert.assertEquals(
+			existingObjectField.getListTypeDefinitionId(),
+			newObjectField.getListTypeDefinitionId());
+		Assert.assertEquals(
 			existingObjectField.getObjectDefinitionId(),
 			newObjectField.getObjectDefinitionId());
 		Assert.assertEquals(
@@ -207,8 +212,8 @@ public class ObjectFieldPersistenceTest {
 		Assert.assertEquals(
 			existingObjectField.getName(), newObjectField.getName());
 		Assert.assertEquals(
-			existingObjectField.getPluralLabel(),
-			newObjectField.getPluralLabel());
+			existingObjectField.getRelationshipType(),
+			newObjectField.getRelationshipType());
 		Assert.assertEquals(
 			existingObjectField.isRequired(), newObjectField.isRequired());
 		Assert.assertEquals(
@@ -231,6 +236,13 @@ public class ObjectFieldPersistenceTest {
 		_persistence.countByUuid_C("null", 0L);
 
 		_persistence.countByUuid_C((String)null, 0L);
+	}
+
+	@Test
+	public void testCountByListTypeDefinitionId() throws Exception {
+		_persistence.countByListTypeDefinitionId(RandomTestUtil.nextLong());
+
+		_persistence.countByListTypeDefinitionId(0L);
 	}
 
 	@Test
@@ -285,10 +297,11 @@ public class ObjectFieldPersistenceTest {
 		return OrderByComparatorFactoryUtil.create(
 			"ObjectField", "mvccVersion", true, "uuid", true, "objectFieldId",
 			true, "companyId", true, "userId", true, "userName", true,
-			"createDate", true, "modifiedDate", true, "objectDefinitionId",
-			true, "dbColumnName", true, "dbTableName", true, "indexed", true,
-			"indexedAsKeyword", true, "indexedLanguageId", true, "label", true,
-			"name", true, "pluralLabel", true, "required", true, "type", true);
+			"createDate", true, "modifiedDate", true, "listTypeDefinitionId",
+			true, "objectDefinitionId", true, "dbColumnName", true,
+			"dbTableName", true, "indexed", true, "indexedAsKeyword", true,
+			"indexedLanguageId", true, "label", true, "name", true,
+			"relationshipType", true, "required", true, "type", true);
 	}
 
 	@Test
@@ -582,6 +595,8 @@ public class ObjectFieldPersistenceTest {
 
 		objectField.setModifiedDate(RandomTestUtil.nextDate());
 
+		objectField.setListTypeDefinitionId(RandomTestUtil.nextLong());
+
 		objectField.setObjectDefinitionId(RandomTestUtil.nextLong());
 
 		objectField.setDBColumnName(RandomTestUtil.randomString());
@@ -598,7 +613,7 @@ public class ObjectFieldPersistenceTest {
 
 		objectField.setName(RandomTestUtil.randomString());
 
-		objectField.setPluralLabel(RandomTestUtil.randomString());
+		objectField.setRelationshipType(RandomTestUtil.randomString());
 
 		objectField.setRequired(RandomTestUtil.randomBoolean());
 

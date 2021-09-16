@@ -14,6 +14,7 @@
 
 package com.liferay.layout.list.retriever;
 
+import com.liferay.info.filter.InfoFilter;
 import com.liferay.info.pagination.Pagination;
 
 import java.util.Map;
@@ -40,6 +41,11 @@ public interface LayoutListRetrieverContext {
 	public Optional<Object> getContextObjectOptional();
 
 	public Optional<HttpServletRequest> getHttpServletRequestOptional();
+
+	public <T> Optional<T> getInfoFilterOptional(
+		Class<? extends InfoFilter> clazz);
+
+	public Optional<Map<String, InfoFilter>> getInfoFiltersOptional();
 
 	public Optional<Pagination> getPaginationOptional();
 

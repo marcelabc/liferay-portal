@@ -14,7 +14,9 @@
 
 package com.liferay.layout.list.retriever;
 
+import com.liferay.info.filter.InfoFilter;
 import com.liferay.info.pagination.Pagination;
+import com.liferay.portal.kernel.util.MapUtil;
 
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +51,29 @@ public class DefaultLayoutListRetrieverContext
 	@Override
 	public Optional<HttpServletRequest> getHttpServletRequestOptional() {
 		return Optional.ofNullable(_httpServletRequest);
+	}
+
+	@Override
+	public <T> Optional<T> getInfoFilterOptional(
+		Class<? extends InfoFilter> clazz) {
+
+		if (MapUtil.isEmpty(_infoFilters)) {
+			return Optional.empty();
+		}
+
+		InfoFilter infoFilter = _infoFilters.getOrDefault(
+			clazz.getName(), null);
+
+		if (infoFilter != null) {
+			return Optional.of((T)infoFilter);
+		}
+
+		return Optional.empty();
+	}
+
+	@Override
+	public Optional<Map<String, InfoFilter>> getInfoFiltersOptional() {
+		return Optional.ofNullable(_infoFilters);
 	}
 
 	@Override
@@ -90,6 +115,10 @@ public class DefaultLayoutListRetrieverContext
 		_httpServletRequest = httpServletRequest;
 	}
 
+	public void setInfoFilters(Map<String, InfoFilter> infoFilters) {
+		_infoFilters = infoFilters;
+	}
+
 	public void setPagination(Pagination pagination) {
 		_pagination = pagination;
 	}
@@ -119,6 +148,7 @@ public class DefaultLayoutListRetrieverContext
 	private Map<String, String[]> _configuration;
 	private Object _contextObject;
 	private HttpServletRequest _httpServletRequest;
+	private Map<String, InfoFilter> _infoFilters;
 	private Pagination _pagination;
 	private long[] _segmentsEntryIds;
 	private long[] _segmentsExperienceIds;

@@ -41,6 +41,7 @@ public class ObjectFieldSoap implements Serializable {
 		soapModel.setUserName(model.getUserName());
 		soapModel.setCreateDate(model.getCreateDate());
 		soapModel.setModifiedDate(model.getModifiedDate());
+		soapModel.setListTypeDefinitionId(model.getListTypeDefinitionId());
 		soapModel.setObjectDefinitionId(model.getObjectDefinitionId());
 		soapModel.setDBColumnName(model.getDBColumnName());
 		soapModel.setDBTableName(model.getDBTableName());
@@ -49,7 +50,7 @@ public class ObjectFieldSoap implements Serializable {
 		soapModel.setIndexedLanguageId(model.getIndexedLanguageId());
 		soapModel.setLabel(model.getLabel());
 		soapModel.setName(model.getName());
-		soapModel.setPluralLabel(model.getPluralLabel());
+		soapModel.setRelationshipType(model.getRelationshipType());
 		soapModel.setRequired(model.isRequired());
 		soapModel.setType(model.getType());
 
@@ -169,6 +170,14 @@ public class ObjectFieldSoap implements Serializable {
 		_modifiedDate = modifiedDate;
 	}
 
+	public long getListTypeDefinitionId() {
+		return _listTypeDefinitionId;
+	}
+
+	public void setListTypeDefinitionId(long listTypeDefinitionId) {
+		_listTypeDefinitionId = listTypeDefinitionId;
+	}
+
 	public long getObjectDefinitionId() {
 		return _objectDefinitionId;
 	}
@@ -241,12 +250,12 @@ public class ObjectFieldSoap implements Serializable {
 		_name = name;
 	}
 
-	public String getPluralLabel() {
-		return _pluralLabel;
+	public String getRelationshipType() {
+		return _relationshipType;
 	}
 
-	public void setPluralLabel(String pluralLabel) {
-		_pluralLabel = pluralLabel;
+	public void setRelationshipType(String relationshipType) {
+		_relationshipType = relationshipType;
 	}
 
 	public boolean getRequired() {
@@ -277,6 +286,7 @@ public class ObjectFieldSoap implements Serializable {
 	private String _userName;
 	private Date _createDate;
 	private Date _modifiedDate;
+	private long _listTypeDefinitionId;
 	private long _objectDefinitionId;
 	private String _dbColumnName;
 	private String _dbTableName;
@@ -285,7 +295,7 @@ public class ObjectFieldSoap implements Serializable {
 	private String _indexedLanguageId;
 	private String _label;
 	private String _name;
-	private String _pluralLabel;
+	private String _relationshipType;
 	private boolean _required;
 	private String _type;
 

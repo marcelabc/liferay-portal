@@ -19,6 +19,7 @@ import com.liferay.expando.kernel.util.ExpandoBridgeFactoryUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.list.type.model.ListTypeDefinitionModel;
+import com.liferay.list.type.model.ListTypeDefinitionSoap;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.LocaleException;
@@ -35,6 +36,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
@@ -42,12 +44,15 @@ import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 
+import java.sql.Blob;
 import java.sql.Types;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -67,6 +72,7 @@ import java.util.function.Function;
  * @see ListTypeDefinitionImpl
  * @generated
  */
+@JSON(strict = true)
 public class ListTypeDefinitionModelImpl
 	extends BaseModelImpl<ListTypeDefinition>
 	implements ListTypeDefinitionModel {
@@ -83,7 +89,7 @@ public class ListTypeDefinitionModelImpl
 		{"listTypeDefinitionId", Types.BIGINT}, {"companyId", Types.BIGINT},
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
-		{"label", Types.VARCHAR}
+		{"name", Types.VARCHAR}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -98,11 +104,11 @@ public class ListTypeDefinitionModelImpl
 		TABLE_COLUMNS_MAP.put("userName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("createDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
-		TABLE_COLUMNS_MAP.put("label", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("name", Types.VARCHAR);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table ListTypeDefinition (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,listTypeDefinitionId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,label STRING null)";
+		"create table ListTypeDefinition (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,listTypeDefinitionId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,name STRING null)";
 
 	public static final String TABLE_SQL_DROP = "drop table ListTypeDefinition";
 
@@ -149,6 +155,59 @@ public class ListTypeDefinitionModelImpl
 	 */
 	@Deprecated
 	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
+
+	/**
+	 * Converts the soap model instance into a normal model instance.
+	 *
+	 * @param soapModel the soap model instance to convert
+	 * @return the normal model instance
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static ListTypeDefinition toModel(ListTypeDefinitionSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
+		ListTypeDefinition model = new ListTypeDefinitionImpl();
+
+		model.setMvccVersion(soapModel.getMvccVersion());
+		model.setUuid(soapModel.getUuid());
+		model.setListTypeDefinitionId(soapModel.getListTypeDefinitionId());
+		model.setCompanyId(soapModel.getCompanyId());
+		model.setUserId(soapModel.getUserId());
+		model.setUserName(soapModel.getUserName());
+		model.setCreateDate(soapModel.getCreateDate());
+		model.setModifiedDate(soapModel.getModifiedDate());
+		model.setName(soapModel.getName());
+
+		return model;
+	}
+
+	/**
+	 * Converts the soap model instances into normal model instances.
+	 *
+	 * @param soapModels the soap model instances to convert
+	 * @return the normal model instances
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static List<ListTypeDefinition> toModels(
+		ListTypeDefinitionSoap[] soapModels) {
+
+		if (soapModels == null) {
+			return null;
+		}
+
+		List<ListTypeDefinition> models = new ArrayList<ListTypeDefinition>(
+			soapModels.length);
+
+		for (ListTypeDefinitionSoap soapModel : soapModels) {
+			models.add(toModel(soapModel));
+		}
+
+		return models;
 	}
 
 	public ListTypeDefinitionModelImpl() {
@@ -325,11 +384,11 @@ public class ListTypeDefinitionModelImpl
 			"modifiedDate",
 			(BiConsumer<ListTypeDefinition, Date>)
 				ListTypeDefinition::setModifiedDate);
-		attributeGetterFunctions.put("label", ListTypeDefinition::getLabel);
+		attributeGetterFunctions.put("name", ListTypeDefinition::getName);
 		attributeSetterBiConsumers.put(
-			"label",
+			"name",
 			(BiConsumer<ListTypeDefinition, String>)
-				ListTypeDefinition::setLabel);
+				ListTypeDefinition::setName);
 
 		_attributeGetterFunctions = Collections.unmodifiableMap(
 			attributeGetterFunctions);
@@ -337,6 +396,7 @@ public class ListTypeDefinitionModelImpl
 			(Map)attributeSetterBiConsumers);
 	}
 
+	@JSON
 	@Override
 	public long getMvccVersion() {
 		return _mvccVersion;
@@ -351,6 +411,7 @@ public class ListTypeDefinitionModelImpl
 		_mvccVersion = mvccVersion;
 	}
 
+	@JSON
 	@Override
 	public String getUuid() {
 		if (_uuid == null) {
@@ -379,6 +440,7 @@ public class ListTypeDefinitionModelImpl
 		return getColumnOriginalValue("uuid_");
 	}
 
+	@JSON
 	@Override
 	public long getListTypeDefinitionId() {
 		return _listTypeDefinitionId;
@@ -393,6 +455,7 @@ public class ListTypeDefinitionModelImpl
 		_listTypeDefinitionId = listTypeDefinitionId;
 	}
 
+	@JSON
 	@Override
 	public long getCompanyId() {
 		return _companyId;
@@ -417,6 +480,7 @@ public class ListTypeDefinitionModelImpl
 			this.<Long>getColumnOriginalValue("companyId"));
 	}
 
+	@JSON
 	@Override
 	public long getUserId() {
 		return _userId;
@@ -447,6 +511,7 @@ public class ListTypeDefinitionModelImpl
 	public void setUserUuid(String userUuid) {
 	}
 
+	@JSON
 	@Override
 	public String getUserName() {
 		if (_userName == null) {
@@ -466,6 +531,7 @@ public class ListTypeDefinitionModelImpl
 		_userName = userName;
 	}
 
+	@JSON
 	@Override
 	public Date getCreateDate() {
 		return _createDate;
@@ -480,6 +546,7 @@ public class ListTypeDefinitionModelImpl
 		_createDate = createDate;
 	}
 
+	@JSON
 	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
@@ -500,111 +567,110 @@ public class ListTypeDefinitionModelImpl
 		_modifiedDate = modifiedDate;
 	}
 
+	@JSON
 	@Override
-	public String getLabel() {
-		if (_label == null) {
+	public String getName() {
+		if (_name == null) {
 			return "";
 		}
 		else {
-			return _label;
+			return _name;
 		}
 	}
 
 	@Override
-	public String getLabel(Locale locale) {
+	public String getName(Locale locale) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 
-		return getLabel(languageId);
+		return getName(languageId);
 	}
 
 	@Override
-	public String getLabel(Locale locale, boolean useDefault) {
+	public String getName(Locale locale, boolean useDefault) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 
-		return getLabel(languageId, useDefault);
+		return getName(languageId, useDefault);
 	}
 
 	@Override
-	public String getLabel(String languageId) {
-		return LocalizationUtil.getLocalization(getLabel(), languageId);
+	public String getName(String languageId) {
+		return LocalizationUtil.getLocalization(getName(), languageId);
 	}
 
 	@Override
-	public String getLabel(String languageId, boolean useDefault) {
+	public String getName(String languageId, boolean useDefault) {
 		return LocalizationUtil.getLocalization(
-			getLabel(), languageId, useDefault);
+			getName(), languageId, useDefault);
 	}
 
 	@Override
-	public String getLabelCurrentLanguageId() {
-		return _labelCurrentLanguageId;
+	public String getNameCurrentLanguageId() {
+		return _nameCurrentLanguageId;
 	}
 
 	@JSON
 	@Override
-	public String getLabelCurrentValue() {
-		Locale locale = getLocale(_labelCurrentLanguageId);
+	public String getNameCurrentValue() {
+		Locale locale = getLocale(_nameCurrentLanguageId);
 
-		return getLabel(locale);
+		return getName(locale);
 	}
 
 	@Override
-	public Map<Locale, String> getLabelMap() {
-		return LocalizationUtil.getLocalizationMap(getLabel());
+	public Map<Locale, String> getNameMap() {
+		return LocalizationUtil.getLocalizationMap(getName());
 	}
 
 	@Override
-	public void setLabel(String label) {
+	public void setName(String name) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_label = label;
+		_name = name;
 	}
 
 	@Override
-	public void setLabel(String label, Locale locale) {
-		setLabel(label, locale, LocaleUtil.getDefault());
+	public void setName(String name, Locale locale) {
+		setName(name, locale, LocaleUtil.getDefault());
 	}
 
 	@Override
-	public void setLabel(String label, Locale locale, Locale defaultLocale) {
+	public void setName(String name, Locale locale, Locale defaultLocale) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 		String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
 
-		if (Validator.isNotNull(label)) {
-			setLabel(
+		if (Validator.isNotNull(name)) {
+			setName(
 				LocalizationUtil.updateLocalization(
-					getLabel(), "Label", label, languageId, defaultLanguageId));
+					getName(), "Name", name, languageId, defaultLanguageId));
 		}
 		else {
-			setLabel(
+			setName(
 				LocalizationUtil.removeLocalization(
-					getLabel(), "Label", languageId));
+					getName(), "Name", languageId));
 		}
 	}
 
 	@Override
-	public void setLabelCurrentLanguageId(String languageId) {
-		_labelCurrentLanguageId = languageId;
+	public void setNameCurrentLanguageId(String languageId) {
+		_nameCurrentLanguageId = languageId;
 	}
 
 	@Override
-	public void setLabelMap(Map<Locale, String> labelMap) {
-		setLabelMap(labelMap, LocaleUtil.getDefault());
+	public void setNameMap(Map<Locale, String> nameMap) {
+		setNameMap(nameMap, LocaleUtil.getDefault());
 	}
 
 	@Override
-	public void setLabelMap(
-		Map<Locale, String> labelMap, Locale defaultLocale) {
-
-		if (labelMap == null) {
+	public void setNameMap(Map<Locale, String> nameMap, Locale defaultLocale) {
+		if (nameMap == null) {
 			return;
 		}
 
-		setLabel(
+		setName(
 			LocalizationUtil.updateLocalization(
-				labelMap, getLabel(), "Label",
+				nameMap, getName(), "Name",
 				LocaleUtil.toLanguageId(defaultLocale)));
 	}
 
@@ -656,9 +722,9 @@ public class ListTypeDefinitionModelImpl
 	public String[] getAvailableLanguageIds() {
 		Set<String> availableLanguageIds = new TreeSet<String>();
 
-		Map<Locale, String> labelMap = getLabelMap();
+		Map<Locale, String> nameMap = getNameMap();
 
-		for (Map.Entry<Locale, String> entry : labelMap.entrySet()) {
+		for (Map.Entry<Locale, String> entry : nameMap.entrySet()) {
 			Locale locale = entry.getKey();
 			String value = entry.getValue();
 
@@ -673,7 +739,7 @@ public class ListTypeDefinitionModelImpl
 
 	@Override
 	public String getDefaultLanguageId() {
-		String xml = getLabel();
+		String xml = getName();
 
 		if (xml == null) {
 			return "";
@@ -708,13 +774,13 @@ public class ListTypeDefinitionModelImpl
 
 		String modelDefaultLanguageId = getDefaultLanguageId();
 
-		String label = getLabel(defaultLocale);
+		String name = getName(defaultLocale);
 
-		if (Validator.isNull(label)) {
-			setLabel(getLabel(modelDefaultLanguageId), defaultLocale);
+		if (Validator.isNull(name)) {
+			setName(getName(modelDefaultLanguageId), defaultLocale);
 		}
 		else {
-			setLabel(getLabel(defaultLocale), defaultLocale, defaultLocale);
+			setName(getName(defaultLocale), defaultLocale, defaultLocale);
 		}
 	}
 
@@ -747,9 +813,36 @@ public class ListTypeDefinitionModelImpl
 		listTypeDefinitionImpl.setUserName(getUserName());
 		listTypeDefinitionImpl.setCreateDate(getCreateDate());
 		listTypeDefinitionImpl.setModifiedDate(getModifiedDate());
-		listTypeDefinitionImpl.setLabel(getLabel());
+		listTypeDefinitionImpl.setName(getName());
 
 		listTypeDefinitionImpl.resetOriginalValues();
+
+		return listTypeDefinitionImpl;
+	}
+
+	@Override
+	public ListTypeDefinition cloneWithOriginalValues() {
+		ListTypeDefinitionImpl listTypeDefinitionImpl =
+			new ListTypeDefinitionImpl();
+
+		listTypeDefinitionImpl.setMvccVersion(
+			this.<Long>getColumnOriginalValue("mvccVersion"));
+		listTypeDefinitionImpl.setUuid(
+			this.<String>getColumnOriginalValue("uuid_"));
+		listTypeDefinitionImpl.setListTypeDefinitionId(
+			this.<Long>getColumnOriginalValue("listTypeDefinitionId"));
+		listTypeDefinitionImpl.setCompanyId(
+			this.<Long>getColumnOriginalValue("companyId"));
+		listTypeDefinitionImpl.setUserId(
+			this.<Long>getColumnOriginalValue("userId"));
+		listTypeDefinitionImpl.setUserName(
+			this.<String>getColumnOriginalValue("userName"));
+		listTypeDefinitionImpl.setCreateDate(
+			this.<Date>getColumnOriginalValue("createDate"));
+		listTypeDefinitionImpl.setModifiedDate(
+			this.<Date>getColumnOriginalValue("modifiedDate"));
+		listTypeDefinitionImpl.setName(
+			this.<String>getColumnOriginalValue("name"));
 
 		return listTypeDefinitionImpl;
 	}
@@ -871,12 +964,12 @@ public class ListTypeDefinitionModelImpl
 			listTypeDefinitionCacheModel.modifiedDate = Long.MIN_VALUE;
 		}
 
-		listTypeDefinitionCacheModel.label = getLabel();
+		listTypeDefinitionCacheModel.name = getName();
 
-		String label = listTypeDefinitionCacheModel.label;
+		String name = listTypeDefinitionCacheModel.name;
 
-		if ((label != null) && (label.length() == 0)) {
-			listTypeDefinitionCacheModel.label = null;
+		if ((name != null) && (name.length() == 0)) {
+			listTypeDefinitionCacheModel.name = null;
 		}
 
 		return listTypeDefinitionCacheModel;
@@ -888,7 +981,7 @@ public class ListTypeDefinitionModelImpl
 			attributeGetterFunctions = getAttributeGetterFunctions();
 
 		StringBundler sb = new StringBundler(
-			(4 * attributeGetterFunctions.size()) + 2);
+			(5 * attributeGetterFunctions.size()) + 2);
 
 		sb.append("{");
 
@@ -899,9 +992,27 @@ public class ListTypeDefinitionModelImpl
 			Function<ListTypeDefinition, Object> attributeGetterFunction =
 				entry.getValue();
 
+			sb.append("\"");
 			sb.append(attributeName);
-			sb.append("=");
-			sb.append(attributeGetterFunction.apply((ListTypeDefinition)this));
+			sb.append("\": ");
+
+			Object value = attributeGetterFunction.apply(
+				(ListTypeDefinition)this);
+
+			if (value == null) {
+				sb.append("null");
+			}
+			else if (value instanceof Blob || value instanceof Date ||
+					 value instanceof Map || value instanceof String) {
+
+				sb.append(
+					"\"" + StringUtil.replace(value.toString(), "\"", "'") +
+						"\"");
+			}
+			else {
+				sb.append(value);
+			}
+
 			sb.append(", ");
 		}
 
@@ -961,8 +1072,8 @@ public class ListTypeDefinitionModelImpl
 	private Date _createDate;
 	private Date _modifiedDate;
 	private boolean _setModifiedDate;
-	private String _label;
-	private String _labelCurrentLanguageId;
+	private String _name;
+	private String _nameCurrentLanguageId;
 
 	public <T> T getColumnValue(String columnName) {
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
@@ -1002,7 +1113,7 @@ public class ListTypeDefinitionModelImpl
 		_columnOriginalValues.put("userName", _userName);
 		_columnOriginalValues.put("createDate", _createDate);
 		_columnOriginalValues.put("modifiedDate", _modifiedDate);
-		_columnOriginalValues.put("label", _label);
+		_columnOriginalValues.put("name", _name);
 	}
 
 	private static final Map<String, String> _attributeNames;
@@ -1042,7 +1153,7 @@ public class ListTypeDefinitionModelImpl
 
 		columnBitmasks.put("modifiedDate", 128L);
 
-		columnBitmasks.put("label", 256L);
+		columnBitmasks.put("name", 256L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

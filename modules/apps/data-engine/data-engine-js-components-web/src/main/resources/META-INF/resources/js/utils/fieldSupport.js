@@ -106,31 +106,15 @@ export const addField = ({
 
 	return {
 		activePage: pageIndex,
-		focusedField: {
-			...newField,
-		},
+		focusedField: newField,
 		pages: newPages,
-		previousFocusedField: newField,
 	};
 };
 
-export const generateId = (length, allowOnlyNumbers = false) => {
-	let text = '';
-
-	const possible = allowOnlyNumbers
-		? '0123456789'
-		: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-	for (let i = 0; i < length; i++) {
-		text += possible.charAt(Math.floor(Math.random() * possible.length));
-	}
-
-	return text;
-};
-
-export const generateInstanceId = (length) => {
-	return generateId(length);
-};
+export const generateInstanceId = (isNumbersOnly) =>
+	Math.random()
+		.toString(isNumbersOnly ? 10 : 36)
+		.substr(2, 8);
 
 export const getDefaultFieldName = (isOptionField = false, fieldType = '') => {
 	const defaultFieldName = fieldType?.label
@@ -139,7 +123,7 @@ export const getDefaultFieldName = (isOptionField = false, fieldType = '') => {
 		? Liferay.Language.get('option')
 		: Liferay.Language.get('field');
 
-	return defaultFieldName + generateId(8, true);
+	return defaultFieldName + generateInstanceId(true);
 };
 
 export const removeField = (
@@ -353,14 +337,14 @@ export const normalizeSettingsContextPages = (
 				});
 			}
 
-			const newInstanceId = generateInstanceId(8);
+			const instanceId = generateInstanceId();
 
 			if (field.type === 'rich_text' && field.editorConfig) {
 				field = {
 					...field,
-					editorConfig: formatEditorConfig(
+					editorConfig: updateEditorConfigInstanceId(
 						field.editorConfig,
-						newInstanceId
+						instanceId
 					),
 				};
 			}
@@ -368,10 +352,10 @@ export const normalizeSettingsContextPages = (
 			return {
 				...field,
 				defaultLanguageId,
-				instanceId: newInstanceId,
+				instanceId,
 				locale: defaultLanguageId,
 				name: generateName(field.name, {
-					instanceId: newInstanceId,
+					instanceId,
 					repeatedIndex: getRepeatedIndex(field.name),
 				}),
 			};
@@ -415,7 +399,7 @@ export const createField = (props, event) => {
 		}
 	}
 
-	const instanceId = generateInstanceId(8);
+	const instanceId = generateInstanceId();
 
 	const newField = {
 		...fieldType,
@@ -468,21 +452,22 @@ export const createField = (props, event) => {
 	};
 };
 
-export const formatEditorConfig = (editorConfig, instanceId) => {
-	Object.keys(editorConfig).map((key) => {
-		if (typeof editorConfig[key] === 'string') {
-			const parsedName = parseName(decodeURIComponent(editorConfig[key]));
+export const updateEditorConfigInstanceId = (editorConfig, instanceId) => {
+	const updatedEditorConfig = {...editorConfig};
+	for (const [key, value] of Object.entries(updatedEditorConfig)) {
+		if (typeof value === 'string') {
+			const parsedName = parseName(decodeURIComponent(value));
 
 			if (parsedName.instanceId) {
-				editorConfig[key] = editorConfig[key].replace(
+				updatedEditorConfig[key] = value.replace(
 					parsedName.instanceId,
 					instanceId
 				);
 			}
 		}
-	});
+	}
 
-	return editorConfig;
+	return updatedEditorConfig;
 };
 
 export const formatFieldName = (instanceId, languageId, value) => {

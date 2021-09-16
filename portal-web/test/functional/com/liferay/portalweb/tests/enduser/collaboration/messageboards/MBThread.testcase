@@ -36,6 +36,59 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-136910. It checks that bold text can be added in the editor."
+	@priority = "4"
+	test CanAddBoldText {
+		MessageboardsThread.addPG(
+			bold = "true",
+			groupName = "Guest",
+			layoutName = "message-boards-page",
+			siteURLKey = "guest",
+			threadBody = "MB Thread Message Body",
+			threadSubject = "MB Thread Message Subject");
+
+		MessageboardsThread.openToThread(
+			groupName = "Guest",
+			layoutName = "message-boards-page",
+			siteURLKey = "guest",
+			threadSubject = "MB Thread Message Subject");
+
+		MessageboardsThread.viewPG(
+			bold = "true",
+			threadBody = "MB Thread Message Body",
+			threadSubject = "MB Thread Message Subject");
+	}
+
+	@description = "This is a test for LPS-136911. It checks that an image can be added in the editor."
+	@priority = "4"
+	test CanAddImage {
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "Document_4.jpg",
+			groupName = "Guest",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_4.jpg");
+
+		MessageboardsThread.addPG(
+			groupName = "Guest",
+			layoutName = "message-boards-page",
+			siteURLKey = "guest",
+			threadBody = "MB Thread Message Body",
+			threadBodyImageName = "Document_4.jpg",
+			threadSubject = "MB Thread Message Subject");
+
+		MessageboardsThread.openToThread(
+			groupName = "Guest",
+			layoutName = "message-boards-page",
+			siteURLKey = "guest",
+			threadSubject = "MB Thread Message Subject");
+
+		MessageboardsThread.viewPG(
+			threadBody = "MB Thread Message Body",
+			threadBodyImageName = "Document_4.jpg",
+			threadSubject = "MB Thread Message Subject");
+	}
+
 	@priority = "4"
 	@refactorneeded
 	test CanAddLinkToDocument {
@@ -141,21 +194,33 @@ definition {
 	@priority = "4"
 	@refactordone
 	test CanAddThreadWithUTF8Characters {
-		JSONMBMessage.addMessage(
-			groupName = "Guest",
+		Navigator.gotoPage(pageName = "Message Boards Page");
+
+		MessageboardsThread.addPG(
 			threadBody = "MB Thrèad Mèssagè Body",
 			threadSubject = "MB Thrèad Mèssagè Subjèct");
 
-		MessageboardsThread.openToThread(
-			categoryName = "MB Category Name",
-			groupName = "Guest",
-			layoutName = "message-boards-page",
-			siteURLKey = "guest",
+		Navigator.gotoPage(pageName = "Message Boards Page");
+
+		MessageboardsThread.gotoPG(
+			lastPostUserName = "Test Test",
+			replyCount = "0",
+			threadBody = "MB Thrèad Mèssagè Body",
 			threadSubject = "MB Thrèad Mèssagè Subjèct");
 
 		MessageboardsThread.viewPG(
 			threadBody = "MB Thrèad Mèssagè Body",
 			threadSubject = "MB Thrèad Mèssagè Subjèct");
+	}
+
+	@description = "This is a test for LPS-136912. It checks that an urgent thread can be added."
+	@ignore = "true"
+	@priority = "3"
+	test CanAddUrgentThread {
+		property portal.acceptance = "false";
+
+		// TODO LPS-136912 CanAddUrgentThread pending implementation
+
 	}
 
 	@priority = "5"
@@ -258,6 +323,59 @@ definition {
 		RecycleBin.viewDefaultCP(assetName = "MB Thread Message Subject");
 	}
 
+	@description = "This is a test for LPS-136914. It checks that an attachment can be downloaded."
+	@priority = "4"
+	test CanDownloadAttachment {
+		MessageboardsThread.addPG(
+			groupName = "Guest",
+			layoutName = "message-boards-page",
+			mbAttachmentFileList = "marketplace_icon.png,Commerce_Black.jpg,Document_2.jpeg",
+			siteURLKey = "guest",
+			threadBody = "MB Thread Message Body",
+			threadSubject = "MB Thread Message Subject");
+
+		AssertTextEquals.assertPartialText(
+			index = "1",
+			locator1 = "MessageBoardsThread#MESSAGE_BODY_ATTACHMENT_LIST",
+			value1 = "Commerce_Black.jpg");
+
+		AssertTextEquals.assertPartialText(
+			index = "2",
+			locator1 = "MessageBoardsThread#MESSAGE_BODY_ATTACHMENT_LIST",
+			value1 = "Document_2.jpeg");
+
+		AssertTextEquals.assertPartialText(
+			index = "3",
+			locator1 = "MessageBoardsThread#MESSAGE_BODY_ATTACHMENT_LIST",
+			value1 = "marketplace_icon.png");
+
+		MessageboardsThread.downloadAttachmentPG(
+			attachmentsList = "true",
+			index = "1");
+
+		MessageboardsThread.assertDownloadedFileNameFromTempFolder(attachmentFileName = "Commerce_Black");
+	}
+
+	@description = "This is a test for LPS-136920. It checks that a thread can be exported."
+	@ignore = "true"
+	@priority = "3"
+	test CanExportThread {
+		property portal.acceptance = "false";
+
+		// TODO LPS-136920 CanExportThread pending implementation
+
+	}
+
+	@description = "This is a test for LPS-136919. It checks that a thread can be imported."
+	@ignore = "true"
+	@priority = "3"
+	test CanImportThread {
+		property portal.acceptance = "false";
+
+		// TODO LPS-136919 CanImportThread pending implementation
+
+	}
+
 	@priority = "4"
 	@refactordone
 	test CanLimitThreadAttachmentSize {
@@ -319,6 +437,31 @@ definition {
 			threadBody = "Message Boards Thread Body",
 			threadReplyBody = "Message Boards Thread Reply Body",
 			threadSubject = "Message Boards Thread Subject");
+	}
+
+	@description = "This test covers LPS-137634. It ensures that a user cannot publish a thread with a tag that contains Java Script."
+	@priority = "3"
+	test CannotPublishThreadWithTagContainingJavaScript {
+		MessageboardsThread.addPG(
+			groupName = "Guest",
+			invalidCharacters = "true",
+			layoutName = "message-boards-page",
+			siteURLKey = "guest",
+			tagName = '''<script>alert(123);</script>''',
+			threadBody = '''<script>alert(123);</script>''',
+			threadSubject = '''<script>alert(123);</script>''');
+
+		AssertAlertNotPresent();
+	}
+
+	@description = "This is a test for LPS-136915. It checks that an attachment can be restored."
+	@ignore = "true"
+	@priority = "3"
+	test CanRestoreAttachment {
+		property portal.acceptance = "false";
+
+		// TODO LPS-136915 CanRestoreAttachment pending implementation
+
 	}
 
 	@priority = "5"
@@ -421,10 +564,6 @@ definition {
 		MessageboardsThread.viewNoXSSPG(
 			threadBody = '''<script>alert(123);</script>''',
 			threadSubject = '''<script>alert(123);</script>''');
-
-		AssertHTMLSourceTextNotPresent(value1 = '''<script>alert(123);</script>''');
-
-		AssertHTMLSourceTextPresent(value1 = '''&lt;script&gt;alert(123);&lt;/script&gt;''');
 	}
 
 	@priority = "4"

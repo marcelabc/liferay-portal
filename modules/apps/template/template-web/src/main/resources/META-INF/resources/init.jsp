@@ -33,7 +33,6 @@ page import="com.liferay.dynamic.data.mapping.exception.TemplateSmallImageNameEx
 page import="com.liferay.dynamic.data.mapping.exception.TemplateSmallImageSizeException" %><%@
 page import="com.liferay.dynamic.data.mapping.model.DDMTemplate" %><%@
 page import="com.liferay.dynamic.data.mapping.service.DDMTemplateLocalServiceUtil" %><%@
-page import="com.liferay.petra.string.StringBundler" %><%@
 page import="com.liferay.petra.string.StringPool" %><%@
 page import="com.liferay.petra.string.StringUtil" %><%@
 page import="com.liferay.portal.kernel.bean.BeanParamUtil" %><%@
@@ -44,11 +43,14 @@ page import="com.liferay.portal.kernel.util.LocaleUtil" %><%@
 page import="com.liferay.portal.kernel.util.ParamUtil" %><%@
 page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
+page import="com.liferay.template.model.TemplateEntry" %><%@
+page import="com.liferay.template.service.TemplateEntryLocalServiceUtil" %><%@
 page import="com.liferay.template.web.internal.display.context.EditDDMTemplateDisplayContext" %><%@
 page import="com.liferay.template.web.internal.display.context.InformationTemplatesManagementToolbarDisplayContext" %><%@
 page import="com.liferay.template.web.internal.display.context.InformationTemplatesTemplateDisplayContext" %><%@
 page import="com.liferay.template.web.internal.display.context.WidgetTemplatesManagementToolbarDisplayContext" %><%@
-page import="com.liferay.template.web.internal.display.context.WidgetTemplatesTemplateDisplayContext" %>
+page import="com.liferay.template.web.internal.display.context.WidgetTemplatesTemplateDisplayContext" %><%@
+page import="com.liferay.template.web.internal.util.FFTemplateConfigurationUtil" %>
 
 <%@ page import="java.util.Objects" %>
 

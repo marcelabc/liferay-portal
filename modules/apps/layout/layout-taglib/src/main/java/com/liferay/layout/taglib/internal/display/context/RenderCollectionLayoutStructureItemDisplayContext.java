@@ -15,7 +15,15 @@
 package com.liferay.layout.taglib.internal.display.context;
 
 import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.fragment.collection.filter.constants.FragmentCollectionFilterConstants;
+import com.liferay.fragment.constants.FragmentConfigurationFieldDataType;
+import com.liferay.fragment.model.FragmentEntryLink;
+import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
+import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.info.constants.InfoDisplayWebKeys;
+import com.liferay.info.filter.InfoFilter;
+import com.liferay.info.filter.InfoFilterProvider;
+import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.list.renderer.InfoListRenderer;
 import com.liferay.info.list.renderer.InfoListRendererTracker;
 import com.liferay.info.pagination.Pagination;
@@ -29,11 +37,16 @@ import com.liferay.layout.list.retriever.ListObjectReferenceFactory;
 import com.liferay.layout.list.retriever.ListObjectReferenceFactoryTracker;
 import com.liferay.layout.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.layout.util.structure.CollectionStyledLayoutStructureItem;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
+import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -89,7 +102,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			Math.min(
 				getNumberOfPages(),
 				ParamUtil.getInteger(
-					_httpServletRequest,
+					PortalUtil.getOriginalServletRequest(_httpServletRequest),
 					PAGE_NUMBER_PARAM_PREFIX +
 						_collectionStyledLayoutStructureItem.getItemId(),
 					1)));
@@ -107,7 +120,8 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		}
 
 		DefaultLayoutListRetrieverContext defaultLayoutListRetrieverContext =
-			_getDefaultLayoutListRetrieverContext();
+			_getDefaultLayoutListRetrieverContext(
+				layoutListRetriever, listObjectReference);
 
 		int end = _collectionStyledLayoutStructureItem.getNumberOfItems();
 		int start = 0;
@@ -117,18 +131,6 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		if (Objects.equals(paginationType, PAGINATION_TYPE_NUMERIC) ||
 			Objects.equals(paginationType, PAGINATION_TYPE_SIMPLE)) {
-
-			HttpServletRequest originalHttpServletRequest =
-				PortalUtil.getOriginalServletRequest(_httpServletRequest);
-
-			int currentPage = ParamUtil.getInteger(
-				originalHttpServletRequest,
-				PAGE_NUMBER_PARAM_PREFIX +
-					_collectionStyledLayoutStructureItem.getItemId());
-
-			if (currentPage < 1) {
-				currentPage = 1;
-			}
 
 			int numberOfItems =
 				_collectionStyledLayoutStructureItem.getNumberOfItems();
@@ -144,10 +146,10 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			}
 
 			end = Math.min(
-				Math.min(currentPage * numberOfItemsPerPage, numberOfItems),
+				Math.min(getActivePage() * numberOfItemsPerPage, numberOfItems),
 				getCollectionCount());
 
-			start = (currentPage - 1) * numberOfItemsPerPage;
+			start = (getActivePage() - 1) * numberOfItemsPerPage;
 		}
 
 		defaultLayoutListRetrieverContext.setPagination(
@@ -171,7 +173,9 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		}
 
 		_collectionCount = layoutListRetriever.getListCount(
-			listObjectReference, _getDefaultLayoutListRetrieverContext());
+			listObjectReference,
+			_getDefaultLayoutListRetrieverContext(
+				layoutListRetriever, listObjectReference));
 
 		return _collectionCount;
 	}
@@ -259,9 +263,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return _numberOfItemsToDisplay;
 		}
 
-		_numberOfItemsToDisplay = Math.min(
-			getCollectionCount(),
-			_collectionStyledLayoutStructureItem.getNumberOfItems());
+		_numberOfItemsToDisplay = getTotalNumberOfItems();
 
 		if (Validator.isNotNull(
 				_collectionStyledLayoutStructureItem.getPaginationType()) &&
@@ -327,17 +329,6 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 	public Map<String, Object> getNumericCollectionPaginationAdditionalProps() {
 		return HashMapBuilder.<String, Object>put(
 			"collectionId", _collectionStyledLayoutStructureItem.getItemId()
-		).put(
-			"numberOfItems",
-			_collectionStyledLayoutStructureItem.getNumberOfItems()
-		).put(
-			"numberOfItemsPerPage",
-			_collectionStyledLayoutStructureItem.getNumberOfItemsPerPage()
-		).put(
-			"paginationType",
-			_collectionStyledLayoutStructureItem.getPaginationType()
-		).put(
-			"totalPages", getNumberOfPages()
 		).build();
 	}
 
@@ -347,6 +338,12 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		).put(
 			"collectionId", _collectionStyledLayoutStructureItem.getItemId()
 		).build();
+	}
+
+	public int getTotalNumberOfItems() {
+		return Math.min(
+			getCollectionCount(),
+			_collectionStyledLayoutStructureItem.getNumberOfItems());
 	}
 
 	private Map<String, String[]> _getConfiguration() {
@@ -385,7 +382,9 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 	}
 
 	private DefaultLayoutListRetrieverContext
-		_getDefaultLayoutListRetrieverContext() {
+		_getDefaultLayoutListRetrieverContext(
+			LayoutListRetriever<?, ListObjectReference> layoutListRetriever,
+			ListObjectReference listObjectReference) {
 
 		DefaultLayoutListRetrieverContext defaultLayoutListRetrieverContext =
 			new DefaultLayoutListRetrieverContext();
@@ -398,12 +397,102 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			).orElse(
 				_httpServletRequest.getAttribute(InfoDisplayWebKeys.INFO_ITEM)
 			));
+		defaultLayoutListRetrieverContext.setInfoFilters(
+			_getInfoFilters(layoutListRetriever, listObjectReference));
 		defaultLayoutListRetrieverContext.setHttpServletRequest(
 			_httpServletRequest);
 		defaultLayoutListRetrieverContext.setSegmentsEntryIds(
 			_getSegmentsEntryIds());
 
 		return defaultLayoutListRetrieverContext;
+	}
+
+	private Map<String, String[]> _getFilterValues() {
+		Map<String, String[]> filterValues = new HashMap<>();
+
+		HttpServletRequest originalHttpServletRequest =
+			PortalUtil.getOriginalServletRequest(_httpServletRequest);
+
+		Map<String, String[]> parameterMap =
+			originalHttpServletRequest.getParameterMap();
+
+		FragmentEntryConfigurationParser fragmentEntryConfigurationParser =
+			ServletContextUtil.getFragmentEntryConfigurationParser();
+
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			String parameterName = entry.getKey();
+
+			if (!parameterName.startsWith(
+					FragmentCollectionFilterConstants.FILTER_PREFIX) ||
+				ArrayUtil.isEmpty(entry.getValue())) {
+
+				continue;
+			}
+
+			List<String> parameterNameParts = StringUtil.split(
+				parameterName, CharPool.UNDERLINE);
+
+			if (parameterNameParts.size() != 3) {
+				continue;
+			}
+
+			FragmentEntryLink fragmentEntryLink =
+				FragmentEntryLinkLocalServiceUtil.fetchFragmentEntryLink(
+					GetterUtil.getLong(parameterNameParts.get(2)));
+
+			if (fragmentEntryLink == null) {
+				continue;
+			}
+
+			JSONArray targetCollectionsJSONArray =
+				(JSONArray)
+					fragmentEntryConfigurationParser.getConfigurationFieldValue(
+						fragmentEntryLink.getEditableValues(),
+						"targetCollections",
+						FragmentConfigurationFieldDataType.ARRAY);
+
+			if ((targetCollectionsJSONArray != null) &&
+				JSONUtil.hasValue(
+					targetCollectionsJSONArray,
+					_collectionStyledLayoutStructureItem.getItemId())) {
+
+				filterValues.put(
+					parameterName.replaceFirst(
+						FragmentCollectionFilterConstants.FILTER_PREFIX,
+						StringPool.BLANK),
+					entry.getValue());
+			}
+		}
+
+		return filterValues;
+	}
+
+	private Map<String, InfoFilter> _getInfoFilters(
+		LayoutListRetriever<?, ListObjectReference> layoutListRetriever,
+		ListObjectReference listObjectReference) {
+
+		Map<String, InfoFilter> infoFilters = new HashMap<>();
+
+		InfoItemServiceTracker infoItemServiceTracker =
+			ServletContextUtil.getInfoItemServiceTracker();
+
+		Map<String, String[]> filterValues = _getFilterValues();
+
+		for (InfoFilter infoFilter :
+				layoutListRetriever.getSupportedInfoFilters(
+					listObjectReference)) {
+
+			Class<?> clazz = infoFilter.getClass();
+
+			InfoFilterProvider<?> infoFilterProvider =
+				infoItemServiceTracker.getFirstInfoItemService(
+					InfoFilterProvider.class, clazz.getName());
+
+			infoFilters.put(
+				clazz.getName(), infoFilterProvider.create(filterValues));
+		}
+
+		return infoFilters;
 	}
 
 	private LayoutListRetriever<?, ListObjectReference>

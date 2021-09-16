@@ -42,13 +42,7 @@ definition {
 		property portal.upstream = "true";
 		property test.name.skip.portal.instance = "FormRulesConditions#AreDisabledUntilAConditionFieldIsSelected";
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName();
 
@@ -76,11 +70,7 @@ definition {
 	test CanBeDeleted {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -94,7 +84,7 @@ definition {
 
 		FormRules.configureConditionOptions(
 			conditionField = "Text",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			conditionRowNumber = "1");
 
 		FormRules.configureActionOptions(
@@ -108,7 +98,7 @@ definition {
 			action = "Require",
 			actionTarget = "Text",
 			conditionField = "Text",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			ruleNumber = "1");
 
 		FormRules.gotoEdit(ruleNumber = "1");
@@ -126,7 +116,7 @@ definition {
 
 		FormRules.viewConditionNotPresent(
 			conditionField = "Text",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			conditionRowNumber = "1");
 
 		FormRules.viewConditionPresent(
@@ -148,7 +138,7 @@ definition {
 
 		FormRules.viewConditionSummaryNotPresent(
 			conditionField = "Text",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			ruleNumber = "1");
 	}
 
@@ -157,11 +147,7 @@ definition {
 	test CanBeEdited {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -173,7 +159,7 @@ definition {
 
 		FormRules.configureConditionOptions(
 			conditionField = "Text",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			conditionRowNumber = "1");
 
 		FormRules.configureActionOptions(
@@ -187,7 +173,7 @@ definition {
 			action = "Require",
 			actionTarget = "Text",
 			conditionField = "Text",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			ruleNumber = "1");
 
 		FormRules.gotoEdit(ruleNumber = "1");
@@ -195,7 +181,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Text",
 			conditionFieldValue = "Test",
-			conditionOperator = "Does not contain",
+			conditionOperator = "Does Not Contain",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -211,7 +197,7 @@ definition {
 			actionTarget = "Text",
 			conditionField = "Text",
 			conditionFieldConstant = "Test",
-			conditionOperator = "Does not contain",
+			conditionOperator = "Does Not Contain",
 			ruleNumber = "1");
 	}
 
@@ -220,11 +206,7 @@ definition {
 	test CanCreateAContainsRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -284,16 +266,12 @@ definition {
 			fieldName = "Numeric");
 	}
 
-	@description = "Verify that a Rule with 'Does not contains' condition can be created"
+	@description = "Verify that a Rule with 'Does Not Contain' condition can be created"
 	@priority = "4"
 	test CanCreateADoesNotContainRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -316,7 +294,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Text",
 			conditionFieldValue = "Test",
-			conditionOperator = "Does not contain",
+			conditionOperator = "Does Not Contain",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -332,7 +310,7 @@ definition {
 			actionTarget = "Numeric",
 			conditionField = "Text",
 			conditionFieldConstant = "Test",
-			conditionOperator = "Does not contain",
+			conditionOperator = "Does Not Contain",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -357,16 +335,12 @@ definition {
 		}
 	}
 
-	@description = "Verify that a Rule with 'Is empty' condition can be created"
+	@description = "Verify that a Rule with 'Is Empty' condition can be created"
 	@priority = "4"
 	test CanCreateAnIsEmptyRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -384,7 +358,7 @@ definition {
 
 		FormRules.configureConditionOptions(
 			conditionField = "Text",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			conditionRowNumber = "1");
 
 		FormRules.configureActionOptions(
@@ -399,7 +373,7 @@ definition {
 			actionTarget = "Numeric",
 			conditionField = "Text",
 			conditionFieldConstant = "Numeric",
-			conditionOperator = "Is empty",
+			conditionOperator = "Is Empty",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -421,16 +395,12 @@ definition {
 		FormFields.viewFieldLabelNotPresent(fieldLabel = "Indicates Required Fields");
 	}
 
-	@description = "Verify that a Rule with 'Is Equal to' condition can be created"
+	@description = "Verify that a Rule with 'Is Equal To' condition can be created"
 	@priority = "4"
 	test CanCreateAnIsEqualToRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -451,7 +421,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Text",
 			conditionFieldValue = "Test",
-			conditionOperator = "Is equal to",
+			conditionOperator = "Is Equal To",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -466,7 +436,7 @@ definition {
 			action = "Show",
 			actionTarget = "Numeric",
 			conditionField = "Text",
-			conditionOperator = "Is equal to",
+			conditionOperator = "Is Equal To",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -492,16 +462,12 @@ definition {
 			fieldValue = "");
 	}
 
-	@description = "Verify that a Rule with 'Is greater than or equal to' condition is working fine on the numeric field"
+	@description = "Verify that a Rule with 'Is greater than or Equal To' condition is working fine on the numeric field"
 	@priority = "4"
 	test CanCreateAnIsGreaterThanOrEqualToRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -526,7 +492,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Numeric",
 			conditionFieldValue = "5",
-			conditionOperator = "Is greater than or equal to",
+			conditionOperator = "Is Greater Than Or Equal To",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -542,7 +508,7 @@ definition {
 			actionTarget = "Paragraph",
 			conditionField = "Numeric",
 			conditionFieldConstant = "5",
-			conditionOperator = "Is greater than or equal to",
+			conditionOperator = "Is Greater Than Or Equal To",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -576,11 +542,7 @@ definition {
 	test CanCreateAnIsGreaterThanRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -601,7 +563,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Numeric",
 			conditionFieldValue = "5",
-			conditionOperator = "Is greater than",
+			conditionOperator = "Is Greater Than",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -616,7 +578,7 @@ definition {
 			action = "Enable",
 			actionTarget = "Text",
 			conditionField = "Numeric",
-			conditionOperator = "Is greater than",
+			conditionOperator = "Is Greater Than",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -644,16 +606,12 @@ definition {
 			fieldValue = "Test");
 	}
 
-	@description = "Verify that a Rule with 'Is less than or equal to' condition is working fine on the numeric field"
+	@description = "Verify that a Rule with 'Is less than or Equal To' condition is working fine on the numeric field"
 	@priority = "4"
 	test CanCreateAnIsLessThanOrEqualToRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -678,7 +636,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Numeric",
 			conditionFieldValue = "5",
-			conditionOperator = "Is less than or equal to",
+			conditionOperator = "Is Less Than Or Equal To",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -693,7 +651,7 @@ definition {
 			action = "Show",
 			actionTarget = "Text",
 			conditionField = "Numeric",
-			conditionOperator = "Is less than or equal to",
+			conditionOperator = "Is Less Than Or Equal To",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -736,11 +694,7 @@ definition {
 	test CanCreateAnIsLessThanRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -767,7 +721,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Numeric",
 			conditionFieldValue = "5",
-			conditionOperator = "Is less than",
+			conditionOperator = "Is Less Than",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -782,7 +736,7 @@ definition {
 			action = "Show",
 			actionTarget = "Paragraph",
 			conditionField = "Numeric",
-			conditionOperator = "Is less than",
+			conditionOperator = "Is Less Than",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -816,20 +770,14 @@ definition {
 		Form.validateNoFieldLabel(fieldLabel = "Paragraph");
 	}
 
-	@description = "LPS-71399 - Verify that a Rule with 'Is not empty' condition can be created"
+	@description = "LPS-71399 - Verify that a Rule with 'Is Not Empty' condition can be created"
 	@priority = "4"
 	test CanCreateAnIsNotEmptyRule {
 		property portal.acceptance = "true";
 		property portal.upstream = "true";
 		property test.name.skip.portal.instance = "FormRulesConditions#CanCreateAnIsNotEmptyRule";
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName();
 
@@ -857,7 +805,7 @@ definition {
 
 		FormRules.configureConditionOptions(
 			conditionField = "Text Field",
-			conditionOperator = "Is not empty",
+			conditionOperator = "Is Not Empty",
 			conditionRowNumber = "1");
 
 		FormRules.configureActionOptions(
@@ -918,16 +866,12 @@ definition {
 			fieldName = "${fieldNameDateField}");
 	}
 
-	@description = "Verify that a Rule with 'Is not Equal to' condition can be created"
+	@description = "Verify that a Rule with 'Is Not Equal To' condition can be created"
 	@priority = "4"
 	test CanCreateAnIsNotEqualToRule {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -942,7 +886,7 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Text",
 			conditionFieldValue = "Test",
-			conditionOperator = "Is not equal to",
+			conditionOperator = "Is Not Equal To",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
@@ -957,7 +901,7 @@ definition {
 			action = "Require",
 			actionTarget = "Text",
 			conditionField = "Text",
-			conditionOperator = "Is not equal to",
+			conditionOperator = "Is Not Equal To",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -975,7 +919,7 @@ definition {
 		FormFields.viewRequiredAsteriskDataFieldNotPresent(fieldFieldLabel = "Text");
 	}
 
-	@description = "Verify that a Rule of User with condition 'Belongs to' can be created"
+	@description = "Verify that a Rule of User with condition 'Belongs To' can be created"
 	@priority = "4"
 	test CanCreateAnUserBelongsToRule {
 		property portal.acceptance = "true";
@@ -991,14 +935,7 @@ definition {
 
 		SearchAdministration.executeSearchActions(actionsDescription = "Reindex all search indexes.");
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms",
-			site = "Guest");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName();
 
@@ -1024,7 +961,7 @@ definition {
 
 		FormRules.configureConditionOptions(
 			conditionField = "User",
-			conditionOperator = "Belongs to",
+			conditionOperator = "Belongs To",
 			conditionRowNumber = "1",
 			conditionValueType = "Site Administrator");
 
@@ -1047,7 +984,7 @@ definition {
 			actionTarget = "Manager",
 			conditionField = "User",
 			conditionFieldConstant = "Site Administrator",
-			conditionOperator = "Belongs to",
+			conditionOperator = "Belongs To",
 			ruleNumber = "1");
 
 		FormRules.viewSummary(
@@ -1055,7 +992,7 @@ definition {
 			actionTarget = "Manager",
 			conditionField = "User",
 			conditionFieldConstant = "Site Administrator",
-			conditionOperator = "Belongs to",
+			conditionOperator = "Belongs To",
 			ruleNumber = "1");
 
 		FormsAdminNavigator.gotoFormBuilder();
@@ -1157,13 +1094,7 @@ definition {
 
 		var portalURL = PropsUtil.get("portal.url");
 
-		Navigator.openURL();
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName();
 
@@ -1212,14 +1143,14 @@ definition {
 		FormRules.configureConditionOptions(
 			conditionField = "Text Field 1",
 			conditionFieldValue = "test",
-			conditionOperator = "Is equal to",
+			conditionOperator = "Is Equal To",
 			conditionRowNumber = "1",
 			conditionValueType = "Value");
 
 		FormRules.configureConditionOptions(
 			conditionField = "Text Field 2",
 			conditionFieldValue = "test",
-			conditionOperator = "Is equal to",
+			conditionOperator = "Is Equal To",
 			conditionRowNumber = "2",
 			conditionValueType = "Value");
 
@@ -1262,11 +1193,7 @@ definition {
 	test CanCreateMultipleConditionsUsingOR {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
@@ -1296,7 +1223,7 @@ definition {
 
 			FormRules.configureConditionOptions(
 				conditionField = "${field}",
-				conditionOperator = "Is not empty",
+				conditionOperator = "Is Not Empty",
 				conditionRowNumber = "${rowNumber}");
 
 			if ("${field}" == "Text") {
@@ -1317,7 +1244,7 @@ definition {
 				ruleNumber = "1");
 
 			FormRules.viewConditionOperatorSummary(
-				conditionOperator = "Is not empty",
+				conditionOperator = "Is Not Empty",
 				ruleNumber = "1");
 		}
 
@@ -1369,11 +1296,7 @@ definition {
 	test OrOperatorisDisabledByDefault {
 		property forms.functional = "true";
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Forms");
-
-		FormsAdminNavigator.gotoAddForm();
+		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 

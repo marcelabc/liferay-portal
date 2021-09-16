@@ -16,7 +16,9 @@ package com.liferay.object.admin.rest.internal.resource.v1_0;
 
 import com.liferay.object.admin.rest.dto.v1_0.ObjectField;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectFieldResource;
+import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
@@ -27,6 +29,9 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.odata.filter.ExpressionConvert;
+import com.liferay.portal.odata.filter.FilterParser;
+import com.liferay.portal.odata.filter.FilterParserProvider;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
@@ -57,7 +62,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -90,6 +97,7 @@ public abstract class BaseObjectFieldResourceImpl
 	@Parameters(
 		value = {
 			@Parameter(in = ParameterIn.PATH, name = "objectDefinitionId"),
+			@Parameter(in = ParameterIn.QUERY, name = "search"),
 			@Parameter(in = ParameterIn.QUERY, name = "page"),
 			@Parameter(in = ParameterIn.QUERY, name = "pageSize")
 		}
@@ -100,6 +108,7 @@ public abstract class BaseObjectFieldResourceImpl
 	public Page<ObjectField> getObjectDefinitionObjectFieldsPage(
 			@NotNull @Parameter(hidden = true) @PathParam("objectDefinitionId")
 				Long objectDefinitionId,
+			@Parameter(hidden = true) @QueryParam("search") String search,
 			@Context Pagination pagination)
 		throws Exception {
 
@@ -109,7 +118,7 @@ public abstract class BaseObjectFieldResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/{objectDefinitionId}/object-fields' -d $'{"indexed": ___, "indexedAsKeyword": ___, "indexedLanguageId": ___, "label": ___, "name": ___, "required": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/object-admin/v1.0/object-definitions/{objectDefinitionId}/object-fields' -d $'{"indexed": ___, "indexedAsKeyword": ___, "indexedLanguageId": ___, "label": ___, "listTypeDefinitionId": ___, "name": ___, "required": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@Consumes({"application/json", "application/xml"})
 	@Override
@@ -173,6 +182,61 @@ public abstract class BaseObjectFieldResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
+	 * curl -X 'DELETE' 'http://localhost:8080/o/object-admin/v1.0/object-fields/{objectFieldId}'  -u 'test@liferay.com:test'
+	 */
+	@DELETE
+	@Override
+	@Parameters(
+		value = {@Parameter(in = ParameterIn.PATH, name = "objectFieldId")}
+	)
+	@Path("/object-fields/{objectFieldId}")
+	@Produces({"application/json", "application/xml"})
+	@Tags(value = {@Tag(name = "ObjectField")})
+	public void deleteObjectField(
+			@NotNull @Parameter(hidden = true) @PathParam("objectFieldId") Long
+				objectFieldId)
+		throws Exception {
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'DELETE' 'http://localhost:8080/o/object-admin/v1.0/object-fields/batch'  -u 'test@liferay.com:test'
+	 */
+	@Consumes("application/json")
+	@DELETE
+	@Override
+	@Parameters(
+		value = {@Parameter(in = ParameterIn.QUERY, name = "callbackURL")}
+	)
+	@Path("/object-fields/batch")
+	@Produces("application/json")
+	@Tags(value = {@Tag(name = "ObjectField")})
+	public Response deleteObjectFieldBatch(
+			@Parameter(hidden = true) @QueryParam("callbackURL") String
+				callbackURL,
+			Object object)
+		throws Exception {
+
+		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
+			contextAcceptLanguage);
+		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
+		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
+			contextHttpServletRequest);
+		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
+		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
+
+		Response.ResponseBuilder responseBuilder = Response.accepted();
+
+		return responseBuilder.entity(
+			vulcanBatchEngineImportTaskResource.deleteImportTask(
+				ObjectField.class.getName(), callbackURL, object)
+		).build();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/object-admin/v1.0/object-fields/{objectFieldId}'  -u 'test@liferay.com:test'
 	 */
 	@GET
@@ -194,7 +258,73 @@ public abstract class BaseObjectFieldResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/object-admin/v1.0/object-fields/{objectFieldId}' -d $'{"indexed": ___, "indexedAsKeyword": ___, "indexedLanguageId": ___, "label": ___, "name": ___, "required": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/object-admin/v1.0/object-fields/{objectFieldId}' -d $'{"indexed": ___, "indexedAsKeyword": ___, "indexedLanguageId": ___, "label": ___, "listTypeDefinitionId": ___, "name": ___, "required": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 */
+	@Consumes({"application/json", "application/xml"})
+	@Override
+	@Parameters(
+		value = {@Parameter(in = ParameterIn.PATH, name = "objectFieldId")}
+	)
+	@PATCH
+	@Path("/object-fields/{objectFieldId}")
+	@Produces({"application/json", "application/xml"})
+	@Tags(value = {@Tag(name = "ObjectField")})
+	public ObjectField patchObjectField(
+			@NotNull @Parameter(hidden = true) @PathParam("objectFieldId") Long
+				objectFieldId,
+			ObjectField objectField)
+		throws Exception {
+
+		ObjectField existingObjectField = getObjectField(objectFieldId);
+
+		if (objectField.getActions() != null) {
+			existingObjectField.setActions(objectField.getActions());
+		}
+
+		if (objectField.getIndexed() != null) {
+			existingObjectField.setIndexed(objectField.getIndexed());
+		}
+
+		if (objectField.getIndexedAsKeyword() != null) {
+			existingObjectField.setIndexedAsKeyword(
+				objectField.getIndexedAsKeyword());
+		}
+
+		if (objectField.getIndexedLanguageId() != null) {
+			existingObjectField.setIndexedLanguageId(
+				objectField.getIndexedLanguageId());
+		}
+
+		if (objectField.getLabel() != null) {
+			existingObjectField.setLabel(objectField.getLabel());
+		}
+
+		if (objectField.getListTypeDefinitionId() != null) {
+			existingObjectField.setListTypeDefinitionId(
+				objectField.getListTypeDefinitionId());
+		}
+
+		if (objectField.getName() != null) {
+			existingObjectField.setName(objectField.getName());
+		}
+
+		if (objectField.getRequired() != null) {
+			existingObjectField.setRequired(objectField.getRequired());
+		}
+
+		if (objectField.getType() != null) {
+			existingObjectField.setType(objectField.getType());
+		}
+
+		preparePatch(objectField, existingObjectField);
+
+		return putObjectField(objectFieldId, existingObjectField);
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PUT' 'http://localhost:8080/o/object-admin/v1.0/object-fields/{objectFieldId}' -d $'{"indexed": ___, "indexedAsKeyword": ___, "indexedLanguageId": ___, "label": ___, "listTypeDefinitionId": ___, "name": ___, "required": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@Consumes({"application/json", "application/xml"})
 	@Override
@@ -257,10 +387,13 @@ public abstract class BaseObjectFieldResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		for (ObjectField objectField : objectFields) {
-			postObjectDefinitionObjectField(
+		UnsafeConsumer<ObjectField, Exception> objectFieldUnsafeConsumer =
+			objectField -> postObjectDefinitionObjectField(
 				Long.parseLong((String)parameters.get("objectDefinitionId")),
 				objectField);
+
+		for (ObjectField objectField : objectFields) {
+			objectFieldUnsafeConsumer.accept(objectField);
 		}
 	}
 
@@ -269,6 +402,10 @@ public abstract class BaseObjectFieldResourceImpl
 			java.util.Collection<ObjectField> objectFields,
 			Map<String, Serializable> parameters)
 		throws Exception {
+
+		for (ObjectField objectField : objectFields) {
+			deleteObjectField(objectField.getId());
+		}
 	}
 
 	@Override
@@ -294,7 +431,7 @@ public abstract class BaseObjectFieldResourceImpl
 
 		return getObjectDefinitionObjectFieldsPage(
 			Long.parseLong((String)parameters.get("objectDefinitionId")),
-			pagination);
+			search, pagination);
 	}
 
 	@Override
@@ -365,12 +502,63 @@ public abstract class BaseObjectFieldResourceImpl
 		this.contextUser = contextUser;
 	}
 
+	public void setExpressionConvert(
+		ExpressionConvert<Filter> expressionConvert) {
+
+		this.expressionConvert = expressionConvert;
+	}
+
+	public void setFilterParserProvider(
+		FilterParserProvider filterParserProvider) {
+
+		this.filterParserProvider = filterParserProvider;
+	}
+
 	public void setGroupLocalService(GroupLocalService groupLocalService) {
 		this.groupLocalService = groupLocalService;
 	}
 
+	public void setResourceActionLocalService(
+		ResourceActionLocalService resourceActionLocalService) {
+
+		this.resourceActionLocalService = resourceActionLocalService;
+	}
+
+	public void setResourcePermissionLocalService(
+		ResourcePermissionLocalService resourcePermissionLocalService) {
+
+		this.resourcePermissionLocalService = resourcePermissionLocalService;
+	}
+
 	public void setRoleLocalService(RoleLocalService roleLocalService) {
 		this.roleLocalService = roleLocalService;
+	}
+
+	@Override
+	public Filter toFilter(
+		String filterString, Map<String, List<String>> multivaluedMap) {
+
+		try {
+			EntityModel entityModel = getEntityModel(multivaluedMap);
+
+			FilterParser filterParser = filterParserProvider.provide(
+				entityModel);
+
+			com.liferay.portal.odata.filter.Filter oDataFilter =
+				new com.liferay.portal.odata.filter.Filter(
+					filterParser.parse(filterString));
+
+			return expressionConvert.convert(
+				oDataFilter.getExpression(),
+				contextAcceptLanguage.getPreferredLocale(), entityModel);
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Invalid filter " + filterString, exception);
+			}
+		}
+
+		return null;
 	}
 
 	protected Map<String, String> addAction(
@@ -405,6 +593,10 @@ public abstract class BaseObjectFieldResourceImpl
 
 		return addAction(
 			actionName, siteId, methodName, null, permissionName, siteId);
+	}
+
+	protected void preparePatch(
+		ObjectField objectField, ObjectField existingObjectField) {
 	}
 
 	protected <T, R> List<R> transform(
@@ -442,11 +634,16 @@ public abstract class BaseObjectFieldResourceImpl
 	protected Object contextScopeChecker;
 	protected UriInfo contextUriInfo;
 	protected com.liferay.portal.kernel.model.User contextUser;
+	protected ExpressionConvert<Filter> expressionConvert;
+	protected FilterParserProvider filterParserProvider;
 	protected GroupLocalService groupLocalService;
 	protected ResourceActionLocalService resourceActionLocalService;
 	protected ResourcePermissionLocalService resourcePermissionLocalService;
 	protected RoleLocalService roleLocalService;
 	protected VulcanBatchEngineImportTaskResource
 		vulcanBatchEngineImportTaskResource;
+
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseObjectFieldResourceImpl.class);
 
 }

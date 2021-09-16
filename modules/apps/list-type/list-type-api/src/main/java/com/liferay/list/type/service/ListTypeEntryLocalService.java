@@ -37,6 +37,8 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import java.io.Serializable;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -76,6 +78,12 @@ public interface ListTypeEntryLocalService
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public ListTypeEntry addListTypeEntry(ListTypeEntry listTypeEntry);
+
+	@Indexable(type = IndexableType.REINDEX)
+	public ListTypeEntry addListTypeEntry(
+			long userId, long listTypeDefinitionId, String key,
+			Map<Locale, String> nameMap)
+		throws PortalException;
 
 	/**
 	 * Creates a new list type entry with the primary key. Does not add the list type entry to the database.
@@ -237,6 +245,13 @@ public interface ListTypeEntryLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<ListTypeEntry> getListTypeEntries(int start, int end);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ListTypeEntry> getListTypeEntries(long listTypeDefinitionId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<ListTypeEntry> getListTypeEntries(
+		long listTypeDefinitionId, int start, int end);
+
 	/**
 	 * Returns the number of list type entries.
 	 *
@@ -244,6 +259,9 @@ public interface ListTypeEntryLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getListTypeEntriesCount();
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getListTypeEntriesCount(long listTypeDefinitionId);
 
 	/**
 	 * Returns the list type entry with the primary key.
@@ -296,5 +314,10 @@ public interface ListTypeEntryLocalService
 	 */
 	@Indexable(type = IndexableType.REINDEX)
 	public ListTypeEntry updateListTypeEntry(ListTypeEntry listTypeEntry);
+
+	@Indexable(type = IndexableType.REINDEX)
+	public ListTypeEntry updateListTypeEntry(
+			long listTypeEntryId, Map<Locale, String> nameMap)
+		throws PortalException;
 
 }

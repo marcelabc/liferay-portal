@@ -44,6 +44,7 @@ import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.util.structure.LayoutStructureItem;
 import com.liferay.layout.util.structure.RootLayoutStructureItem;
 import com.liferay.layout.util.structure.RowStyledLayoutStructureItem;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.layoutconfiguration.util.RuntimePageUtil;
@@ -56,7 +57,7 @@ import com.liferay.portal.kernel.service.LayoutTemplateLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.template.StringTemplateResource;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.util.PropsValues;
@@ -179,11 +180,6 @@ public class RenderLayoutStructureTag extends IncludeTag {
 					collectionStyledLayoutStructureItem, httpServletRequest,
 					httpServletResponse);
 
-		InfoListRenderer<Object> infoListRenderer =
-			(InfoListRenderer<Object>)
-				renderCollectionLayoutStructureItemDisplayContext.
-					getInfoListRenderer();
-
 		jspWriter.write("<div class=\"");
 		jspWriter.write(
 			renderLayoutStructureDisplayContext.getCssClass(
@@ -193,6 +189,20 @@ public class RenderLayoutStructureTag extends IncludeTag {
 			renderLayoutStructureDisplayContext.getStyle(
 				collectionStyledLayoutStructureItem));
 		jspWriter.write("\">");
+
+		List<Object> collection =
+			renderCollectionLayoutStructureItemDisplayContext.getCollection();
+
+		if (ListUtil.isEmpty(collection)) {
+			_renderEmptyState(jspWriter);
+
+			return;
+		}
+
+		InfoListRenderer<Object> infoListRenderer =
+			(InfoListRenderer<Object>)
+				renderCollectionLayoutStructureItemDisplayContext.
+					getInfoListRenderer();
 
 		if (infoListRenderer != null) {
 			UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
@@ -210,10 +220,7 @@ public class RenderLayoutStructureTag extends IncludeTag {
 			defaultInfoListRendererContext.setTemplateKey(
 				collectionStyledLayoutStructureItem.getTemplateKey());
 
-			infoListRenderer.render(
-				renderCollectionLayoutStructureItemDisplayContext.
-					getCollection(),
-				defaultInfoListRendererContext);
+			infoListRenderer.render(collection, defaultInfoListRendererContext);
 
 			jspWriter.write(unsyncStringWriter.toString());
 		}
@@ -227,10 +234,6 @@ public class RenderLayoutStructureTag extends IncludeTag {
 					LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_PROVIDER,
 					renderCollectionLayoutStructureItemDisplayContext.
 						getCollectionLayoutDisplayPageProvider());
-
-				List<Object> collection =
-					renderCollectionLayoutStructureItemDisplayContext.
-						getCollection();
 
 				int numberOfRows =
 					renderCollectionLayoutStructureItemDisplayContext.
@@ -310,7 +313,8 @@ public class RenderLayoutStructureTag extends IncludeTag {
 			PaginationBarTag paginationBarTag = new PaginationBarTag();
 
 			paginationBarTag.setActiveDelta(
-				collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
+				renderCollectionLayoutStructureItemDisplayContext.
+					getMaxNumberOfItemsPerPage());
 			paginationBarTag.setActivePage(
 				renderCollectionLayoutStructureItemDisplayContext.
 					getActivePage());
@@ -321,8 +325,10 @@ public class RenderLayoutStructureTag extends IncludeTag {
 			paginationBarTag.setPropsTransformer(
 				"render_layout_structure/js" +
 					"/NumericCollectionPaginationPropsTransformer");
+			paginationBarTag.setShowDeltasDropDown(false);
 			paginationBarTag.setTotalItems(
-				collectionStyledLayoutStructureItem.getNumberOfItems());
+				renderCollectionLayoutStructureItemDisplayContext.
+					getTotalNumberOfItems());
 
 			paginationBarTag.doTag(pageContext);
 		}
@@ -334,23 +340,21 @@ public class RenderLayoutStructureTag extends IncludeTag {
 
 			jspWriter.write("<div class=\"d-flex flex-grow-1 h-100 ");
 			jspWriter.write("justify-content-center py-3\" ");
-			jspWriter.write("id=\"paginationPreviousButton_");
+			jspWriter.write("id=\"paginationButtons_");
 			jspWriter.write(collectionStyledLayoutStructureItem.getItemId());
-			jspWriter.write("\"");
+			jspWriter.write("\">");
 
 			ButtonTag previousButtonTag = new ButtonTag();
 
 			previousButtonTag.setCssClass(
 				"font-weight-semi-bold mr-3 previous text-secondary");
-			previousButtonTag.setAdditionalProps(
-				HashMapBuilder.<String, Object>put(
-					"disabled",
-					Objects.equals(
-						renderCollectionLayoutStructureItemDisplayContext.
-							getActivePage(),
-						1)
-				).build());
 			previousButtonTag.setDisplayType("unstyled");
+			previousButtonTag.setDynamicAttribute(
+				StringPool.BLANK, "disabled",
+				Objects.equals(
+					renderCollectionLayoutStructureItemDisplayContext.
+						getActivePage(),
+					1));
 			previousButtonTag.setId(
 				"paginationPreviousButton_" +
 					collectionStyledLayoutStructureItem.getItemId());
@@ -363,20 +367,17 @@ public class RenderLayoutStructureTag extends IncludeTag {
 
 			nextButtonTag.setCssClass(
 				"font-weight-semi-bold ml-3 next text-secondary");
-			nextButtonTag.setAdditionalProps(
-				HashMapBuilder.<String, Object>put(
-					"disabled",
-					Objects.equals(
-						renderCollectionLayoutStructureItemDisplayContext.
-							getActivePage(),
-						renderCollectionLayoutStructureItemDisplayContext.
-							getNumberOfPages())
-				).build());
 			nextButtonTag.setDisplayType("unstyled");
+			nextButtonTag.setDynamicAttribute(
+				StringPool.BLANK, "disabled",
+				Objects.equals(
+					renderCollectionLayoutStructureItemDisplayContext.
+						getActivePage(),
+					renderCollectionLayoutStructureItemDisplayContext.
+						getNumberOfPages()));
 			nextButtonTag.setId(
-				RenderCollectionLayoutStructureItemDisplayContext.
-					PAGE_NUMBER_PARAM_PREFIX +
-						collectionStyledLayoutStructureItem.getItemId());
+				"paginationNextButton_" +
+					collectionStyledLayoutStructureItem.getItemId());
 			nextButtonTag.setLabel(LanguageUtil.get(getRequest(), "next"));
 
 			nextButtonTag.doTag(pageContext);
@@ -548,6 +549,19 @@ public class RenderLayoutStructureTag extends IncludeTag {
 				layoutStructureItem.getChildrenItemIds(),
 				renderLayoutStructureDisplayContext);
 		}
+	}
+
+	private void _renderEmptyState(JspWriter jspWriter) throws Exception {
+		jspWriter.write("<div class=\"c-empty-state\">");
+		jspWriter.write("<div class=\"c-empty-state-title mt-0\">");
+		jspWriter.write("<span class=\"text-truncate-inline\">");
+		jspWriter.write("<span class=\"text-truncate\">");
+		jspWriter.write(LanguageUtil.get(getRequest(), "no-results-found"));
+		jspWriter.write("</span></span></div>");
+		jspWriter.write("<div class=\"c-empty-state-text\">");
+		jspWriter.write(
+			LanguageUtil.get(getRequest(), "sorry-there-are-no-results-found"));
+		jspWriter.write("</div></div>");
 	}
 
 	private void _renderFragmentStyledLayoutStructureItem(

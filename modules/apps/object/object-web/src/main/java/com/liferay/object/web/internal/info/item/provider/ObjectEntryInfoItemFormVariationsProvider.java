@@ -20,8 +20,10 @@ import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.Collection;
@@ -45,24 +47,31 @@ public class ObjectEntryInfoItemFormVariationsProvider
 				GetterUtil.getLong(formVariationKey));
 
 		return new InfoItemFormVariation(
-			String.valueOf(objectDefinition.getObjectDefinitionId()),
-			InfoLocalizedValue.localize(
-				ObjectEntryInfoItemFormVariationsProvider.class,
-				objectDefinition.getName()));
+			groupId, String.valueOf(objectDefinition.getObjectDefinitionId()),
+			InfoLocalizedValue.<String>builder(
+			).values(
+				objectDefinition.getLabelMap()
+			).build());
 	}
 
 	@Override
 	public Collection<InfoItemFormVariation> getInfoItemFormVariations(
 		long groupId) {
 
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
 		return TransformUtil.transform(
 			_objectDefinitionLocalService.getObjectDefinitions(
-				QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+				serviceContext.getCompanyId(), true,
+				WorkflowConstants.STATUS_APPROVED),
 			objectDefinition -> new InfoItemFormVariation(
+				groupId,
 				String.valueOf(objectDefinition.getObjectDefinitionId()),
-				InfoLocalizedValue.localize(
-					ObjectEntryInfoItemFormVariationsProvider.class,
-					objectDefinition.getName())));
+				InfoLocalizedValue.<String>builder(
+				).values(
+					objectDefinition.getLabelMap()
+				).build()));
 	}
 
 	@Reference

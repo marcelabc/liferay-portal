@@ -89,7 +89,6 @@ export interface Config {
 	defaultSegmentsEntryId: string;
 	defaultSegmentsExperienceId: string;
 	deleteFragmentEntryLinkCommentURL: string;
-	deleteItemURL: string;
 	deleteSegmentsExperienceURL: string;
 	discardDraftURL: string;
 	draft: boolean;
@@ -98,7 +97,6 @@ export interface Config {
 	editFragmentEntryLinkCommentURL: string;
 	editFragmentEntryLinkURL: string;
 	editSegmentsEntryURL: string;
-	fragmentsHidingEnabled: boolean;
 	frontendTokens: {
 		[key: string]: {
 			cssVariable: string;
@@ -117,6 +115,7 @@ export interface Config {
 	getCollectionFiltersURL: string;
 	getCollectionItemCountURL: string;
 	getCollectionMappingFieldsURL: string;
+	getCollectionSupportedFiltersURL: string;
 	getExperienceUsedPortletsURL: string;
 	getIframeContentCssURL: string;
 	getIframeContentURL: string;
@@ -154,6 +153,7 @@ export interface Config {
 	publishURL: string;
 	redirectURL: string;
 	renderFragmentEntryURL: string;
+	restoreCollectionDisplayConfigURL: string;
 	searchContainerPageMaxDelta: number;
 	selectedSegmentsEntryId: string;
 
@@ -188,6 +188,7 @@ export interface Config {
 
 	unmarkItemForDeletionURL: string;
 	updateConfigurationValuesURL: string;
+	updateCollectionDisplayConfigURL: string;
 	updateItemConfigURL: string;
 	updateLayoutPageTemplateDataURL: string;
 	updateRowColumnsURL: string;

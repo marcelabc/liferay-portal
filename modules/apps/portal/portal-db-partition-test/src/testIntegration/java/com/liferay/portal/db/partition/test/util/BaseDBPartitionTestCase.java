@@ -15,6 +15,7 @@
 package com.liferay.portal.db.partition.test.util;
 
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.init.DBInitUtil;
 import com.liferay.portal.db.partition.DBPartitionUtil;
@@ -87,6 +88,28 @@ public abstract class BaseDBPartitionTestCase {
 		}
 	}
 
+	protected static void createControlTable(String tableName)
+		throws Exception {
+
+		db.runSQL(
+			"create table " + tableName + " (testColumn bigint primary key)");
+	}
+
+	protected static void createIndex(String tableName) throws Exception {
+		db.runSQL(getCreateIndexSQL(tableName));
+	}
+
+	protected static void createTable(String tableName) throws Exception {
+		db.runSQL(getCreateTableSQL(tableName));
+	}
+
+	protected static void createUniqueIndex(String tableName) throws Exception {
+		db.runSQL(
+			StringBundler.concat(
+				"create unique index", TEST_INDEX_NAME, "on ", tableName,
+				" (testColumn)"));
+	}
+
 	protected static void disableDBPartition() {
 		DataAccess.cleanUp(connection);
 
@@ -109,8 +132,18 @@ public abstract class BaseDBPartitionTestCase {
 			_lazyConnectionDataSourceProxy);
 	}
 
+	protected static void dropIndex(String tableName) throws Exception {
+		db.runSQL(
+			StringBundler.concat(
+				"drop index", TEST_INDEX_NAME, "on ", tableName));
+	}
+
 	protected static void dropSchema() throws Exception {
 		db.runSQL("drop schema if exists " + getSchemaName(COMPANY_ID));
+	}
+
+	protected static void dropTable(String tableName) throws Exception {
+		db.runSQL("drop table if exists " + tableName);
 	}
 
 	protected static void enableDBPartition() throws Exception {
@@ -152,6 +185,16 @@ public abstract class BaseDBPartitionTestCase {
 			_lazyConnectionDataSourceProxy);
 	}
 
+	protected static String getCreateIndexSQL(String tableName) {
+		return StringBundler.concat(
+			"create index", TEST_INDEX_NAME, "on ", tableName, " (testColumn)");
+	}
+
+	protected static String getCreateTableSQL(String tableName) {
+		return "create table " + tableName +
+			" (testColumn bigint primary key, companyId bigint)";
+	}
+
 	protected static String getSchemaName(long companyId) {
 		if (_dbPartitionEnabled) {
 			return (String)ReflectionTestUtil.getFieldValue(
@@ -189,27 +232,32 @@ public abstract class BaseDBPartitionTestCase {
 		}
 	}
 
-	protected void createAndPopulateTable(String tableName) throws Exception {
+	protected void createAndPopulateControlTable(String tableName)
+		throws Exception {
+
 		try (Statement statement = connection.createStatement()) {
-			statement.execute(getCreateTableSQL(tableName));
+			statement.execute(
+				"create table " + tableName +
+					" (testColumn bigint primary key)");
 
 			statement.execute("insert into " + tableName + " values (1)");
 		}
 	}
 
-	protected void dropTable(String tableName) throws Exception {
-		db.runSQL("drop table if exists " + tableName);
-	}
+	protected void createAndPopulateTable(String tableName) throws Exception {
+		try (Statement statement = connection.createStatement()) {
+			statement.execute(getCreateTableSQL(tableName));
 
-	protected String getCreateIndexSQL(String tableName) {
-		return "create index IX_Test on " + tableName + " (testColumn)";
-	}
-
-	protected String getCreateTableSQL(String tableName) {
-		return "create table " + tableName + " (testColumn bigint primary key)";
+			statement.execute(
+				StringBundler.concat(
+					"insert into ", tableName, " values (1, ",
+					CompanyThreadLocal.getCompanyId(), ")"));
+		}
 	}
 
 	protected static final long COMPANY_ID = 123456789L;
+
+	protected static final String TEST_CONTROL_TABLE_NAME = "TestControlTable";
 
 	protected static final String TEST_INDEX_NAME = "IX_Test";
 

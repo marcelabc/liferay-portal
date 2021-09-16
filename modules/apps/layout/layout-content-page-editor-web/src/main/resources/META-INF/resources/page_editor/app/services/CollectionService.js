@@ -102,4 +102,16 @@ export default {
 			onNetworkStatus
 		);
 	},
+
+	/**
+	 * @param {Array<{collectionId: string}>} collections
+	 * @returns {Promise<string[]>}
+	 */
+	getCollectionSupportedFilters(collections) {
+		return serviceFetch(
+			config.getCollectionSupportedFiltersURL,
+			{body: {collections: JSON.stringify(collections)}},
+			() => {}
+		);
+	},
 };

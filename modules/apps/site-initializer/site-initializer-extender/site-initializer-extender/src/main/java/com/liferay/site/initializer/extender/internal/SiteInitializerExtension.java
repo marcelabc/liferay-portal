@@ -14,12 +14,26 @@
 
 package com.liferay.site.initializer.extender.internal;
 
+import com.liferay.asset.list.service.AssetListEntryLocalService;
+import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
+import com.liferay.dynamic.data.mapping.util.DefaultDDMStructureHelper;
 import com.liferay.fragment.importer.FragmentsImporter;
+import com.liferay.headless.admin.taxonomy.resource.v1_0.TaxonomyCategoryResource;
 import com.liferay.headless.admin.taxonomy.resource.v1_0.TaxonomyVocabularyResource;
+import com.liferay.headless.commerce.admin.catalog.resource.v1_0.CatalogResource;
+import com.liferay.headless.commerce.admin.channel.resource.v1_0.ChannelResource;
+import com.liferay.headless.delivery.resource.v1_0.DocumentFolderResource;
 import com.liferay.headless.delivery.resource.v1_0.DocumentResource;
+import com.liferay.headless.delivery.resource.v1_0.StructuredContentFolderResource;
+import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
 import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.style.book.zip.processor.StyleBookEntryZipProcessor;
 
 import javax.servlet.ServletContext;
 
@@ -36,10 +50,26 @@ import org.osgi.framework.BundleContext;
 public class SiteInitializerExtension {
 
 	public SiteInitializerExtension(
-		Bundle bundle, BundleContext bundleContext,
+		AssetListEntryLocalService assetListEntryLocalService, Bundle bundle,
+		BundleContext bundleContext,
+		CatalogResource.Factory catalogResourceFactory,
+		ChannelResource.Factory channelResourceFactory,
+		DDMStructureLocalService ddmStructureLocalService,
+		DDMTemplateLocalService ddmTemplateLocalService,
+		DefaultDDMStructureHelper defaultDDMStructureHelper,
+		DLURLHelper dlURLHelper,
+		DocumentFolderResource.Factory documentFolderResourceFactory,
 		DocumentResource.Factory documentResourceFactory,
-		FragmentsImporter fragmentsImporter, JSONFactory jsonFactory,
+		FragmentsImporter fragmentsImporter,
+		GroupLocalService groupLocalService,
+		JournalArticleLocalService journalArticleLocalService,
+		JSONFactory jsonFactory,
 		ObjectDefinitionResource.Factory objectDefinitionResourceFactory,
+		Portal portal,
+		StructuredContentFolderResource.Factory
+			structuredContentFolderResourceFactory,
+		StyleBookEntryZipProcessor styleBookEntryZipProcessor,
+		TaxonomyCategoryResource.Factory taxonomyCategoryResourceFactory,
 		TaxonomyVocabularyResource.Factory taxonomyVocabularyResourceFactory,
 		UserLocalService userLocalService) {
 
@@ -49,8 +79,16 @@ public class SiteInitializerExtension {
 
 		_component.setImplementation(
 			new SiteInitializerRegistrar(
-				bundle, bundleContext, documentResourceFactory,
-				fragmentsImporter, jsonFactory, objectDefinitionResourceFactory,
+				assetListEntryLocalService, bundle, bundleContext,
+				catalogResourceFactory, channelResourceFactory,
+				ddmStructureLocalService, ddmTemplateLocalService,
+				defaultDDMStructureHelper, dlURLHelper,
+				documentFolderResourceFactory, documentResourceFactory,
+				fragmentsImporter, groupLocalService,
+				journalArticleLocalService, jsonFactory,
+				objectDefinitionResourceFactory, portal,
+				structuredContentFolderResourceFactory,
+				styleBookEntryZipProcessor, taxonomyCategoryResourceFactory,
 				taxonomyVocabularyResourceFactory, userLocalService));
 
 		ServiceDependency serviceDependency =

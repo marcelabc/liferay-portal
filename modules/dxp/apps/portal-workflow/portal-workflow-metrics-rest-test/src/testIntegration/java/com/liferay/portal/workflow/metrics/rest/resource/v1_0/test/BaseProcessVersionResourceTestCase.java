@@ -27,7 +27,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
@@ -193,15 +192,14 @@ public abstract class BaseProcessVersionResourceTestCase {
 
 	@Test
 	public void testGetProcessProcessVersionsPage() throws Exception {
-		Page<ProcessVersion> page =
-			processVersionResource.getProcessProcessVersionsPage(
-				testGetProcessProcessVersionsPage_getProcessId());
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long processId = testGetProcessProcessVersionsPage_getProcessId();
 		Long irrelevantProcessId =
 			testGetProcessProcessVersionsPage_getIrrelevantProcessId();
+
+		Page<ProcessVersion> page =
+			processVersionResource.getProcessProcessVersionsPage(processId);
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantProcessId != null) {
 			ProcessVersion irrelevantProcessVersion =
@@ -257,6 +255,23 @@ public abstract class BaseProcessVersionResourceTestCase {
 		throws Exception {
 
 		return null;
+	}
+
+	protected void assertContains(
+		ProcessVersion processVersion, List<ProcessVersion> processVersions) {
+
+		boolean contains = false;
+
+		for (ProcessVersion item : processVersions) {
+			if (equals(processVersion, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			processVersions + " does not contain " + processVersion, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -667,8 +682,8 @@ public abstract class BaseProcessVersionResourceTestCase {
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseProcessVersionResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseProcessVersionResourceTestCase.class);
 
 	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
 

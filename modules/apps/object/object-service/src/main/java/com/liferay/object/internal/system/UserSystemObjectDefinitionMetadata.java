@@ -14,14 +14,16 @@
 
 package com.liferay.object.internal.system;
 
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.system.BaseSystemObjectDefinitionMetadata;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.petra.sql.dsl.Column;
+import com.liferay.petra.sql.dsl.Table;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserTable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,45 +39,52 @@ public class UserSystemObjectDefinitionMetadata
 	extends BaseSystemObjectDefinitionMetadata {
 
 	@Override
-	public String getDBTableName() {
-		return "User_";
+	public String getClassName() {
+		return User.class.getName();
 	}
 
 	@Override
 	public Map<Locale, String> getLabelMap() {
-		return Collections.singletonMap(
-			_defaultLocale, LanguageUtil.get(_defaultLocale, "user"));
-	}
-
-	@Override
-	public String getName() {
-		return "User";
+		return createLabelMap("user");
 	}
 
 	@Override
 	public List<ObjectField> getObjectFields() {
 		return Arrays.asList(
-			createObjectField(
-				LanguageUtil.get(_defaultLocale, "email-address"),
-				"emailAddress", true, "String"),
-			createObjectField(
-				LanguageUtil.get(_defaultLocale, "first-name"), "firstName",
-				true, "String"),
-			createObjectField(
-				LanguageUtil.get(_defaultLocale, "middle-name"), "middleName",
-				false, "String"),
-			createObjectField(
-				"uuid_",
-				Collections.singletonMap(
-					_defaultLocale, LanguageUtil.get(_defaultLocale, "uuid")),
-				"uuid", false, "String"));
+			createObjectField("email-address", "emailAddress", true, "String"),
+			createObjectField("first-name", "firstName", true, "String"),
+			createObjectField("middle-name", "middleName", false, "String"),
+			createObjectField("uuid_", "uuid", "uuid", false, "String"));
+	}
+
+	@Override
+	public Map<Locale, String> getPluralLabelMap() {
+		return createLabelMap("users");
+	}
+
+	@Override
+	public Column<?, Long> getPrimaryKeyColumn() {
+		return UserTable.INSTANCE.userId;
+	}
+
+	@Override
+	public String getRESTContextPath() {
+		return "headless-admin-user/v1.0/user-accounts";
+	}
+
+	@Override
+	public String getScope() {
+		return ObjectDefinitionConstants.SCOPE_COMPANY;
+	}
+
+	@Override
+	public Table getTable() {
+		return UserTable.INSTANCE;
 	}
 
 	@Override
 	public int getVersion() {
 		return 1;
 	}
-
-	private final Locale _defaultLocale = LocaleUtil.getSiteDefault();
 
 }

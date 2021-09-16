@@ -46,15 +46,16 @@ public class ObjectFieldLocalServiceUtil {
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.object.service.impl.ObjectFieldLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static ObjectField addCustomObjectField(
-			long userId, long objectDefinitionId, boolean indexed,
-			boolean indexedAsKeyword, String indexedLanguageId,
+			long userId, long listTypeDefinitionId, long objectDefinitionId,
+			boolean indexed, boolean indexedAsKeyword, String indexedLanguageId,
 			Map<java.util.Locale, String> labelMap, String name,
 			boolean required, String type)
 		throws PortalException {
 
 		return getService().addCustomObjectField(
-			userId, objectDefinitionId, indexed, indexedAsKeyword,
-			indexedLanguageId, labelMap, name, required, type);
+			userId, listTypeDefinitionId, objectDefinitionId, indexed,
+			indexedAsKeyword, indexedLanguageId, labelMap, name, required,
+			type);
 	}
 
 	/**
@@ -129,8 +130,11 @@ public class ObjectFieldLocalServiceUtil {
 	 *
 	 * @param objectField the object field
 	 * @return the object field that was removed
+	 * @throws PortalException
 	 */
-	public static ObjectField deleteObjectField(ObjectField objectField) {
+	public static ObjectField deleteObjectField(ObjectField objectField)
+		throws PortalException {
+
 		return getService().deleteObjectField(objectField);
 	}
 
@@ -233,6 +237,12 @@ public class ObjectFieldLocalServiceUtil {
 		return getService().fetchObjectField(objectFieldId);
 	}
 
+	public static ObjectField fetchObjectField(
+		long objectDefinitionId, String name) {
+
+		return getService().fetchObjectField(objectDefinitionId, name);
+	}
+
 	/**
 	 * Returns the object field with the matching UUID and company.
 	 *
@@ -321,6 +331,12 @@ public class ObjectFieldLocalServiceUtil {
 		return getService().getObjectFields(objectDefinitionId);
 	}
 
+	public static List<ObjectField> getObjectFields(
+		long objectDefinitionId, String dbTableName) {
+
+		return getService().getObjectFields(objectDefinitionId, dbTableName);
+	}
+
 	/**
 	 * Returns the number of object fields.
 	 *
@@ -332,6 +348,13 @@ public class ObjectFieldLocalServiceUtil {
 
 	public static int getObjectFieldsCount(long objectDefinitionId) {
 		return getService().getObjectFieldsCount(objectDefinitionId);
+	}
+
+	public static int getObjectFieldsCountByListTypeDefinitionId(
+		long listTypeDefinitionId) {
+
+		return getService().getObjectFieldsCountByListTypeDefinitionId(
+			listTypeDefinitionId);
 	}
 
 	/**
@@ -353,14 +376,15 @@ public class ObjectFieldLocalServiceUtil {
 	}
 
 	public static ObjectField updateCustomObjectField(
-			long objectFieldId, boolean indexed, boolean indexedAsKeyword,
-			String indexedLanguageId, Map<java.util.Locale, String> labelMap,
-			boolean required)
+			long objectFieldId, long listTypeDefinitionId, boolean indexed,
+			boolean indexedAsKeyword, String indexedLanguageId,
+			Map<java.util.Locale, String> labelMap, String name,
+			boolean required, String type)
 		throws PortalException {
 
 		return getService().updateCustomObjectField(
-			objectFieldId, indexed, indexedAsKeyword, indexedLanguageId,
-			labelMap, required);
+			objectFieldId, listTypeDefinitionId, indexed, indexedAsKeyword,
+			indexedLanguageId, labelMap, name, required, type);
 	}
 
 	/**

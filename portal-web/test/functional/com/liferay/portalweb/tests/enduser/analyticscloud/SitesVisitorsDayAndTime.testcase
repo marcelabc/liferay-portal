@@ -1,11 +1,10 @@
 @component-name = "portal-analytics-cloud"
 definition {
 
-	property analytics.cloud.enabled = "true";
 	property custom.properties = "jsonws.web.service.paths.excludes=";
-	property minimum.slave.ram = "32";
 	property portal.release = "false";
 	property portal.upstream = "true";
+	property property.group = "analytics.cloud.profile";
 	property testray.main.component.name = "Analytics Cloud";
 
 	setUp {
@@ -79,9 +78,7 @@ definition {
 		}
 
 		task ("Close sessions") {
-			ACUtils.closeAllSessions();
-
-			Pause(locator1 = "30000");
+			ACUtils.closeAllSessionsAndWait();
 		}
 
 		task ("Switch to new property in AC") {

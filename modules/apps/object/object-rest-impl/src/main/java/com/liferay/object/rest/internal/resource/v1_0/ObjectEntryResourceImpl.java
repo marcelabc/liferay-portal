@@ -77,17 +77,36 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 	}
 
 	@Override
+	public void deleteByExternalReferenceCode(String externalReferenceCode)
+		throws Exception {
+
+		_objectEntryManager.deleteObjectEntry(
+			externalReferenceCode, contextCompany.getCompanyId(),
+			_objectDefinition, null);
+	}
+
+	@Override
 	public void deleteObjectEntry(Long objectEntryId) throws Exception {
 		_objectEntryManager.deleteObjectEntry(objectEntryId);
 	}
 
 	@Override
-	public void deleteSiteObjectEntryByExternalReferenceCode(
-			Long siteId, String externalReferenceCode)
+	public void deleteScopeScopeKeyByExternalReferenceCode(
+			String scopeKey, String externalReferenceCode)
 		throws Exception {
 
 		_objectEntryManager.deleteObjectEntry(
-			externalReferenceCode, contextCompany.getCompanyId(), siteId);
+			externalReferenceCode, contextCompany.getCompanyId(),
+			_objectDefinition, scopeKey);
+	}
+
+	@Override
+	public ObjectEntry getByExternalReferenceCode(String externalReferenceCode)
+		throws Exception {
+
+		return _objectEntryManager.getObjectEntry(
+			_getDTOConverterContext(null), externalReferenceCode,
+			contextCompany.getCompanyId(), _objectDefinition, null);
 	}
 
 	@Override
@@ -108,8 +127,7 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 		throws Exception {
 
 		return _objectEntryManager.getObjectEntries(
-			contextCompany.getCompanyId(),
-			_objectDefinition.getObjectDefinitionId(), aggregation,
+			contextCompany.getCompanyId(), _objectDefinition, null, aggregation,
 			_getDTOConverterContext(null), filter, pagination, search, sorts);
 	}
 
@@ -120,13 +138,26 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 	}
 
 	@Override
-	public ObjectEntry getSiteObjectEntryByExternalReferenceCode(
-			Long siteId, String externalReferenceCode)
+	public ObjectEntry getScopeScopeKeyByExternalReferenceCode(
+			String scopeKey, String externalReferenceCode)
 		throws Exception {
 
 		return _objectEntryManager.getObjectEntry(
 			_getDTOConverterContext(null), externalReferenceCode,
-			contextCompany.getCompanyId(), siteId);
+			contextCompany.getCompanyId(), _objectDefinition, scopeKey);
+	}
+
+	@Override
+	public Page<ObjectEntry> getScopeScopeKeyPage(
+			String scopeKey, Boolean flatten, String search,
+			Aggregation aggregation, Filter filter, Pagination pagination,
+			Sort[] sorts)
+		throws Exception {
+
+		return _objectEntryManager.getObjectEntries(
+			contextCompany.getCompanyId(), _objectDefinition, scopeKey,
+			aggregation, _getDTOConverterContext(null), filter, pagination,
+			search, sorts);
 	}
 
 	@Override
@@ -135,7 +166,27 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 
 		return _objectEntryManager.addObjectEntry(
 			_getDTOConverterContext(null), contextUser.getUserId(),
-			_objectDefinition.getObjectDefinitionId(), objectEntry);
+			_objectDefinition, objectEntry, null);
+	}
+
+	@Override
+	public ObjectEntry postScopeScopeKey(
+			String scopeKey, ObjectEntry objectEntry)
+		throws Exception {
+
+		return _objectEntryManager.addObjectEntry(
+			_getDTOConverterContext(null), contextUser.getUserId(),
+			_objectDefinition, objectEntry, scopeKey);
+	}
+
+	@Override
+	public ObjectEntry putByExternalReferenceCode(
+			String externalReferenceCode, ObjectEntry objectEntry)
+		throws Exception {
+
+		return _objectEntryManager.addOrUpdateObjectEntry(
+			_getDTOConverterContext(null), externalReferenceCode,
+			contextUser.getUserId(), _objectDefinition, objectEntry, null);
 	}
 
 	@Override
@@ -149,14 +200,14 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 	}
 
 	@Override
-	public ObjectEntry putSiteObjectEntryByExternalReferenceCode(
-			Long siteId, String externalReferenceCode, ObjectEntry objectEntry)
+	public ObjectEntry putScopeScopeKeyByExternalReferenceCode(
+			String scopeKey, String externalReferenceCode,
+			ObjectEntry objectEntry)
 		throws Exception {
 
 		return _objectEntryManager.addOrUpdateObjectEntry(
 			_getDTOConverterContext(null), externalReferenceCode,
-			contextUser.getUserId(), siteId,
-			_objectDefinition.getObjectDefinitionId(), objectEntry);
+			contextUser.getUserId(), _objectDefinition, objectEntry, scopeKey);
 	}
 
 	@Override

@@ -15,14 +15,14 @@
 package com.liferay.object.system;
 
 import com.liferay.object.model.ObjectField;
-import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.object.util.LocalizedMapUtil;
+import com.liferay.object.util.ObjectFieldUtil;
+import com.liferay.petra.sql.dsl.Table;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
-
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marco Leo
@@ -31,39 +31,40 @@ import org.osgi.service.component.annotations.Reference;
 public abstract class BaseSystemObjectDefinitionMetadata
 	implements SystemObjectDefinitionMetadata {
 
+	@Override
+	public String getName() {
+		Table table = getTable();
+
+		String tableName = table.getName();
+
+		if (tableName.endsWith("_")) {
+			return tableName.substring(0, tableName.length() - 1);
+		}
+
+		return tableName;
+	}
+
+	protected Map<Locale, String> createLabelMap(String labelKey) {
+		return LocalizedMapUtil.getLocalizedMap(_translate(labelKey));
+	}
+
 	protected ObjectField createObjectField(
-		Map<Locale, String> labelMap, String name, boolean required,
+		String labelKey, String name, boolean required, String type) {
+
+		return createObjectField(null, labelKey, name, required, type);
+	}
+
+	protected ObjectField createObjectField(
+		String dbColumnName, String labelKey, String name, boolean required,
 		String type) {
 
-		return createObjectField(null, labelMap, name, required, type);
+		return ObjectFieldUtil.createObjectField(
+			0, dbColumnName, false, false, null, _translate(labelKey), name,
+			required, type);
 	}
 
-	protected ObjectField createObjectField(
-		String dbColumnName, Map<Locale, String> labelMap, String name,
-		boolean required, String type) {
-
-		ObjectField objectField = objectFieldLocalService.createObjectField(0);
-
-		objectField.setDBColumnName(dbColumnName);
-		objectField.setIndexed(false);
-		objectField.setIndexedAsKeyword(false);
-		objectField.setLabelMap(labelMap);
-		objectField.setName(name);
-		objectField.setRequired(required);
-		objectField.setType(type);
-
-		return objectField;
+	private String _translate(String labelKey) {
+		return LanguageUtil.get(LocaleUtil.getDefault(), labelKey);
 	}
-
-	protected ObjectField createObjectField(
-		String label, String name, boolean required, String type) {
-
-		return createObjectField(
-			null, Collections.singletonMap(LocaleUtil.getSiteDefault(), label),
-			name, required, type);
-	}
-
-	@Reference
-	protected ObjectFieldLocalService objectFieldLocalService;
 
 }

@@ -14,10 +14,24 @@
 
 package com.liferay.list.type.service.impl;
 
+import com.liferay.list.type.exception.RequiredListTypeDefinitionException;
+import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.list.type.service.base.ListTypeDefinitionLocalServiceBaseImpl;
+import com.liferay.list.type.service.persistence.ListTypeEntryPersistence;
+import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.search.Indexable;
+import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.service.UserLocalService;
+
+import java.util.Locale;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Gabriel Albuquerque
@@ -28,4 +42,102 @@ import org.osgi.service.component.annotations.Component;
 )
 public class ListTypeDefinitionLocalServiceImpl
 	extends ListTypeDefinitionLocalServiceBaseImpl {
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public ListTypeDefinition addListTypeDefinition(
+			long userId, Map<Locale, String> nameMap)
+		throws PortalException {
+
+		ListTypeDefinition listTypeDefinition =
+			listTypeDefinitionPersistence.create(
+				counterLocalService.increment());
+
+		User user = _userLocalService.getUser(userId);
+
+		listTypeDefinition.setCompanyId(user.getCompanyId());
+		listTypeDefinition.setUserId(user.getUserId());
+		listTypeDefinition.setUserName(user.getFullName());
+
+		listTypeDefinition.setNameMap(nameMap);
+
+		listTypeDefinition = listTypeDefinitionPersistence.update(
+			listTypeDefinition);
+
+		resourceLocalService.addResources(
+			listTypeDefinition.getCompanyId(), 0,
+			listTypeDefinition.getUserId(), ListTypeDefinition.class.getName(),
+			listTypeDefinition.getListTypeDefinitionId(), false, true, true);
+
+		return listTypeDefinition;
+	}
+
+	@Indexable(type = IndexableType.DELETE)
+	@Override
+	public ListTypeDefinition deleteListTypeDefinition(
+			ListTypeDefinition listTypeDefinition)
+		throws PortalException {
+
+		int count =
+			_objectFieldLocalService.getObjectFieldsCountByListTypeDefinitionId(
+				listTypeDefinition.getListTypeDefinitionId());
+
+		if (count > 0) {
+			throw new RequiredListTypeDefinitionException();
+		}
+
+		listTypeDefinition = listTypeDefinitionPersistence.remove(
+			listTypeDefinition);
+
+		_listTypeEntryPersistence.removeByListTypeDefinitionId(
+			listTypeDefinition.getListTypeDefinitionId());
+
+		return listTypeDefinition;
+	}
+
+	@Indexable(type = IndexableType.DELETE)
+	@Override
+	public ListTypeDefinition deleteListTypeDefinition(
+			long listTypeDefinitionId)
+		throws PortalException {
+
+		ListTypeDefinition listTypeDefinition =
+			listTypeDefinitionPersistence.findByPrimaryKey(
+				listTypeDefinitionId);
+
+		listTypeDefinition = deleteListTypeDefinition(listTypeDefinition);
+
+		resourceLocalService.deleteResource(
+			listTypeDefinition.getCompanyId(),
+			ListTypeDefinition.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			listTypeDefinition.getListTypeDefinitionId());
+
+		return listTypeDefinition;
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public ListTypeDefinition updateListTypeDefinition(
+			long listTypeDefinitionId, Map<Locale, String> nameMap)
+		throws PortalException {
+
+		ListTypeDefinition listTypeDefinition =
+			listTypeDefinitionPersistence.findByPrimaryKey(
+				listTypeDefinitionId);
+
+		listTypeDefinition.setNameMap(nameMap);
+
+		return listTypeDefinitionPersistence.update(listTypeDefinition);
+	}
+
+	@Reference
+	private ListTypeEntryPersistence _listTypeEntryPersistence;
+
+	@Reference
+	private ObjectFieldLocalService _objectFieldLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
+
 }

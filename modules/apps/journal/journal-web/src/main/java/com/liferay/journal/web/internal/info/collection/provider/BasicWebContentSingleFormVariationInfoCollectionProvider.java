@@ -20,11 +20,14 @@ import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.info.collection.provider.CollectionQuery;
 import com.liferay.info.collection.provider.ConfigurableInfoCollectionProvider;
+import com.liferay.info.collection.provider.FilteredInfoCollectionProvider;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.info.collection.provider.SingleFormVariationInfoCollectionProvider;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.type.SelectInfoFieldType;
 import com.liferay.info.field.type.TextInfoFieldType;
+import com.liferay.info.filter.InfoFilter;
+import com.liferay.info.filter.KeywordsInfoFilter;
 import com.liferay.info.form.InfoForm;
 import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.localized.InfoLocalizedValue;
@@ -59,6 +62,7 @@ import com.liferay.portlet.asset.util.comparator.AssetTagNameComparator;
 import java.io.Serializable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -77,17 +81,18 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class BasicWebContentSingleFormVariationInfoCollectionProvider
 	implements ConfigurableInfoCollectionProvider<JournalArticle>,
+			   FilteredInfoCollectionProvider<JournalArticle>,
 			   SingleFormVariationInfoCollectionProvider<JournalArticle> {
 
 	@Override
 	public InfoPage<JournalArticle> getCollectionInfoPage(
 		CollectionQuery collectionQuery) {
 
-		Indexer<?> indexer = JournalSearcher.getInstance();
-
-		SearchContext searchContext = _buildSearchContext(collectionQuery);
-
 		try {
+			Indexer<?> indexer = JournalSearcher.getInstance();
+
+			SearchContext searchContext = _buildSearchContext(collectionQuery);
+
 			Hits hits = indexer.search(searchContext);
 
 			List<JournalArticle> articles = new ArrayList<>();
@@ -103,7 +108,9 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 						_journalArticleLocalService.fetchLatestArticle(
 							classPK, WorkflowConstants.STATUS_ANY, false);
 
-					articles.add(article);
+					if (article != null) {
+						articles.add(article);
+					}
 				}
 			}
 
@@ -159,9 +166,12 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 		return LanguageUtil.get(resourceBundle, "basic-web-content");
 	}
 
-	private SearchContext _buildSearchContext(CollectionQuery collectionQuery) {
-		Pagination pagination = collectionQuery.getPagination();
+	@Override
+	public List<InfoFilter> getSupportedInfoFilters() {
+		return Arrays.asList(new KeywordsInfoFilter());
+	}
 
+	private SearchContext _buildSearchContext(CollectionQuery collectionQuery) {
 		SearchContext searchContext = new SearchContext();
 
 		searchContext.setAndSearch(true);
@@ -204,9 +214,22 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 
 		searchContext.setCompanyId(serviceContext.getCompanyId());
 
+		Pagination pagination = collectionQuery.getPagination();
+
 		searchContext.setEnd(pagination.getEnd());
+
 		searchContext.setGroupIds(
 			new long[] {serviceContext.getScopeGroupId()});
+
+		Optional<KeywordsInfoFilter> keywordsInfoFilterOptional =
+			collectionQuery.getInfoFilterOptional(KeywordsInfoFilter.class);
+
+		if (keywordsInfoFilterOptional.isPresent()) {
+			KeywordsInfoFilter keywordsInfoFilter =
+				keywordsInfoFilterOptional.get();
+
+			searchContext.setKeywords(keywordsInfoFilter.getKeywords());
+		}
 
 		Optional<Sort> sortOptional = collectionQuery.getSortOptional();
 
@@ -219,6 +242,12 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 					com.liferay.portal.kernel.search.Sort.LONG_TYPE,
 					sort.isReverse()));
 		}
+		else {
+			searchContext.setSorts(
+				new com.liferay.portal.kernel.search.Sort(
+					Field.MODIFIED_DATE,
+					com.liferay.portal.kernel.search.Sort.LONG_TYPE, true));
+		}
 
 		searchContext.setStart(pagination.getStart());
 
@@ -230,7 +259,7 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 		return searchContext;
 	}
 
-	private InfoField _getAssetTagsInfoField() {
+	private InfoField<?> _getAssetTagsInfoField() {
 		List<SelectInfoFieldType.Option> options = new ArrayList<>();
 
 		ServiceContext serviceContext =
@@ -248,7 +277,7 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 					assetTag.getName(), assetTag.getName()));
 		}
 
-		InfoField.FinalStep finalStep = InfoField.builder(
+		InfoField.FinalStep<?> finalStep = InfoField.builder(
 		).infoFieldType(
 			SelectInfoFieldType.INSTANCE
 		).name(

@@ -36,7 +36,6 @@ import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
@@ -473,18 +472,17 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 	public void testGetKnowledgeBaseFolderKnowledgeBaseFoldersPage()
 		throws Exception {
 
-		Page<KnowledgeBaseFolder> page =
-			knowledgeBaseFolderResource.
-				getKnowledgeBaseFolderKnowledgeBaseFoldersPage(
-					testGetKnowledgeBaseFolderKnowledgeBaseFoldersPage_getParentKnowledgeBaseFolderId(),
-					Pagination.of(1, 2));
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long parentKnowledgeBaseFolderId =
 			testGetKnowledgeBaseFolderKnowledgeBaseFoldersPage_getParentKnowledgeBaseFolderId();
 		Long irrelevantParentKnowledgeBaseFolderId =
 			testGetKnowledgeBaseFolderKnowledgeBaseFoldersPage_getIrrelevantParentKnowledgeBaseFolderId();
+
+		Page<KnowledgeBaseFolder> page =
+			knowledgeBaseFolderResource.
+				getKnowledgeBaseFolderKnowledgeBaseFoldersPage(
+					parentKnowledgeBaseFolderId, Pagination.of(1, 10));
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantParentKnowledgeBaseFolderId != null) {
 			KnowledgeBaseFolder irrelevantKnowledgeBaseFolder =
@@ -517,7 +515,7 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 		page =
 			knowledgeBaseFolderResource.
 				getKnowledgeBaseFolderKnowledgeBaseFoldersPage(
-					parentKnowledgeBaseFolderId, Pagination.of(1, 2));
+					parentKnowledgeBaseFolderId, Pagination.of(1, 10));
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -642,16 +640,15 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 
 	@Test
 	public void testGetSiteKnowledgeBaseFoldersPage() throws Exception {
-		Page<KnowledgeBaseFolder> page =
-			knowledgeBaseFolderResource.getSiteKnowledgeBaseFoldersPage(
-				testGetSiteKnowledgeBaseFoldersPage_getSiteId(),
-				Pagination.of(1, 2));
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long siteId = testGetSiteKnowledgeBaseFoldersPage_getSiteId();
 		Long irrelevantSiteId =
 			testGetSiteKnowledgeBaseFoldersPage_getIrrelevantSiteId();
+
+		Page<KnowledgeBaseFolder> page =
+			knowledgeBaseFolderResource.getSiteKnowledgeBaseFoldersPage(
+				siteId, Pagination.of(1, 10));
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantSiteId != null) {
 			KnowledgeBaseFolder irrelevantKnowledgeBaseFolder =
@@ -678,7 +675,7 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 				siteId, randomKnowledgeBaseFolder());
 
 		page = knowledgeBaseFolderResource.getSiteKnowledgeBaseFoldersPage(
-			siteId, Pagination.of(1, 2));
+			siteId, Pagination.of(1, 10));
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -775,7 +772,7 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 			new HashMap<String, Object>() {
 				{
 					put("page", 1);
-					put("pageSize", 2);
+					put("pageSize", 10);
 
 					put("siteKey", "\"" + siteId + "\"");
 				}
@@ -801,7 +798,7 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 			"JSONObject/knowledgeBaseFolders");
 
 		Assert.assertEquals(
-			2, knowledgeBaseFoldersJSONObject.get("totalCount"));
+			2, knowledgeBaseFoldersJSONObject.getLong("totalCount"));
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(knowledgeBaseFolder1, knowledgeBaseFolder2),
@@ -1210,6 +1207,25 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 						graphQLFields)),
 				"JSONObject/data", "JSONObject/createSiteKnowledgeBaseFolder"),
 			KnowledgeBaseFolder.class);
+	}
+
+	protected void assertContains(
+		KnowledgeBaseFolder knowledgeBaseFolder,
+		List<KnowledgeBaseFolder> knowledgeBaseFolders) {
+
+		boolean contains = false;
+
+		for (KnowledgeBaseFolder item : knowledgeBaseFolders) {
+			if (equals(knowledgeBaseFolder, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			knowledgeBaseFolders + " does not contain " + knowledgeBaseFolder,
+			contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -2072,8 +2088,8 @@ public abstract class BaseKnowledgeBaseFolderResourceTestCase {
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseKnowledgeBaseFolderResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseKnowledgeBaseFolderResourceTestCase.class);
 
 	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
 

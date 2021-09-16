@@ -334,6 +334,20 @@ definition {
 		PortletEntry.publish();
 	}
 
+	macro addWithCustomAbstractViaAP {
+		AssetPublisherPortlet.addAsset(assetType = "Blogs Entry");
+
+		BlogsEntry.addEntryContent(
+			entryContent = "${entryContent}",
+			entryTitle = "${entryTitle}");
+
+		Panel.expandPanel(panel = "Configuration");
+
+		BlogsEntry.addCustomAbstract(entryAbstractDescription = "${entryAbstractDescription}");
+
+		PortletEntry.publish();
+	}
+
 	macro addWithDefaultAbstract {
 		BlogsNavigator.gotoAddEntry();
 
@@ -573,15 +587,26 @@ definition {
 	}
 
 	macro publishViaSAP {
-		Blogs.clickEllipsisItemCP(
-			entryTitle = "${entryTitle}",
-			item = "Publish to Live");
+		if (IsElementPresent(locator1 = "Portlet#SPECIFIC_TITLE", key_portletTitleName = "Blogs")) {
+			Blogs.clickEllipsisItemPG(
+				entryTitle = "${entryTitle}",
+				item = "Publish to Live");
 
-		AssertConfirm(value1 = "${confirmMessage}");
+			AssertConfirm(value1 = "${confirmMessage}");
 
-		AssertTextEquals(
-			locator1 = "Staging#PROCESS_SUCCESSFUL",
-			value1 = "Successful");
+			Alert.viewSuccessMessage();
+		}
+		else {
+			Blogs.clickEllipsisItemCP(
+				entryTitle = "${entryTitle}",
+				item = "Publish to Live");
+
+			AssertConfirm(value1 = "${confirmMessage}");
+
+			AssertTextEquals(
+				locator1 = "Staging#PROCESS_SUCCESSFUL",
+				value1 = "Successful");
+		}
 	}
 
 	macro subscribePG {

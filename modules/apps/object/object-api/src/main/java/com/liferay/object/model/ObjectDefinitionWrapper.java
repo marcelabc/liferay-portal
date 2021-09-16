@@ -51,9 +51,13 @@ public class ObjectDefinitionWrapper
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
 		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("active", isActive());
 		attributes.put("dbTableName", getDBTableName());
 		attributes.put("label", getLabel());
+		attributes.put("className", getClassName());
 		attributes.put("name", getName());
+		attributes.put("panelAppOrder", getPanelAppOrder());
+		attributes.put("panelCategoryKey", getPanelCategoryKey());
 		attributes.put(
 			"pkObjectFieldDBColumnName", getPKObjectFieldDBColumnName());
 		attributes.put("pkObjectFieldName", getPKObjectFieldName());
@@ -116,6 +120,12 @@ public class ObjectDefinitionWrapper
 			setModifiedDate(modifiedDate);
 		}
 
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+
 		String dbTableName = (String)attributes.get("dbTableName");
 
 		if (dbTableName != null) {
@@ -128,10 +138,28 @@ public class ObjectDefinitionWrapper
 			setLabel(label);
 		}
 
+		String className = (String)attributes.get("className");
+
+		if (className != null) {
+			setClassName(className);
+		}
+
 		String name = (String)attributes.get("name");
 
 		if (name != null) {
 			setName(name);
+		}
+
+		String panelAppOrder = (String)attributes.get("panelAppOrder");
+
+		if (panelAppOrder != null) {
+			setPanelAppOrder(panelAppOrder);
+		}
+
+		String panelCategoryKey = (String)attributes.get("panelCategoryKey");
+
+		if (panelCategoryKey != null) {
+			setPanelCategoryKey(panelCategoryKey);
 		}
 
 		String pkObjectFieldDBColumnName = (String)attributes.get(
@@ -179,10 +207,30 @@ public class ObjectDefinitionWrapper
 	}
 
 	@Override
+	public ObjectDefinition cloneWithOriginalValues() {
+		return wrap(model.cloneWithOriginalValues());
+	}
+
+	/**
+	 * Returns the active of this object definition.
+	 *
+	 * @return the active of this object definition
+	 */
+	@Override
+	public boolean getActive() {
+		return model.getActive();
+	}
+
+	@Override
 	public String[] getAvailableLanguageIds() {
 		return model.getAvailableLanguageIds();
 	}
 
+	/**
+	 * Returns the class name of this object definition.
+	 *
+	 * @return the class name of this object definition
+	 */
 	@Override
 	public String getClassName() {
 		return model.getClassName();
@@ -221,6 +269,11 @@ public class ObjectDefinitionWrapper
 	@Override
 	public String getDefaultLanguageId() {
 		return model.getDefaultLanguageId();
+	}
+
+	@Override
+	public String getDestinationName() {
+		return model.getDestinationName();
 	}
 
 	@Override
@@ -342,6 +395,26 @@ public class ObjectDefinitionWrapper
 	@Override
 	public long getObjectDefinitionId() {
 		return model.getObjectDefinitionId();
+	}
+
+	/**
+	 * Returns the panel app order of this object definition.
+	 *
+	 * @return the panel app order of this object definition
+	 */
+	@Override
+	public String getPanelAppOrder() {
+		return model.getPanelAppOrder();
+	}
+
+	/**
+	 * Returns the panel category key of this object definition.
+	 *
+	 * @return the panel category key of this object definition
+	 */
+	@Override
+	public String getPanelCategoryKey() {
+		return model.getPanelCategoryKey();
 	}
 
 	/**
@@ -551,6 +624,21 @@ public class ObjectDefinitionWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this object definition is active.
+	 *
+	 * @return <code>true</code> if this object definition is active; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isActive() {
+		return model.isActive();
+	}
+
+	@Override
+	public boolean isApproved() {
+		return model.isApproved();
+	}
+
+	/**
 	 * Returns <code>true</code> if this object definition is system.
 	 *
 	 * @return <code>true</code> if this object definition is system; <code>false</code> otherwise
@@ -578,6 +666,26 @@ public class ObjectDefinitionWrapper
 		throws com.liferay.portal.kernel.exception.LocaleException {
 
 		model.prepareLocalizedFieldsForImport(defaultImportLocale);
+	}
+
+	/**
+	 * Sets whether this object definition is active.
+	 *
+	 * @param active the active of this object definition
+	 */
+	@Override
+	public void setActive(boolean active) {
+		model.setActive(active);
+	}
+
+	/**
+	 * Sets the class name of this object definition.
+	 *
+	 * @param className the class name of this object definition
+	 */
+	@Override
+	public void setClassName(String className) {
+		model.setClassName(className);
 	}
 
 	/**
@@ -712,6 +820,26 @@ public class ObjectDefinitionWrapper
 	@Override
 	public void setObjectDefinitionId(long objectDefinitionId) {
 		model.setObjectDefinitionId(objectDefinitionId);
+	}
+
+	/**
+	 * Sets the panel app order of this object definition.
+	 *
+	 * @param panelAppOrder the panel app order of this object definition
+	 */
+	@Override
+	public void setPanelAppOrder(String panelAppOrder) {
+		model.setPanelAppOrder(panelAppOrder);
+	}
+
+	/**
+	 * Sets the panel category key of this object definition.
+	 *
+	 * @param panelCategoryKey the panel category key of this object definition
+	 */
+	@Override
+	public void setPanelCategoryKey(String panelCategoryKey) {
+		model.setPanelCategoryKey(panelCategoryKey);
 	}
 
 	/**

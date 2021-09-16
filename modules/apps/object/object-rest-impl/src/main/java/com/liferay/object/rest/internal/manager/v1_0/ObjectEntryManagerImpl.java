@@ -14,12 +14,14 @@
 
 package com.liferay.object.rest.internal.manager.v1_0;
 
+import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.internal.dto.v1_0.converter.ObjectEntryDTOConverter;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
-import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.scope.ObjectScopeProvider;
+import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -28,14 +30,17 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.util.GroupUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
 import java.io.Serializable;
@@ -63,15 +68,18 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 	@Override
 	public ObjectEntry addObjectEntry(
 			DTOConverterContext dtoConverterContext, long userId,
-			long objectDefinitionId, ObjectEntry objectEntry)
+			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
+			String scopeKey)
 		throws Exception {
 
 		return _objectEntryDTOConverter.toDTO(
 			dtoConverterContext,
 			_objectEntryLocalService.addObjectEntry(
-				userId, 0L, objectDefinitionId,
+				userId, _getGroupId(objectDefinition, scopeKey),
+				objectDefinition.getObjectDefinitionId(),
 				_toObjectValues(
-					objectDefinitionId, objectEntry.getProperties(),
+					objectDefinition.getObjectDefinitionId(),
+					objectEntry.getProperties(),
 					dtoConverterContext.getLocale()),
 				new ServiceContext()));
 	}
@@ -79,15 +87,22 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 	@Override
 	public ObjectEntry addOrUpdateObjectEntry(
 			DTOConverterContext dtoConverterContext,
-			String externalReferenceCode, long userId, long groupId,
-			long objectDefinitionId, ObjectEntry objectEntry)
+			String externalReferenceCode, long userId,
+			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
+			String scopeKey)
 		throws Exception {
 
 		return _objectEntryDTOConverter.toDTO(
 			dtoConverterContext,
 			_objectEntryLocalService.addOrUpdateObjectEntry(
-				externalReferenceCode, userId, groupId, objectDefinitionId,
-				(Map)objectEntry.getProperties(), new ServiceContext()));
+				externalReferenceCode, userId,
+				_getGroupId(objectDefinition, scopeKey),
+				objectDefinition.getObjectDefinitionId(),
+				_toObjectValues(
+					objectDefinition.getObjectDefinitionId(),
+					objectEntry.getProperties(),
+					dtoConverterContext.getLocale()),
+				new ServiceContext()));
 	}
 
 	@Override
@@ -97,23 +112,23 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 
 	@Override
 	public void deleteObjectEntry(
-			String externalReferenceCode, long companyId, long groupId)
+			String externalReferenceCode, long companyId,
+			ObjectDefinition objectDefinition, String scopeKey)
 		throws Exception {
 
 		_objectEntryLocalService.deleteObjectEntry(
-			externalReferenceCode, companyId, groupId);
+			externalReferenceCode, companyId,
+			_getGroupId(objectDefinition, scopeKey));
 	}
 
 	@Override
 	public Page<ObjectEntry> getObjectEntries(
-			long companyId, long objectDefinitionId, Aggregation aggregation,
-			DTOConverterContext dtoConverterContext, Filter filter,
-			Pagination pagination, String search, Sort[] sorts)
+			long companyId, ObjectDefinition objectDefinition, String scopeKey,
+			Aggregation aggregation, DTOConverterContext dtoConverterContext,
+			Filter filter, Pagination pagination, String search, Sort[] sorts)
 		throws Exception {
 
-		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.getObjectDefinition(
-				objectDefinitionId);
+		long objectDefinitionId = objectDefinition.getObjectDefinitionId();
 
 		return SearchUtil.search(
 			new HashMap<>(),
@@ -133,8 +148,12 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 			searchContext -> {
 				searchContext.addVulcanAggregation(aggregation);
 				searchContext.setAttribute(
+					Field.STATUS, WorkflowConstants.STATUS_ANY);
+				searchContext.setAttribute(
 					"objectDefinitionId", objectDefinitionId);
 				searchContext.setCompanyId(companyId);
+				searchContext.setGroupIds(
+					new long[] {_getGroupId(objectDefinition, scopeKey)});
 			},
 			sorts,
 			document -> getObjectEntry(
@@ -155,13 +174,15 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 	@Override
 	public ObjectEntry getObjectEntry(
 			DTOConverterContext dtoConverterContext,
-			String externalReferenceCode, long companyId, long groupId)
+			String externalReferenceCode, long companyId,
+			ObjectDefinition objectDefinition, String scopeKey)
 		throws Exception {
 
 		return _objectEntryDTOConverter.toDTO(
 			dtoConverterContext,
 			_objectEntryLocalService.getObjectEntry(
-				externalReferenceCode, companyId, groupId));
+				externalReferenceCode, companyId,
+				_getGroupId(objectDefinition, scopeKey)));
 	}
 
 	@Override
@@ -182,6 +203,28 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 					objectEntry.getProperties(),
 					dtoConverterContext.getLocale()),
 				new ServiceContext()));
+	}
+
+	private long _getGroupId(
+		ObjectDefinition objectDefinition, String scopeKey) {
+
+		ObjectScopeProvider objectScopeProvider =
+			_objectScopeProviderRegistry.getObjectScopeProvider(
+				objectDefinition.getScope());
+
+		if (objectScopeProvider.isGroupAware()) {
+			if (Objects.equals("site", objectDefinition.getScope())) {
+				return GroupUtil.getGroupId(
+					objectDefinition.getCompanyId(), scopeKey,
+					_groupLocalService);
+			}
+
+			return GroupUtil.getDepotGroupId(
+				scopeKey, objectDefinition.getCompanyId(),
+				_depotEntryLocalService, _groupLocalService);
+		}
+
+		return 0;
 	}
 
 	private Date _toDate(Locale locale, String valueString) {
@@ -235,7 +278,10 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 	}
 
 	@Reference
-	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+	private DepotEntryLocalService _depotEntryLocalService;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
 
 	@Reference
 	private ObjectEntryDTOConverter _objectEntryDTOConverter;
@@ -245,5 +291,8 @@ public class ObjectEntryManagerImpl implements ObjectEntryManager {
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
+
+	@Reference
+	private ObjectScopeProviderRegistry _objectScopeProviderRegistry;
 
 }

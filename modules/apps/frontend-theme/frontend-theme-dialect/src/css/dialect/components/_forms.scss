@@ -1,0 +1,156 @@
+.form-condensed {
+	--condensed-form-input-label-transform: translateY(
+		calc(
+			(
+					#{$input-border-width} + #{$input-padding-y} +
+						(var(--form-input-line-height) / 2)
+				) - 0.5em
+		)
+	);
+	--form-feedback-item-margin: var(--condensed-form-feedback-item-margin);
+	--form-input-background-color: var(--condensed-form-input-background-color);
+	--form-input-border-color: var(
+		--condensed-form-input-border-color,
+		var(--condensed-form-input-background-color)
+	);
+	--form-input-label-font-weight: var(
+		--condensed-form-input-label-font-weight
+	);
+	--form-text-font-size: var(--condensed-form-text-font-size);
+	--form-text-font-weight: var(--condensed-form-text-font-weight);
+	--form-input-disabled-background-color: var(
+		--condensed-form-input-disabled-background-color
+	);
+	--current-form-input-disabled-border-color: var(
+		--condensed-form-input-disabled-border-color,
+		var(--condensed-form-input-disabled-background-color)
+	);
+
+	&.form-group,
+	.form-group {
+		&:not(.filled):not(:focus-within) {
+			--form-input-placeholder-color: transparent;
+			--form-input-placeholder-disabled-color: transparent;
+			--form-input-color: transparent;
+			--form-input-disabled-color: transparent;
+
+			> label {
+				pointer-events: none;
+			}
+		}
+
+		> label {
+			background-color: var(
+				--condensed-form-input-label-background-color,
+				transparent
+			);
+			color: var(--condensed-form-input-label-color);
+			font-size: var(--condensed-form-input-label-font-size);
+			line-height: 1;
+			margin: 0 var(--condensed-form-input-label-margin-x);
+			padding: 0 var(--condensed-form-input-label-padding-x);
+			position: absolute;
+			top: 0;
+			transform: var(--condensed-form-input-label-transform);
+			z-index: 1;
+		}
+	}
+}
+
+.filled,
+.form-group:focus-within {
+	--condensed-form-input-disabled-background-color: #{$form-white-color};
+	--condensed-form-input-label-background-color: #{$form-white-color};
+	--condensed-form-input-label-font-size: var(
+		--condensed-form-input-filled-label-font-size
+	);
+	--condensed-form-input-label-font-weight: var(
+		--condensed-form-input-filled-label-font-weight
+	);
+	--condensed-form-input-label-transform: translateY(-0.5em);
+}
+
+.filled {
+	--condensed-form-input-border-color: var(
+		--condensed-form-input-filled-border-color
+	);
+	--condensed-form-input-background-color: #{$form-white-color};
+	--condensed-form-input-disabled-border-color: var(
+		--form-input-disabled-border-color
+	);
+	--condensed-form-input-label-color: var(
+		--condensed-form-input-filled-label-color
+	);
+	--form-input-error-bg: $form-white-color;
+	--form-input-success-bg: $form-white-color;
+	--form-input-warning-bg: $form-white-color;
+}
+
+.form-group:focus-within {
+	--condensed-form-input-label-color: #{$form-input-focus-color};
+}
+
+label {
+	line-height: var(--form-input-label-line-height);
+	margin-left: var(--form-input-label-margin-left);
+	margin-right: var(--form-input-label-margin-right);
+	margin-top: var(--form-input-label-margin-top);
+	transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out,
+		font-size 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+
+label.disabled,
+fieldset[disabled],
+.form-control[disabled] {
+	--condensed-form-input-label-color: var(
+		--condensed-form-input-disabled-label-color
+	);
+}
+
+.form-control::placeholder,
+.form-builder-select-field .form-control .option-selected-placeholder {
+	color: $input-placeholder-color;
+	font-size: var(--form-input-placeholder-font-size);
+	font-weight: var(--form-input-placeholder-font-weight);
+	line-height: var(--form-input-placeholder-line-height);
+	transition: color 0.15s ease-in-out;
+}
+
+.form-feedback-item {
+	display: flex;
+}
+
+.form-group .form-feedback-group .form-feedback-item {
+	background-color: var(--form-feedback-background-color);
+	border-radius: var(--form-feedback-item-border-radius);
+	color: var(--form-feedback-color);
+	line-height: var(--form-feedback-item-line-height);
+	margin: var(--form-feedback-item-margin);
+	padding: var(--form-feedback-item-padding);
+}
+
+.has-error {
+	--condensed-form-input-filled-label-color: var(--color-state-error);
+	--form-feedback-background-color: var(--color-state-error-lighten);
+	--form-feedback-color: var(--color-state-error);
+}
+
+.has-success {
+	--condensed-form-input-filled-label-color: var(--color-state-success);
+	--form-feedback-background-color: var(--color-state-success-lighten);
+	--form-feedback-color: var(--color-state-success);
+}
+
+.has-warning {
+	--condensed-form-input-filled-label-color: var(--color-state-warning);
+	--form-feedback-background-color: var(--color-state-warning-lighten);
+	--form-feedback-color: var(--color-state-warning);
+}
+
+.form-text {
+	margin: var(--form-text-margin);
+
+	&:empty {
+		margin: 0;
+	}
+}

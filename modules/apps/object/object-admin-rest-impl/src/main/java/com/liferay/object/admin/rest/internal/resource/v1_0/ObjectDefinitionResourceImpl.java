@@ -21,16 +21,17 @@ import com.liferay.object.admin.rest.internal.dto.v1_0.util.ObjectFieldUtil;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
+import com.liferay.portal.vulcan.util.SearchUtil;
 
 import java.util.Collections;
 
@@ -65,15 +66,25 @@ public class ObjectDefinitionResourceImpl
 
 	@Override
 	public Page<ObjectDefinition> getObjectDefinitionsPage(
-			Pagination pagination)
-		throws PortalException {
+			String search, Pagination pagination)
+		throws Exception {
 
-		return Page.of(
-			transform(
-				_objectDefinitionService.getObjectDefinitions(
-					pagination.getStartPosition(), pagination.getEndPosition()),
-				this::_toObjectDefinition),
-			pagination, _objectDefinitionService.getObjectDefinitionsCount());
+		return SearchUtil.search(
+			Collections.emptyMap(),
+			booleanQuery -> {
+			},
+			null, com.liferay.object.model.ObjectDefinition.class.getName(),
+			search, pagination,
+			queryConfig -> queryConfig.setSelectedFieldNames(
+				Field.ENTRY_CLASS_PK),
+			searchContext -> {
+				searchContext.setAttribute(Field.NAME, search);
+				searchContext.setCompanyId(contextCompany.getCompanyId());
+			},
+			null,
+			document -> _toObjectDefinition(
+				_objectDefinitionService.getObjectDefinition(
+					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
 	}
 
 	@Override
@@ -83,9 +94,12 @@ public class ObjectDefinitionResourceImpl
 
 		return _toObjectDefinition(
 			_objectDefinitionService.addCustomObjectDefinition(
-				Collections.singletonMap(
-					LocaleUtil.getSiteDefault(), objectDefinition.getName()),
-				objectDefinition.getName(),
+				LocalizedMapUtil.getLocalizedMap(objectDefinition.getLabel()),
+				objectDefinition.getName(), objectDefinition.getPanelAppOrder(),
+				objectDefinition.getPanelCategoryKey(),
+				LocalizedMapUtil.getLocalizedMap(
+					objectDefinition.getPluralLabel()),
+				objectDefinition.getScope(),
 				transformToList(
 					objectDefinition.getObjectFields(),
 					objectField -> ObjectFieldUtil.toObjectField(
@@ -100,38 +114,56 @@ public class ObjectDefinitionResourceImpl
 			objectDefinitionId);
 	}
 
+	@Override
+	public ObjectDefinition putObjectDefinition(
+			Long objectDefinitionId, ObjectDefinition objectDefinition)
+		throws Exception {
+
+		return _toObjectDefinition(
+			_objectDefinitionService.updateCustomObjectDefinition(
+				objectDefinitionId,
+				GetterUtil.getBoolean(objectDefinition.getActive(), true),
+				LocalizedMapUtil.getLocalizedMap(objectDefinition.getLabel()),
+				objectDefinition.getName(), objectDefinition.getPanelAppOrder(),
+				objectDefinition.getPanelCategoryKey(),
+				LocalizedMapUtil.getLocalizedMap(
+					objectDefinition.getPluralLabel()),
+				objectDefinition.getScope()));
+	}
+
 	private ObjectDefinition _toObjectDefinition(
 		com.liferay.object.model.ObjectDefinition objectDefinition) {
+
+		String permissionName =
+			com.liferay.object.model.ObjectDefinition.class.getName();
 
 		return new ObjectDefinition() {
 			{
 				actions = HashMapBuilder.put(
 					"delete",
 					() -> {
-						if (objectDefinition.isSystem()) {
+						if (objectDefinition.isApproved() ||
+							objectDefinition.isSystem()) {
+
 							return null;
 						}
 
 						return addAction(
-							ActionKeys.DELETE,
-							objectDefinition.getObjectDefinitionId(),
-							"deleteObjectDefinition",
-							_objectDefinitionModelResourcePermission);
+							ActionKeys.DELETE, "deleteObjectDefinition",
+							permissionName,
+							objectDefinition.getObjectDefinitionId());
 					}
 				).put(
 					"get",
 					addAction(
-						ActionKeys.VIEW,
-						objectDefinition.getObjectDefinitionId(),
-						"getObjectDefinition",
-						_objectDefinitionModelResourcePermission)
+						ActionKeys.VIEW, "getObjectDefinition", permissionName,
+						objectDefinition.getObjectDefinitionId())
 				).put(
 					"update",
 					addAction(
-						ActionKeys.UPDATE,
-						objectDefinition.getObjectDefinitionId(),
-						"postObjectDefinition",
-						_objectDefinitionModelResourcePermission)
+						ActionKeys.UPDATE, "postObjectDefinition",
+						permissionName,
+						objectDefinition.getObjectDefinitionId())
 				).build();
 				dateCreated = objectDefinition.getCreateDate();
 				dateModified = objectDefinition.getModifiedDate();
@@ -140,7 +172,10 @@ public class ObjectDefinitionResourceImpl
 				objectFields = transformToArray(
 					_objectFieldLocalService.getObjectFields(
 						objectDefinition.getObjectDefinitionId()),
-					ObjectFieldUtil::toObjectField, ObjectField.class);
+					objectField -> ObjectFieldUtil.toObjectField(
+						null, objectField),
+					ObjectField.class);
+				scope = objectDefinition.getScope();
 				status = new Status() {
 					{
 						code = objectDefinition.getStatus();
@@ -157,12 +192,6 @@ public class ObjectDefinitionResourceImpl
 			}
 		};
 	}
-
-	@Reference(
-		target = "(model.class.name=com.liferay.object.model.ObjectDefinition)"
-	)
-	private ModelResourcePermission<com.liferay.object.model.ObjectDefinition>
-		_objectDefinitionModelResourcePermission;
 
 	@Reference
 	private ObjectDefinitionService _objectDefinitionService;

@@ -100,6 +100,13 @@ DDMStructure ddmStructure = journalEditDDMTemplateDisplayContext.getDDMStructure
 
 <aui:input helpMessage="journal-template-cacheable-help" labelCssClass="control-label" name="cacheable" value="<%= journalEditDDMTemplateDisplayContext.isCacheable() %>" />
 
+<aui:script>
+	Liferay.Util.toggleBoxes(
+		'<portlet:namespace />cacheable',
+		'<portlet:namespace />-cacheableWarningMessage'
+	);
+</aui:script>
+
 <c:if test="<%= (ddmTemplate == null) || (ddmTemplate.getClassPK() == 0) %>">
 	<aui:script sandbox="<%= true %>">
 		const selectDDMStructure = document.getElementById(
@@ -136,6 +143,23 @@ DDMStructure ddmStructure = journalEditDDMTemplateDisplayContext.getDDMStructure
 
 		if (ddmStructure) {
 			ddmStructure.addEventListener('click', onClick);
+		}
+
+		const languageSelect = document.getElementById('<portlet:namespace />language');
+
+		const onChange = (event) => {
+			const portletURL = new Liferay.Util.PortletURL.createPortletURL(
+				window.location.href,
+				{
+					language: event.target.value,
+				}
+			);
+
+			Liferay.Util.navigate(portletURL.toString());
+		};
+
+		if (languageSelect) {
+			languageSelect.addEventListener('change', onChange);
 		}
 	</aui:script>
 </c:if>

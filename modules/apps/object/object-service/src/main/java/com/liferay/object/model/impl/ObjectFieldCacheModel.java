@@ -77,7 +77,7 @@ public class ObjectFieldCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(39);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -95,6 +95,8 @@ public class ObjectFieldCacheModel
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", listTypeDefinitionId=");
+		sb.append(listTypeDefinitionId);
 		sb.append(", objectDefinitionId=");
 		sb.append(objectDefinitionId);
 		sb.append(", dbColumnName=");
@@ -111,8 +113,8 @@ public class ObjectFieldCacheModel
 		sb.append(label);
 		sb.append(", name=");
 		sb.append(name);
-		sb.append(", pluralLabel=");
-		sb.append(pluralLabel);
+		sb.append(", relationshipType=");
+		sb.append(relationshipType);
 		sb.append(", required=");
 		sb.append(required);
 		sb.append(", type=");
@@ -160,6 +162,7 @@ public class ObjectFieldCacheModel
 			objectFieldImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		objectFieldImpl.setListTypeDefinitionId(listTypeDefinitionId);
 		objectFieldImpl.setObjectDefinitionId(objectDefinitionId);
 
 		if (dbColumnName == null) {
@@ -200,11 +203,11 @@ public class ObjectFieldCacheModel
 			objectFieldImpl.setName(name);
 		}
 
-		if (pluralLabel == null) {
-			objectFieldImpl.setPluralLabel("");
+		if (relationshipType == null) {
+			objectFieldImpl.setRelationshipType("");
 		}
 		else {
-			objectFieldImpl.setPluralLabel(pluralLabel);
+			objectFieldImpl.setRelationshipType(relationshipType);
 		}
 
 		objectFieldImpl.setRequired(required);
@@ -235,6 +238,8 @@ public class ObjectFieldCacheModel
 		createDate = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
 
+		listTypeDefinitionId = objectInput.readLong();
+
 		objectDefinitionId = objectInput.readLong();
 		dbColumnName = objectInput.readUTF();
 		dbTableName = objectInput.readUTF();
@@ -245,7 +250,7 @@ public class ObjectFieldCacheModel
 		indexedLanguageId = objectInput.readUTF();
 		label = objectInput.readUTF();
 		name = objectInput.readUTF();
-		pluralLabel = objectInput.readUTF();
+		relationshipType = objectInput.readUTF();
 
 		required = objectInput.readBoolean();
 		type = objectInput.readUTF();
@@ -277,6 +282,8 @@ public class ObjectFieldCacheModel
 
 		objectOutput.writeLong(createDate);
 		objectOutput.writeLong(modifiedDate);
+
+		objectOutput.writeLong(listTypeDefinitionId);
 
 		objectOutput.writeLong(objectDefinitionId);
 
@@ -319,11 +326,11 @@ public class ObjectFieldCacheModel
 			objectOutput.writeUTF(name);
 		}
 
-		if (pluralLabel == null) {
+		if (relationshipType == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(pluralLabel);
+			objectOutput.writeUTF(relationshipType);
 		}
 
 		objectOutput.writeBoolean(required);
@@ -344,6 +351,7 @@ public class ObjectFieldCacheModel
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long listTypeDefinitionId;
 	public long objectDefinitionId;
 	public String dbColumnName;
 	public String dbTableName;
@@ -352,7 +360,7 @@ public class ObjectFieldCacheModel
 	public String indexedLanguageId;
 	public String label;
 	public String name;
-	public String pluralLabel;
+	public String relationshipType;
 	public boolean required;
 	public String type;
 

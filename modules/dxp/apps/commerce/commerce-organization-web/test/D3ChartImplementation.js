@@ -14,9 +14,21 @@ import * as d3 from 'd3';
 import D3OrganizationChart from '../src/main/resources/META-INF/resources/js/D3OrganizationChart';
 import {
 	ACCOUNTS_PROPERTY_NAME,
+	BRIEFS_KEYS_MAP,
 	ORGANIZATIONS_PROPERTY_NAME,
 	USERS_PROPERTY_NAME_IN_ORGANIZATION,
 } from '../src/main/resources/META-INF/resources/js/utils/constants';
+
+const actions = {
+	delete: {
+		href: '#',
+		method: 'test',
+	},
+	update: {
+		href: '#',
+		method: 'test',
+	},
+};
 
 jest.mock(
 	'../src/main/resources/META-INF/resources/js/data/organizations',
@@ -47,16 +59,22 @@ jest.mock(
 				type: 'organization',
 				userAccounts: [
 					{
+						accountBriefs: [],
 						id: '2000',
 						name: `User Child 1`,
+						organizationBriefs: [],
 					},
 					{
+						accountBriefs: [],
 						id: '2001',
 						name: `User Child 2`,
+						organizationBriefs: [],
 					},
 					{
+						accountBriefs: [],
 						id: '2002',
 						name: `User Child 3`,
+						organizationBriefs: [],
 					},
 				],
 			});
@@ -67,21 +85,27 @@ jest.mock(
 jest.mock('../src/main/resources/META-INF/resources/js/data/accounts', () => ({
 	getAccount: () =>
 		Promise.resolve({
-			accountUsers: [
+			type: 'accountUserAccounts',
+			userAccounts: [
 				{
+					accountBriefs: [],
 					id: '2000',
 					name: `User Child 1`,
+					organizationBriefs: [],
 				},
 				{
+					accountBriefs: [],
 					id: '2001',
 					name: `User Child 2`,
+					organizationBriefs: [],
 				},
 				{
+					accountBriefs: [],
 					id: '2002',
 					name: `User Child 3`,
+					organizationBriefs: [],
 				},
 			],
-			type: 'account',
 		}),
 }));
 
@@ -100,46 +124,60 @@ const countLinks = (root) => {
 const INITIAL_DATA = {
 	[ACCOUNTS_PROPERTY_NAME]: [
 		{
+			actions,
 			id: '1',
 			name: `Auto Care`,
 		},
 		{
+			actions,
 			id: '0000',
 			name: `CC West`,
 		},
 		{
+			actions,
 			id: '3',
 			name: `Leo Auto`,
 		},
 		{
+			actions,
 			id: '5',
 			name: `Repair World`,
 		},
 	],
 	[ORGANIZATIONS_PROPERTY_NAME]: [
 		{
+			actions,
 			id: '999',
 			name: `Canada`,
 		},
 		{
+			actions,
 			id: '2',
 			name: `Italy`,
 		},
 		{
+			actions,
 			id: '40',
 			name: `Spain`,
 		},
 	],
 	[USERS_PROPERTY_NAME_IN_ORGANIZATION]: [
 		{
+			actions,
 			id: '1',
 			name: `Mark`,
+			[BRIEFS_KEYS_MAP.organization]: [],
+			[BRIEFS_KEYS_MAP.account]: [],
 		},
 		{
+			actions,
 			id: '2',
 			name: `John`,
+			[BRIEFS_KEYS_MAP.organization]: [],
+			[BRIEFS_KEYS_MAP.account]: [],
 		},
 	],
+	actions,
 	id: '0',
 	name: `Root`,
 };
@@ -179,6 +217,7 @@ describe('D3OrganizationChart implementation', () => {
 	let zoomOutButton;
 	let defaultParams;
 	const getChartNodes = (...args) => getNodes(chartSVGWrapper, ...args);
+	let lastActionPerformed = null;
 
 	beforeEach(() => {
 		chartSVGWrapper = document.createElement('svg');
@@ -192,13 +231,31 @@ describe('D3OrganizationChart implementation', () => {
 			},
 			'./assets/clay/icons.svg',
 			{
-				open: () => {},
+				open: (parentData, type) => {
+					lastActionPerformed = {
+						details: {parentData, type},
+						name: 'modal opened',
+					};
+				},
 			},
 			{
-				close: () => {},
-				open: () => {},
+				close: () => {
+					lastActionPerformed = {
+						name: 'menu closed',
+					};
+				},
+				open: (target, data) => {
+					lastActionPerformed = {
+						details: {data, target},
+						name: 'menu opened',
+					};
+				},
 			},
 		];
+	});
+
+	afterEach(() => {
+		lastActionPerformed = null;
 	});
 
 	it('Must create a chart', async () => {
@@ -284,6 +341,123 @@ describe('D3OrganizationChart implementation', () => {
 				expect(node).toBeTruthy();
 				expect(node.__data__.parent.data.name).toBe('Canada');
 			});
+		});
+	});
+
+	describe('Node creation', () => {
+		let addButton = null;
+
+		beforeAll(async () => {
+			new D3OrganizationChart(INITIAL_DATA, ...defaultParams);
+			const clickedNode = getChartNodes('Root', 'name')[0];
+
+			await d3click(clickedNode);
+
+			addButton = getChartNodes('add', 'type')[0];
+		});
+
+		it('Must display an add button when an organization is clicked', () => {
+			expect(addButton).toBeTruthy();
+			expect(addButton.__data__.parent.data.name).toBe('Root');
+		});
+
+		it('Add button must change its state when clicked', async () => {
+			expect(addButton).toBeTruthy();
+
+			const actionsWrapper = addButton.querySelector('.actions-wrapper');
+			const openActionsWrapper = addButton.querySelector(
+				'.open-actions-wrapper'
+			);
+
+			await d3click(openActionsWrapper);
+
+			expect(actionsWrapper.classList).toContain('menu-open');
+		});
+
+		it('Must open a modal when a creation button is clicked', async () => {
+			const openActionsWrapper = addButton.querySelector(
+				'.open-actions-wrapper'
+			);
+
+			await d3click(openActionsWrapper);
+
+			const createOrganizationButton = addButton.querySelector(
+				'.add-action-wrapper.organization'
+			);
+			expect(createOrganizationButton).toBeTruthy();
+
+			await d3click(createOrganizationButton);
+
+			expect(lastActionPerformed.name).toBe('modal opened');
+		});
+
+		it('Must open a create organization modal when a creation button is clicked', async () => {
+			const openActionsWrapper = addButton.querySelector(
+				'.open-actions-wrapper'
+			);
+
+			await d3click(openActionsWrapper);
+
+			const createOrganizationButton = addButton.querySelector(
+				'.add-action-wrapper.organization'
+			);
+			expect(createOrganizationButton).toBeTruthy();
+
+			await d3click(createOrganizationButton);
+
+			expect(lastActionPerformed.name).toBe('modal opened');
+			expect(lastActionPerformed.details.type).toBe('organization');
+		});
+
+		it('Must open a create account modal when a creation button is clicked', async () => {
+			const openActionsWrapper = addButton.querySelector(
+				'.open-actions-wrapper'
+			);
+
+			await d3click(openActionsWrapper);
+
+			const createAccountButton = addButton.querySelector(
+				'.add-action-wrapper.account'
+			);
+			expect(createAccountButton).toBeTruthy();
+
+			await d3click(createAccountButton);
+
+			expect(lastActionPerformed.name).toBe('modal opened');
+			expect(lastActionPerformed.details.type).toBe('account');
+		});
+
+		it('Must open a invite user modal when a creation button is clicked', async () => {
+			const openActionsWrapper = addButton.querySelector(
+				'.open-actions-wrapper'
+			);
+
+			await d3click(openActionsWrapper);
+
+			const inviteUserButton = addButton.querySelector(
+				'.add-action-wrapper.user'
+			);
+
+			await d3click(inviteUserButton);
+
+			expect(lastActionPerformed.name).toBe('modal opened');
+			expect(lastActionPerformed.details.type).toBe('user');
+		});
+	});
+
+	describe('Node actions', () => {
+		it('must open an action menu when a menu button is clicked', async () => {
+			new D3OrganizationChart(INITIAL_DATA, ...defaultParams);
+
+			const node = getChartNodes('Italy', 'name')[0];
+			const menuButton = node.querySelector('.node-menu-wrapper');
+
+			expect(menuButton).toBeTruthy();
+
+			await d3click(menuButton);
+
+			expect(lastActionPerformed.name).toBe('menu opened');
+			expect(lastActionPerformed.details.data.name).toBe('Italy');
 		});
 	});
 });

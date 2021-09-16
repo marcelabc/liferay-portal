@@ -51,6 +51,15 @@ public class ListTypeDefinitionLocalServiceWrapper
 			listTypeDefinition);
 	}
 
+	@Override
+	public com.liferay.list.type.model.ListTypeDefinition addListTypeDefinition(
+			long userId, java.util.Map<java.util.Locale, String> nameMap)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _listTypeDefinitionLocalService.addListTypeDefinition(
+			userId, nameMap);
+	}
+
 	/**
 	 * Creates a new list type definition with the primary key. Does not add the list type definition to the database.
 	 *
@@ -86,11 +95,14 @@ public class ListTypeDefinitionLocalServiceWrapper
 	 *
 	 * @param listTypeDefinition the list type definition
 	 * @return the list type definition that was removed
+	 * @throws PortalException
 	 */
 	@Override
 	public com.liferay.list.type.model.ListTypeDefinition
-		deleteListTypeDefinition(
-			com.liferay.list.type.model.ListTypeDefinition listTypeDefinition) {
+			deleteListTypeDefinition(
+				com.liferay.list.type.model.ListTypeDefinition
+					listTypeDefinition)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _listTypeDefinitionLocalService.deleteListTypeDefinition(
 			listTypeDefinition);
@@ -379,6 +391,17 @@ public class ListTypeDefinitionLocalServiceWrapper
 
 		return _listTypeDefinitionLocalService.updateListTypeDefinition(
 			listTypeDefinition);
+	}
+
+	@Override
+	public com.liferay.list.type.model.ListTypeDefinition
+			updateListTypeDefinition(
+				long listTypeDefinitionId,
+				java.util.Map<java.util.Locale, String> nameMap)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _listTypeDefinitionLocalService.updateListTypeDefinition(
+			listTypeDefinitionId, nameMap);
 	}
 
 	@Override

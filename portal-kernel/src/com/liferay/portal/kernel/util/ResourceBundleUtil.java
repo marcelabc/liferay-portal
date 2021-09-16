@@ -68,6 +68,10 @@ public class ResourceBundleUtil {
 		return getBundle("content.Language", locale, classLoader);
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no replacement
+	 */
+	@Deprecated
 	public static ResourceBundle getBundle(Locale locale, String symbolicName) {
 		return _getBundle(
 			"content.Language", locale,
@@ -149,8 +153,7 @@ public class ResourceBundleUtil {
 	 */
 	@Deprecated
 	public static com.liferay.portal.kernel.util.ResourceBundleLoader
-		getResourceBundleLoader(
-			final String baseName, final ClassLoader classLoader) {
+		getResourceBundleLoader(String baseName, ClassLoader classLoader) {
 
 		return new ClassResourceBundleLoader(baseName, classLoader);
 	}

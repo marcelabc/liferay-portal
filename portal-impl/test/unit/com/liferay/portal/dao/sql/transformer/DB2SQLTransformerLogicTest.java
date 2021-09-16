@@ -42,15 +42,9 @@ public class DB2SQLTransformerLogicTest
 
 	@Override
 	public String getDropTableIfExistsTextTransformedSQL() {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("BEGIN\n");
-		sb.append("DECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\n");
-		sb.append("BEGIN END;\n");
-		sb.append("EXECUTE IMMEDIATE 'DROP TABLE Foo';\n");
-		sb.append("END");
-
-		return sb.toString();
+		return StringBundler.concat(
+			"BEGIN\n", "DECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\n",
+			"BEGIN END;\n", "EXECUTE IMMEDIATE 'DROP TABLE Foo';\n", "END");
 	}
 
 	@Override
@@ -59,6 +53,22 @@ public class DB2SQLTransformerLogicTest
 		Assert.assertEquals(
 			getBitwiseCheckTransformedSQL(),
 			sqlTransformer.transform(getBitwiseCheckOriginalSQL()));
+	}
+
+	@Test
+	public void testReplaceCastText() {
+		Assert.assertEquals(
+			"select CAST(foo AS VARCHAR(2000)) from Foo",
+			sqlTransformer.transform(getCastTextOriginalSQL()));
+	}
+
+	@Test
+	public void testReplaceConcat() {
+		Assert.assertEquals(
+			"select * from Foo where foo LIKE CAST(bar AS VARCHAR(2000)) " +
+				"CONCAT COALESCE(CAST(? AS VARCHAR(2000)),'')",
+			sqlTransformer.transform(
+				"select * from Foo where foo LIKE CONCAT(CAST_TEXT(bar),?)"));
 	}
 
 	@Override
@@ -95,7 +105,7 @@ public class DB2SQLTransformerLogicTest
 
 	@Override
 	protected String getCastClobTextTransformedSQL() {
-		return "select CAST(foo AS VARCHAR(32672)) from Foo";
+		return "select CAST(foo AS VARCHAR(2000)) from Foo";
 	}
 
 	@Override
@@ -112,7 +122,7 @@ public class DB2SQLTransformerLogicTest
 		Assert.assertEquals(
 			StringUtil.replace(
 				sql, CharPool.QUESTION,
-				"COALESCE(CAST(? AS VARCHAR(32672)),'')"),
+				"COALESCE(CAST(? AS VARCHAR(2000)),'')"),
 			sqlTransformer.transform(sql));
 	}
 

@@ -24,6 +24,7 @@ import selectCanUpdateItemConfiguration from '../../selectors/selectCanUpdateIte
 import {getResponsiveColumnSize} from '../../utils/getResponsiveColumnSize';
 import {getResponsiveConfig} from '../../utils/getResponsiveConfig';
 import isItemEmpty from '../../utils/isItemEmpty';
+import {isValidSpacingOption} from '../../utils/isValidSpacingOption';
 import Topper from '../Topper';
 import Row from './Row';
 
@@ -54,6 +55,10 @@ const RowWithControls = React.forwardRef(({children, item}, ref) => {
 	const {
 		display,
 		height,
+		marginBottom,
+		marginLeft,
+		marginRight,
+		marginTop,
 		maxWidth,
 		minWidth,
 		width,
@@ -61,6 +66,12 @@ const RowWithControls = React.forwardRef(({children, item}, ref) => {
 
 	return (
 		<Topper
+			className={classNames({
+				[`mb-${marginBottom}`]: isValidSpacingOption(marginBottom),
+				[`ml-${marginLeft}`]: isValidSpacingOption(marginLeft),
+				[`mr-${marginRight}`]: isValidSpacingOption(marginRight),
+				[`mt-${marginTop}`]: isValidSpacingOption(marginTop),
+			})}
 			item={item}
 			itemElement={itemElement}
 			style={{
@@ -74,7 +85,6 @@ const RowWithControls = React.forwardRef(({children, item}, ref) => {
 				className={classNames({
 					'align-bottom': verticalAlignment === 'bottom',
 					'align-middle': verticalAlignment === 'middle',
-					'align-top': verticalAlignment === 'top',
 					empty:
 						isSomeRowEmpty(
 							item,

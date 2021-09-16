@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import java.io.Serializable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides the local service utility for ListTypeDefinition. This utility wraps
@@ -61,6 +62,13 @@ public class ListTypeDefinitionLocalServiceUtil {
 		return getService().addListTypeDefinition(listTypeDefinition);
 	}
 
+	public static ListTypeDefinition addListTypeDefinition(
+			long userId, Map<java.util.Locale, String> nameMap)
+		throws PortalException {
+
+		return getService().addListTypeDefinition(userId, nameMap);
+	}
+
 	/**
 	 * Creates a new list type definition with the primary key. Does not add the list type definition to the database.
 	 *
@@ -92,9 +100,11 @@ public class ListTypeDefinitionLocalServiceUtil {
 	 *
 	 * @param listTypeDefinition the list type definition
 	 * @return the list type definition that was removed
+	 * @throws PortalException
 	 */
 	public static ListTypeDefinition deleteListTypeDefinition(
-		ListTypeDefinition listTypeDefinition) {
+			ListTypeDefinition listTypeDefinition)
+		throws PortalException {
 
 		return getService().deleteListTypeDefinition(listTypeDefinition);
 	}
@@ -341,6 +351,14 @@ public class ListTypeDefinitionLocalServiceUtil {
 		ListTypeDefinition listTypeDefinition) {
 
 		return getService().updateListTypeDefinition(listTypeDefinition);
+	}
+
+	public static ListTypeDefinition updateListTypeDefinition(
+			long listTypeDefinitionId, Map<java.util.Locale, String> nameMap)
+		throws PortalException {
+
+		return getService().updateListTypeDefinition(
+			listTypeDefinitionId, nameMap);
 	}
 
 	public static ListTypeDefinitionLocalService getService() {

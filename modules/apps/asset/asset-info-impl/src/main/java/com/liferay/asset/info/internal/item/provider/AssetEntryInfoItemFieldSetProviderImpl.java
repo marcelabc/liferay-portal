@@ -229,8 +229,8 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 		).infoFieldSetEntry(
 			_categoriesInfoField
 		).infoFieldSetEntry(
-			consumer -> assetVocabularies.forEach(
-				assetVocabulary -> consumer.accept(
+			unsafeConsumer -> assetVocabularies.forEach(
+				assetVocabulary -> unsafeConsumer.accept(
 					InfoField.builder(
 					).infoFieldType(
 						CategoriesInfoFieldType.INSTANCE
@@ -289,8 +289,9 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 
 				return ListUtil.filter(
 					groupsAssetVocabularies,
-					assetVocabulary -> !(assetVocabulary.getVisibilityType() ==
-						AssetVocabularyConstants.VISIBILITY_TYPE_INTERNAL));
+					assetVocabulary ->
+						!(assetVocabulary.getVisibilityType() ==
+							AssetVocabularyConstants.VISIBILITY_TYPE_INTERNAL));
 			}
 
 			List<AssetVocabulary> groupsAssetVocabularies =
@@ -300,8 +301,9 @@ public class AssetEntryInfoItemFieldSetProviderImpl
 
 			return ListUtil.filter(
 				groupsAssetVocabularies,
-				assetVocabulary -> !(assetVocabulary.getVisibilityType() ==
-					AssetVocabularyConstants.VISIBILITY_TYPE_INTERNAL));
+				assetVocabulary ->
+					!(assetVocabulary.getVisibilityType() ==
+						AssetVocabularyConstants.VISIBILITY_TYPE_INTERNAL));
 		}
 		catch (PortalException portalException) {
 			throw new RuntimeException(portalException);

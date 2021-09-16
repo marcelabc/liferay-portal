@@ -50,7 +50,10 @@ public abstract class BaseRemoteAppEntryUADDisplay
 
 	@Override
 	public String[] getDisplayFieldNames() {
-		return new String[] {"name", "url"};
+		return new String[] {
+			"customElementCSSURLs", "customElementHTMLElementName",
+			"customElementURLs", "iFrameURL", "name", "type"
+		};
 	}
 
 	@Override

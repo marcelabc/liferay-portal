@@ -1446,18 +1446,19 @@ definition {
 		}
 	}
 
+	@description = "LPS-119966 Given a document with and associated Display Page Template
+	When the user with permissions clicks on the info panel button
+	Then the user is lead to the info panel"
+
 	@priority = "4"
 	test DocumentViewInfoPanel {
-		property osgi.module.configuration.file.names = "com.liferay.content.dashboard.web.internal.configuration.FFContentDashboardDocumentConfiguration.config";
-		property osgi.module.configurations = "enabled=B&quot;true&quot;";
 		property portal.acceptance = "true";
 
-		task ("Add a document") {
-			DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "test-site-name");
-
-			DMDocument.addCP(
-				dmDocumentFile = "Document_1.txt",
-				dmDocumentTitle = "DM Document Title");
+		task ("Create a new Document") {
+			JSONDocument.addFile(
+				dmDocumentDescription = "DM Document Description",
+				dmDocumentTitle = "DM Document Title",
+				groupName = "Test Site Name");
 		}
 
 		task ("Go to Content Dashboard") {
@@ -1472,7 +1473,7 @@ definition {
 
 			AssertTextPresent(
 				locator1 = "ContentDashboard#INFO_PANEL_TITLE",
-				value1 = "Content Info");
+				value1 = "DM Document Title");
 
 			Click(locator1 = "ContentDashboard#CLOSE_INFO_PANEL_BUTTON");
 		}
@@ -1676,126 +1677,6 @@ definition {
 		Category.deleteCategoryByMenuCP(
 			categoryName = "Category Name",
 			vocabularyName = "Vocabulary Name");
-	}
-
-	@description = "Validate if the user can filter by category and subtype"
-	@priority = "5"
-	test FilterByCategoryAndSubtype {
-		property portal.acceptance = "true";
-
-		JSONCategory.addVocabulary(
-			groupName = "Test Site Name",
-			title = "Vocabulary Name");
-
-		var categoryId1 = JSONCategory.addCategory(
-			groupName = "Test Site Name",
-			title = "Category 1",
-			vocabularyName = "Vocabulary Name");
-
-		var categoryId2 = JSONCategory.addCategory(
-			groupName = "Test Site Name",
-			title = "Category 2",
-			vocabularyName = "Vocabulary Name");
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
-
-		NavItem.gotoStructures();
-
-		WebContentStructures.addCP(
-			structureDescription = "WC Structure Description",
-			structureName = "Subtype1");
-
-		DataEngine.addFields(fieldNameList = "Text");
-
-		WebContentStructures.saveCP(structureName = "Subtype1");
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
-
-		NavItem.gotoStructures();
-
-		WebContentStructures.addCP(
-			structureDescription = "WC Structure Description",
-			structureName = "Subtype2");
-
-		DataEngine.addFields(fieldNameList = "Text");
-
-		WebContentStructures.saveCP(structureName = "Subtype2");
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
-
-		WebContentNavigator.gotoAddWithStructureCP(structureName = "Subtype1");
-
-		WebContent.addWithStructureCP(
-			structureName = "Subtype1",
-			webContentTitle = "WC Title 1");
-
-		PortletEntry.publish();
-
-		WebContentNavigator.gotoAddWithStructureCP(structureName = "Subtype2");
-
-		WebContent.addWithStructureCP(
-			structureName = "Subtype2",
-			webContentTitle = "WC Title 2");
-
-		PortletEntry.publish();
-
-		WebContentNavigator.openWebContentAdmin(siteURLKey = "test-site-name");
-
-		WebContentNavigator.gotoEditCP(webContentTitle = "WC Title 1");
-
-		WebContent.selectCategory(
-			categoryName = "Category 1",
-			userSegmentDetailTitle = "${userSegmentDetailTitle}",
-			vocabularyName = "Vocabulary Name");
-
-		WebContent.selectCategory(
-			categoryName = "Category 2",
-			userSegmentDetailTitle = "${userSegmentDetailTitle}",
-			vocabularyName = "Vocabulary Name");
-
-		PortletEntry.publish();
-
-		WebContentNavigator.gotoEditCP(webContentTitle = "WC Title 2");
-
-		WebContent.selectCategory(
-			categoryName = "Category 1",
-			userSegmentDetailTitle = "${userSegmentDetailTitle}",
-			vocabularyName = "Vocabulary Name");
-
-		PortletEntry.publish();
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Content",
-			panel = "Applications",
-			portlet = "Content Dashboard");
-
-		Pause(locator1 = "5000");
-
-		ContentDashboard.filterByCategory(
-			categoryName = "Category 1",
-			filterOption = "Categories");
-
-		ContentDashboard.filterBySubtype(
-			filterOption = "Subtype",
-			subtypeName = "Subtype1");
-
-		Pause(locator1 = "3000");
-
-		AssertTextPresent(
-			locator1 = "ContentDashboard#FIRST_ELEMENT_LISTED",
-			value1 = "WC Title 1");
-
-		JSONWebcontent.deleteWebContent(
-			groupName = "Test Site Name",
-			title = "WC Title 1");
-
-		JSONWebcontent.deleteWebContent(
-			groupName = "Test Site Name",
-			title = "WC Title 2");
-
-		Category.openCategoriesAdmin(siteURLKey = "test-site-name");
-
-		Vocabulary.deleteByMenuCP(vocabularyName = "Vocabulary Name");
 	}
 
 	@description = "Validate if the user can filter by multiple tags"
@@ -2047,6 +1928,44 @@ definition {
 		WebContent.deleteCP(
 			siteURLKey = "test-site-name",
 			webContentTitle = "WC Title Scheduled");
+	}
+
+	@description = "LPS-132411 Given The Type filter modal
+	When the user selects one or more subtypes
+	Then the subtypes selected appear as filter boxes above the Content table in the Content Dashboard, with the format Subtype: [subtypen_name]"
+	@priority = "5"
+	test FilterBySubtype {
+		property portal.acceptance = "true";
+
+		task ("Create a Web Content") {
+			JSONWebcontent.addWebContent(
+				content = "Webcontent Content",
+				groupName = "Test Site Name",
+				title = "Webcontent Title");
+		}
+
+		task ("Navigate to the content Dashboard") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Content",
+				panel = "Applications",
+				portlet = "Content Dashboard");
+		}
+
+		task ("Filter by Type") {
+			ContentDashboard.filterByType(
+				filterOption = "Type",
+				subtypeName = "Basic Web Content");
+		}
+
+		task ("Assert that the web content and filter label are present") {
+			AssertTextPresent(
+				locator1 = "ContentDashboard#FIRST_ELEMENT_LISTED",
+				value1 = "Webcontent Title");
+
+			AssertTextPresent(
+				locator1 = "ContentDashboard#FILTER_TEXT",
+				value1 = "Subtype: Basic Web Content");
+		}
 	}
 
 	@description = "Validate if the user can filter by tag"
@@ -2902,6 +2821,64 @@ definition {
 		}
 	}
 
+	@description = "LPS-131187 Given the Content Dashboard table
+	When a document is added
+	Then its type will be shown in the Type column"
+	@priority = "3"
+	test TypeColumnForDocument {
+		property osgi.module.configuration.file.names = "com.liferay.content.dashboard.web.internal.configuration.FFContentDashboardDocumentConfiguration.config";
+		property osgi.module.configurations = "enabled=B&quot;true&quot;";
+		property portal.acceptance = "true";
+
+		task ("Create document via JSON") {
+			task ("Create a new Document") {
+				JSONDocument.addFile(
+					dmDocumentDescription = "DM Document Description",
+					dmDocumentTitle = "DM Document Title",
+					groupName = "Test Site Name");
+			}
+		}
+
+		task ("Go to Content Dashboard") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Content",
+				panel = "Applications",
+				portlet = "Content Dashboard");
+		}
+
+		task ("Assert the type of the web content is shown in the Type column") {
+			AssertTextPresent(
+				locator1 = "ContentDashboard#TYPE_COLUMN_VALUE",
+				value1 = "Document");
+		}
+	}
+
+	@description = "LPS-131187 Given the Content Dashboard table
+	When a web content is added
+	Then its type will be shown in the Type column"
+	@priority = "3"
+	test TypeColumnForWebContent {
+		task ("Create WC via JSON") {
+			JSONWebcontent.addWebContent(
+				content = "WC WebContent Content",
+				groupName = "Test Site Name",
+				title = "WC WebContent Title");
+		}
+
+		task ("Go to Content Dashboard") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Content",
+				panel = "Applications",
+				portlet = "Content Dashboard");
+		}
+
+		task ("Assert the type of the web content is shown in the Type column") {
+			AssertTextPresent(
+				locator1 = "ContentDashboard#TYPE_COLUMN_VALUE",
+				value1 = "Web Content Article");
+		}
+	}
+
 	@description = "LPS-122873 When the user uncheck any checkbox from the vocab2, the relative ordering of the categories remain the same"
 	@priority = "3"
 	test UncheckACategoryInTheContentPanel {
@@ -3008,34 +2985,34 @@ definition {
 		}
 	}
 
-	@description = "Validate if the user can open de Info side panel of a web content"
+	@description = "LPS-114912: Validate if the user can open de Info side panel of a web content"
 	@priority = "5"
 	test WebContentViewInfoPanel {
 		property portal.acceptance = "true";
 
-		JSONWebcontent.addWebContent(
-			content = "WC Content",
-			groupName = "Test Site Name",
-			title = "WC Title");
+		task ("Create a web content") {
+			JSONWebcontent.addWebContent(
+				content = "WC Content",
+				groupName = "Test Site Name",
+				title = "WC Title");
+		}
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Content",
-			panel = "Applications",
-			portlet = "Content Dashboard");
+		task ("Go to Content Dashboard") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Content",
+				panel = "Applications",
+				portlet = "Content Dashboard");
+		}
 
-		Pause(locator1 = "3000");
+		task ("Open the Info panel") {
+			ContentDashboard.openInfoPanelByDropdownMenu();
 
-		ContentDashboard.openInfoPanelByDropdownMenu();
+			AssertTextPresent(
+				locator1 = "ContentDashboard#INFO_PANEL_TITLE",
+				value1 = "WC Title");
 
-		AssertTextPresent(
-			locator1 = "ContentDashboard#INFO_PANEL_TITLE",
-			value1 = "Content Info");
-
-		Click(locator1 = "ContentDashboard#CLOSE_INFO_PANEL_BUTTON");
-
-		JSONWebcontent.deleteWebContent(
-			groupName = "Test Site Name",
-			title = "WC Title");
+			Click(locator1 = "ContentDashboard#CLOSE_INFO_PANEL_BUTTON");
+		}
 	}
 
 }

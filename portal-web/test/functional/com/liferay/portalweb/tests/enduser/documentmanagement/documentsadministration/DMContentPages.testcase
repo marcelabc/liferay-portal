@@ -45,6 +45,10 @@ definition {
 
 		PageEditor.clickPublish();
 
+		ContentPagesNavigator.openViewContentPage(
+			pageName = "Test Content Page Name",
+			siteName = "Guest");
+
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 
 		DMDocument.addMultiplePG(
@@ -100,7 +104,7 @@ definition {
 
 		SelectFrame(value1 = "relative=top");
 
-		Alert.viewSuccessMessageText(successMessage = "Changes saved.");
+		Alert.viewSuccessMessageText(successMessage = "Changes Saved");
 
 		DMNavigator.gotoDocumentPG(dmDocumentTitle = "Document_2");
 
@@ -125,6 +129,10 @@ definition {
 		DMDocument.enableActionsMenuOnPortlet();
 
 		PageEditor.clickPublish();
+
+		ContentPagesNavigator.openViewContentPage(
+			pageName = "Test Content Page Name",
+			siteName = "Guest");
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 
@@ -177,6 +185,10 @@ definition {
 		DMDocument.enableActionsMenuOnPortlet();
 
 		PageEditor.clickPublish();
+
+		ContentPagesNavigator.openViewContentPage(
+			pageName = "Test Content Page Name",
+			siteName = "Guest");
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "list");
 

@@ -17,9 +17,9 @@ package com.liferay.object.admin.rest.internal.dto.v1_0.util;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectField;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
-import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Gabriel Albuquerque
@@ -27,9 +27,10 @@ import java.util.Collections;
 public class ObjectFieldUtil {
 
 	public static ObjectField toObjectField(
+		Map<String, Map<String, String>> actions,
 		com.liferay.object.model.ObjectField serviceBuilderObjectField) {
 
-		return new ObjectField() {
+		ObjectField objectField = new ObjectField() {
 			{
 				id = serviceBuilderObjectField.getObjectFieldId();
 				indexed = serviceBuilderObjectField.getIndexed();
@@ -37,11 +38,20 @@ public class ObjectFieldUtil {
 					serviceBuilderObjectField.getIndexedAsKeyword();
 				indexedLanguageId =
 					serviceBuilderObjectField.getIndexedLanguageId();
+				label = LocalizedMapUtil.getI18nMap(
+					serviceBuilderObjectField.getLabelMap());
+				listTypeDefinitionId =
+					serviceBuilderObjectField.getListTypeDefinitionId();
 				name = serviceBuilderObjectField.getName();
 				required = serviceBuilderObjectField.isRequired();
-				type = serviceBuilderObjectField.getType();
+				type = ObjectField.Type.create(
+					serviceBuilderObjectField.getType());
 			}
 		};
+
+		objectField.setActions(actions);
+
+		return objectField;
 	}
 
 	public static com.liferay.object.model.ObjectField toObjectField(
@@ -51,6 +61,8 @@ public class ObjectFieldUtil {
 		com.liferay.object.model.ObjectField serviceBuilderObjectField =
 			objectFieldLocalService.createObjectField(0L);
 
+		serviceBuilderObjectField.setListTypeDefinitionId(
+			GetterUtil.getLong(objectField.getListTypeDefinitionId()));
 		serviceBuilderObjectField.setIndexed(
 			GetterUtil.getBoolean(objectField.getIndexed()));
 		serviceBuilderObjectField.setIndexedAsKeyword(
@@ -58,12 +70,11 @@ public class ObjectFieldUtil {
 		serviceBuilderObjectField.setIndexedLanguageId(
 			objectField.getIndexedLanguageId());
 		serviceBuilderObjectField.setLabelMap(
-			Collections.singletonMap(
-				LocaleUtil.getSiteDefault(), objectField.getName()));
+			LocalizedMapUtil.getLocalizedMap(objectField.getLabel()));
 		serviceBuilderObjectField.setName(objectField.getName());
 		serviceBuilderObjectField.setRequired(
 			GetterUtil.getBoolean(objectField.getRequired()));
-		serviceBuilderObjectField.setType(objectField.getType());
+		serviceBuilderObjectField.setType(objectField.getTypeAsString());
 
 		return serviceBuilderObjectField;
 	}

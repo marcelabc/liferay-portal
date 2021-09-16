@@ -134,7 +134,7 @@ renderResponse.setTitle(categoryDisplayName);
 				</clay:content-row>
 
 				<liferay-ui:search-container
-					emptyResultsMessage='<%= LanguageUtil.format(request, "no-entries-for-x-have-been-added-yet", factoryConfigurationModelName) %>'
+					emptyResultsMessage='<%= LanguageUtil.format(request, "no-entries-for-x-have-been-added-yet.-use-the-add-button-above-to-add-the-first", factoryConfigurationModelName) %>'
 					iteratorURL='<%=
 						PortletURLBuilder.createRenderURL(
 							renderResponse
@@ -215,7 +215,7 @@ renderResponse.setTitle(categoryDisplayName);
 										url="<%= deleteConfigActionURL %>"
 									/>
 
-									<portlet:resourceURL id="export" var="exportURL">
+									<portlet:resourceURL id="/configuration_admin/export_configuration" var="exportURL">
 										<portlet:param name="factoryPid" value="<%= curConfigurationModel.getFactoryPid() %>" />
 										<portlet:param name="pid" value="<%= curConfigurationModel.getID() %>" />
 									</portlet:resourceURL>

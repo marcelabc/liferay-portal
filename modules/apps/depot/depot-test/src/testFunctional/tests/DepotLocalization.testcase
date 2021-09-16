@@ -119,9 +119,7 @@ definition {
 				localizationName4 = "fr-FR");
 		}
 
-		DepotNavigator.openDepotDocumentsAndMediaAdmin(depotName = "Test Depot Name");
-
-		DMNavigator.gotoDocumentType();
+		DepotNavigator.openDepotDocumentTypeAdmin(depotName = "Test Depot Name");
 
 		LexiconEntry.gotoAdd();
 
@@ -264,9 +262,9 @@ definition {
 			site = "false",
 			title = "WC WebContent Title");
 
-		DepotNavigator.openDepotWebContentAdmin(depotName = "Test Depot Name");
-
-		WebContentNavigator.gotoEditCP(webContentTitle = "WC WebContent Title");
+		DepotNavigator.openToEditWCEntry(
+			depotName = "Test Depot Name",
+			webContentTitle = "WC WebContent Title");
 
 		Depot.viewLanguageOrderInWebContent(
 			localizationName1 = "en-US",

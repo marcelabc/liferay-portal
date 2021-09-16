@@ -57,20 +57,14 @@ public class DB2SQLTransformerLogic extends BaseSQLTransformerLogic {
 
 	@Override
 	protected String replaceCastText(Matcher matcher) {
-		return matcher.replaceAll("CAST($1 AS VARCHAR(32672))");
+		return matcher.replaceAll("CAST($1 AS VARCHAR(2000))");
 	}
 
 	@Override
 	protected String replaceDropTableIfExistsText(Matcher matcher) {
-		StringBundler sb = new StringBundler(5);
-
-		sb.append("BEGIN\n");
-		sb.append("DECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\n");
-		sb.append("BEGIN END;\n");
-		sb.append("EXECUTE IMMEDIATE 'DROP TABLE $1';\n");
-		sb.append("END");
-
-		String dropTableIfExists = sb.toString();
+		String dropTableIfExists = StringBundler.concat(
+			"BEGIN\n", "DECLARE CONTINUE HANDLER FOR SQLSTATE '42704'\n",
+			"BEGIN END;\n", "EXECUTE IMMEDIATE 'DROP TABLE $1';\n", "END");
 
 		return matcher.replaceAll(dropTableIfExists);
 	}
@@ -79,8 +73,7 @@ public class DB2SQLTransformerLogic extends BaseSQLTransformerLogic {
 		return (String sql) -> {
 			Matcher matcher = _questionMarkPattern.matcher(sql);
 
-			return matcher.replaceAll(
-				" COALESCE(CAST(? AS VARCHAR(32672)),'')");
+			return matcher.replaceAll(" COALESCE(CAST(? AS VARCHAR(2000)),'')");
 		};
 	}
 

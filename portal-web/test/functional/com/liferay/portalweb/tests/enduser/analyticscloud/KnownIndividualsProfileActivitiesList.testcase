@@ -1,10 +1,9 @@
 @component-name = "portal-analytics-cloud"
 definition {
 
-	property analytics.cloud.enabled = "true";
-	property minimum.slave.ram = "32";
 	property portal.release = "false";
 	property portal.upstream = "true";
+	property property.group = "analytics.cloud.profile";
 	property testray.main.component.name = "Analytics Cloud";
 
 	setUp {
@@ -67,9 +66,7 @@ definition {
 			Pause(locator1 = "5000");
 		}
 
-		ACUtils.closeAllSessions();
-
-		Pause(locator1 = "30000");
+		ACUtils.closeAllSessionsAndWait();
 
 		ACUtils.launchAC();
 

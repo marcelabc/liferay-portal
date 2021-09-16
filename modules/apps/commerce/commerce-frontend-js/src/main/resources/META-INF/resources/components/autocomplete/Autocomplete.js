@@ -26,7 +26,7 @@ import {getData, getValueFromItem} from '../../utilities/index';
 import {showErrorNotification} from '../../utilities/notifications';
 import InfiniteScroller from '../infinite_scroller/InfiniteScroller';
 
-function Autocomplete({onItemsUpdated, onValueUpdated, ...props}) {
+function Autocomplete({onChange, onItemsUpdated, onValueUpdated, ...props}) {
 	const [query, setQuery] = useState(props.initialLabel || '');
 	const [initialised, setInitialised] = useState(
 		Boolean(props.customViewModuleUrl || props.customView)
@@ -83,7 +83,11 @@ function Autocomplete({onItemsUpdated, onValueUpdated, ...props}) {
 		if (onValueUpdated) {
 			onValueUpdated(value, selectedItem);
 		}
-	}, [selectedItem, props.id, props.itemsKey, onValueUpdated]);
+
+		if (onChange) {
+			onChange({target: {value}});
+		}
+	}, [selectedItem, props.id, props.itemsKey, onChange, onValueUpdated]);
 
 	useEffect(() => {
 		if (query) {
@@ -256,6 +260,9 @@ function Autocomplete({onItemsUpdated, onValueUpdated, ...props}) {
 						value={currentValue || ''}
 					/>
 					<ClayAutocomplete.Input
+						disabled={props.readOnly}
+						id={props.id}
+						name={props.name}
 						onChange={(event) => {
 							updateSelectedItem(null);
 							updatePage(1);
@@ -329,9 +336,11 @@ Autocomplete.propTypes = {
 		PropTypes.arrayOf(PropTypes.string),
 	]).isRequired,
 	loadingView: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+	onChange: PropTypes.func,
 	onItemsUpdated: PropTypes.func,
 	onValueUpdated: PropTypes.func,
 	required: PropTypes.bool,
+	value: PropTypes.string,
 };
 
 Autocomplete.defaultProps = {

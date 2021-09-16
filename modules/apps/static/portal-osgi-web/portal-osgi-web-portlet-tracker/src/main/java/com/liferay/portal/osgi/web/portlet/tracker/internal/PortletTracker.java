@@ -1327,8 +1327,6 @@ public class PortletTracker
 
 		List<Company> companies = _companyLocalService.getCompanies(false);
 
-		_portletLocalService.clearCache();
-
 		for (Company company : companies) {
 			futures.add(
 				_executorService.submit(
@@ -1354,6 +1352,8 @@ public class PortletTracker
 				throw new PortalException(exception);
 			}
 		}
+
+		_portletLocalService.clearCache();
 	}
 
 	protected Object get(
@@ -1591,10 +1591,12 @@ public class PortletTracker
 
 			_serviceRegistrations.remove(_bundle.getBundleId());
 
-			BundleContext bundleContext = _bundle.getBundleContext();
+			if (_bundle.getState() != Bundle.STOPPING) {
+				BundleContext bundleContext = _bundle.getBundleContext();
 
-			bundleContext.ungetService(
-				_servletContextHelperRegistrationServiceReference);
+				bundleContext.ungetService(
+					_servletContextHelperRegistrationServiceReference);
+			}
 		}
 
 		public synchronized void setPortletApp(PortletApp portletApp) {

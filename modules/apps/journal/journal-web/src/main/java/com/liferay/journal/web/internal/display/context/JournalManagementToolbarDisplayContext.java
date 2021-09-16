@@ -18,6 +18,7 @@ import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.SearchContainerManagementToolbarDisplayContext;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.LabelItem;
@@ -128,8 +129,7 @@ public class JournalManagementToolbarDisplayContext
 						dropdownItem -> {
 							dropdownItem.putData("action", "deleteEntries");
 
-							boolean trashEnabled = _trashHelper.isTrashEnabled(
-								_themeDisplay.getScopeGroupId());
+							boolean trashEnabled = _isTrashEnabled();
 
 							dropdownItem.setIcon(
 								trashEnabled ? "trash" : "times-circle");
@@ -151,7 +151,8 @@ public class JournalManagementToolbarDisplayContext
 		).build();
 	}
 
-	public Map<String, Object> getAdditionalProps() throws Exception {
+	@Override
+	public Map<String, Object> getAdditionalProps() {
 		return HashMapBuilder.<String, Object>put(
 			"addArticleURL",
 			PortletURLBuilder.createRenderURL(
@@ -209,8 +210,7 @@ public class JournalManagementToolbarDisplayContext
 				LiferayWindowState.POP_UP
 			).buildString()
 		).put(
-			"trashEnabled",
-			_trashHelper.isTrashEnabled(_themeDisplay.getScopeGroupId())
+			"trashEnabled", _isTrashEnabled()
 		).put(
 			"viewDDMStructureArticlesURL",
 			PortletURLBuilder.createRenderURL(
@@ -466,14 +466,14 @@ public class JournalManagementToolbarDisplayContext
 			).buildPortletURL(),
 			getNavigationParam(), getNavigation());
 
-		DropdownItem dropdownItem = new DropdownItem();
-
-		dropdownItem.putData("action", "openDDMStructuresSelector");
-		dropdownItem.setActive(_journalDisplayContext.isNavigationStructure());
-		dropdownItem.setLabel(
-			LanguageUtil.get(httpServletRequest, "structures"));
-
-		filterNavigationDropdownItems.add(dropdownItem);
+		filterNavigationDropdownItems.add(
+			DropdownItemBuilder.putData(
+				"action", "openDDMStructuresSelector"
+			).setActive(
+				_journalDisplayContext.isNavigationStructure()
+			).setLabel(
+				LanguageUtil.get(httpServletRequest, "structures")
+			).build());
 
 		return filterNavigationDropdownItems;
 	}
@@ -668,6 +668,20 @@ public class JournalManagementToolbarDisplayContext
 				_journalDisplayContext.getFolderId(), ActionKeys.ADD_ARTICLE)) {
 
 			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isTrashEnabled() {
+		try {
+			return _trashHelper.isTrashEnabled(_themeDisplay.getScopeGroupId());
+		}
+		catch (PortalException portalException) {
+
+			// LPS-52675
+
+			_log.error(portalException, portalException);
 		}
 
 		return false;

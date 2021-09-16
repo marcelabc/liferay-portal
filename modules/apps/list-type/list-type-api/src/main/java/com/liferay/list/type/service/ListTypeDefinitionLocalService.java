@@ -37,6 +37,8 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import java.io.Serializable;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -78,6 +80,11 @@ public interface ListTypeDefinitionLocalService
 	public ListTypeDefinition addListTypeDefinition(
 		ListTypeDefinition listTypeDefinition);
 
+	@Indexable(type = IndexableType.REINDEX)
+	public ListTypeDefinition addListTypeDefinition(
+			long userId, Map<Locale, String> nameMap)
+		throws PortalException;
+
 	/**
 	 * Creates a new list type definition with the primary key. Does not add the list type definition to the database.
 	 *
@@ -103,10 +110,12 @@ public interface ListTypeDefinitionLocalService
 	 *
 	 * @param listTypeDefinition the list type definition
 	 * @return the list type definition that was removed
+	 * @throws PortalException
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	public ListTypeDefinition deleteListTypeDefinition(
-		ListTypeDefinition listTypeDefinition);
+			ListTypeDefinition listTypeDefinition)
+		throws PortalException;
 
 	/**
 	 * Deletes the list type definition with the primary key from the database. Also notifies the appropriate model listeners.
@@ -302,5 +311,10 @@ public interface ListTypeDefinitionLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public ListTypeDefinition updateListTypeDefinition(
 		ListTypeDefinition listTypeDefinition);
+
+	@Indexable(type = IndexableType.REINDEX)
+	public ListTypeDefinition updateListTypeDefinition(
+			long listTypeDefinitionId, Map<Locale, String> nameMap)
+		throws PortalException;
 
 }

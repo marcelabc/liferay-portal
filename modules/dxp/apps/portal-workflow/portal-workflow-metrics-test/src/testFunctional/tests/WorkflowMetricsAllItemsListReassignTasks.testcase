@@ -199,6 +199,8 @@ definition {
 
 		Refresh();
 
+		Click(locator1 = "WorkflowAllItems#WORKFLOW_ALL_ITEMS_ASSIGNEE_HEADER");
+
 		Click(
 			locator1 = "WorkflowAllItems#KEBAB_DROPDOWN",
 			task = "1");
@@ -307,6 +309,8 @@ definition {
 		Pause(locator1 = "1000");
 
 		Refresh();
+
+		Click(locator1 = "WorkflowAllItems#WORKFLOW_ALL_ITEMS_ASSIGNEE_HEADER");
 
 		Click(
 			locator1 = "WorkflowAllItems#KEBAB_DROPDOWN",

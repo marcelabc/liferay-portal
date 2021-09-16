@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.segments.constants.SegmentsEntryConstants;
 
 import java.util.List;
@@ -61,6 +62,7 @@ public class AssetListAssetEntryProviderTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE,
 			SynchronousDestinationTestRule.INSTANCE);
 
 	@Before
@@ -69,6 +71,44 @@ public class AssetListAssetEntryProviderTest {
 
 		_serviceContext = ServiceContextTestUtil.getServiceContext(
 			_group.getGroupId(), TestPropsValues.getUserId());
+	}
+
+	@Test
+	public void testGetDynamicAssetEntriesByKeywords() throws Exception {
+		JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "title1",
+			RandomTestUtil.randomString());
+		JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "title2",
+			RandomTestUtil.randomString());
+		JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "title3",
+			RandomTestUtil.randomString());
+
+		AssetListEntry assetListEntry =
+			_assetListEntryLocalService.addAssetListEntry(
+				TestPropsValues.getUserId(), _group.getGroupId(),
+				RandomTestUtil.randomString(),
+				AssetListEntryTypeConstants.TYPE_DYNAMIC, _serviceContext);
+
+		List<AssetEntry> assetEntries =
+			_assetListAssetEntryProvider.getAssetEntries(
+				assetListEntry, new long[] {SegmentsEntryConstants.ID_DEFAULT},
+				String.valueOf(TestPropsValues.getUserId()), QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS);
+
+		Assert.assertEquals(assetEntries.toString(), 3, assetEntries.size());
+
+		assetEntries = _assetListAssetEntryProvider.getAssetEntries(
+			assetListEntry, new long[] {SegmentsEntryConstants.ID_DEFAULT},
+			new long[0][], "title1",
+			String.valueOf(TestPropsValues.getUserId()), QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS);
+
+		Assert.assertEquals(assetEntries.toString(), 1, assetEntries.size());
 	}
 
 	@Test
@@ -289,6 +329,64 @@ public class AssetListAssetEntryProviderTest {
 
 			Assert.assertEquals(assetEntry.getEntryId(), assetEntryIds[i]);
 		}
+	}
+
+	@Test
+	public void testGetManualAssetEntriesByKeywords() throws Exception {
+		JournalArticle article1 = JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "title1",
+			RandomTestUtil.randomString());
+
+		AssetEntry assetEntry1 = _assetEntryLocalService.fetchEntry(
+			JournalArticle.class.getName(), article1.getResourcePrimKey());
+
+		JournalArticle article2 = JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "title2",
+			RandomTestUtil.randomString());
+
+		AssetEntry assetEntry2 = _assetEntryLocalService.fetchEntry(
+			JournalArticle.class.getName(), article2.getResourcePrimKey());
+
+		JournalArticle article3 = JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID, "title3",
+			RandomTestUtil.randomString());
+
+		AssetEntry assetEntry3 = _assetEntryLocalService.fetchEntry(
+			JournalArticle.class.getName(), article3.getResourcePrimKey());
+
+		AssetListEntry assetListEntry =
+			_assetListEntryLocalService.addAssetListEntry(
+				TestPropsValues.getUserId(), _group.getGroupId(),
+				RandomTestUtil.randomString(),
+				AssetListEntryTypeConstants.TYPE_MANUAL, _serviceContext);
+
+		long[] assetEntryIds = {
+			assetEntry1.getEntryId(), assetEntry2.getEntryId(),
+			assetEntry3.getEntryId()
+		};
+
+		_assetListEntryLocalService.addAssetEntrySelections(
+			assetListEntry.getAssetListEntryId(), assetEntryIds,
+			SegmentsEntryConstants.ID_DEFAULT, _serviceContext);
+
+		List<AssetEntry> assetEntries =
+			_assetListAssetEntryProvider.getAssetEntries(
+				assetListEntry, new long[] {SegmentsEntryConstants.ID_DEFAULT},
+				String.valueOf(TestPropsValues.getUserId()), QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS);
+
+		Assert.assertEquals(assetEntries.toString(), 3, assetEntries.size());
+
+		assetEntries = _assetListAssetEntryProvider.getAssetEntries(
+			assetListEntry, new long[] {SegmentsEntryConstants.ID_DEFAULT},
+			new long[0][], "title1",
+			String.valueOf(TestPropsValues.getUserId()), QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS);
+
+		Assert.assertEquals(assetEntries.toString(), 1, assetEntries.size());
 	}
 
 	@Test

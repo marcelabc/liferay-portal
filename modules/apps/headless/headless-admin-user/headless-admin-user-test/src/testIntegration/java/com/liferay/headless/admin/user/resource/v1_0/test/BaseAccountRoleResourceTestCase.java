@@ -34,7 +34,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
@@ -202,22 +201,22 @@ public abstract class BaseAccountRoleResourceTestCase {
 	}
 
 	@Test
-	public void testDeleteAccountAccountRoleUserAccountAssociationByExternalReferenceCode()
+	public void testDeleteAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCode()
 		throws Exception {
 
 		@SuppressWarnings("PMD.UnusedLocalVariable")
 		AccountRole accountRole =
-			testDeleteAccountAccountRoleUserAccountAssociationByExternalReferenceCode_addAccountRole();
+			testDeleteAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCode_addAccountRole();
 
 		assertHttpResponseStatusCode(
 			204,
 			accountRoleResource.
-				deleteAccountAccountRoleUserAccountAssociationByExternalReferenceCodeHttpResponse(
+				deleteAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCodeHttpResponse(
 					null, accountRole.getId(), null));
 	}
 
 	protected AccountRole
-			testDeleteAccountAccountRoleUserAccountAssociationByExternalReferenceCode_addAccountRole()
+			testDeleteAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCode_addAccountRole()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -225,50 +224,159 @@ public abstract class BaseAccountRoleResourceTestCase {
 	}
 
 	@Test
-	public void testPostAccountAccountRoleUserAccountAssociationByExternalReferenceCode()
+	public void testPostAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCode()
 		throws Exception {
 
 		@SuppressWarnings("PMD.UnusedLocalVariable")
 		AccountRole accountRole =
-			testPostAccountAccountRoleUserAccountAssociationByExternalReferenceCode_addAccountRole();
+			testPostAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCode_addAccountRole();
 
 		assertHttpResponseStatusCode(
 			204,
 			accountRoleResource.
-				postAccountAccountRoleUserAccountAssociationByExternalReferenceCodeHttpResponse(
+				postAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCodeHttpResponse(
 					null, accountRole.getId(), null));
 
 		assertHttpResponseStatusCode(
 			404,
 			accountRoleResource.
-				postAccountAccountRoleUserAccountAssociationByExternalReferenceCodeHttpResponse(
+				postAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCodeHttpResponse(
 					null, 0L, null));
 	}
 
 	protected AccountRole
-			testPostAccountAccountRoleUserAccountAssociationByExternalReferenceCode_addAccountRole()
+			testPostAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCode_addAccountRole()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage()
+		throws Exception {
+
+		String accountExternalReferenceCode =
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getAccountExternalReferenceCode();
+		String irrelevantAccountExternalReferenceCode =
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getIrrelevantAccountExternalReferenceCode();
+		String userAccountExternalReferenceCode =
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getUserAccountExternalReferenceCode();
+		String irrelevantUserAccountExternalReferenceCode =
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getIrrelevantUserAccountExternalReferenceCode();
+
+		Page<AccountRole> page =
+			accountRoleResource.
+				getAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage(
+					accountExternalReferenceCode,
+					userAccountExternalReferenceCode);
+
+		Assert.assertEquals(0, page.getTotalCount());
+
+		if ((irrelevantAccountExternalReferenceCode != null) &&
+			(irrelevantUserAccountExternalReferenceCode != null)) {
+
+			AccountRole irrelevantAccountRole =
+				testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_addAccountRole(
+					irrelevantAccountExternalReferenceCode,
+					irrelevantUserAccountExternalReferenceCode,
+					randomIrrelevantAccountRole());
+
+			page =
+				accountRoleResource.
+					getAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage(
+						irrelevantAccountExternalReferenceCode,
+						irrelevantUserAccountExternalReferenceCode);
+
+			Assert.assertEquals(1, page.getTotalCount());
+
+			assertEquals(
+				Arrays.asList(irrelevantAccountRole),
+				(List<AccountRole>)page.getItems());
+			assertValid(page);
+		}
+
+		AccountRole accountRole1 =
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_addAccountRole(
+				accountExternalReferenceCode, userAccountExternalReferenceCode,
+				randomAccountRole());
+
+		AccountRole accountRole2 =
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_addAccountRole(
+				accountExternalReferenceCode, userAccountExternalReferenceCode,
+				randomAccountRole());
+
+		page =
+			accountRoleResource.
+				getAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage(
+					accountExternalReferenceCode,
+					userAccountExternalReferenceCode);
+
+		Assert.assertEquals(2, page.getTotalCount());
+
+		assertEqualsIgnoringOrder(
+			Arrays.asList(accountRole1, accountRole2),
+			(List<AccountRole>)page.getItems());
+		assertValid(page);
+	}
+
+	protected AccountRole
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_addAccountRole(
+				String accountExternalReferenceCode,
+				String userAccountExternalReferenceCode,
+				AccountRole accountRole)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getAccountExternalReferenceCode()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getIrrelevantAccountExternalReferenceCode()
+		throws Exception {
+
+		return null;
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getUserAccountExternalReferenceCode()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage_getIrrelevantUserAccountExternalReferenceCode()
+		throws Exception {
+
+		return null;
 	}
 
 	@Test
 	public void testGetAccountAccountRolesByExternalReferenceCodePage()
 		throws Exception {
 
-		Page<AccountRole> page =
-			accountRoleResource.
-				getAccountAccountRolesByExternalReferenceCodePage(
-					testGetAccountAccountRolesByExternalReferenceCodePage_getExternalReferenceCode(),
-					RandomTestUtil.randomString(), Pagination.of(1, 2), null);
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		String externalReferenceCode =
 			testGetAccountAccountRolesByExternalReferenceCodePage_getExternalReferenceCode();
 		String irrelevantExternalReferenceCode =
 			testGetAccountAccountRolesByExternalReferenceCodePage_getIrrelevantExternalReferenceCode();
+
+		Page<AccountRole> page =
+			accountRoleResource.
+				getAccountAccountRolesByExternalReferenceCodePage(
+					externalReferenceCode, RandomTestUtil.randomString(),
+					Pagination.of(1, 10), null);
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantExternalReferenceCode != null) {
 			AccountRole irrelevantAccountRole =
@@ -301,7 +409,7 @@ public abstract class BaseAccountRoleResourceTestCase {
 		page =
 			accountRoleResource.
 				getAccountAccountRolesByExternalReferenceCodePage(
-					externalReferenceCode, null, Pagination.of(1, 2), null);
+					externalReferenceCode, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -541,16 +649,171 @@ public abstract class BaseAccountRoleResourceTestCase {
 	}
 
 	@Test
-	public void testGetAccountAccountRolesPage() throws Exception {
-		Page<AccountRole> page = accountRoleResource.getAccountAccountRolesPage(
-			testGetAccountAccountRolesPage_getAccountId(),
-			RandomTestUtil.randomString(), Pagination.of(1, 2), null);
+	public void testDeleteAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddress()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		AccountRole accountRole =
+			testDeleteAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddress_addAccountRole();
+
+		assertHttpResponseStatusCode(
+			204,
+			accountRoleResource.
+				deleteAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddressHttpResponse(
+					null, accountRole.getId(), null));
+	}
+
+	protected AccountRole
+			testDeleteAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddress_addAccountRole()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testPostAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddress()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		AccountRole accountRole =
+			testPostAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddress_addAccountRole();
+
+		assertHttpResponseStatusCode(
+			204,
+			accountRoleResource.
+				postAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddressHttpResponse(
+					null, accountRole.getId(), null));
+
+		assertHttpResponseStatusCode(
+			404,
+			accountRoleResource.
+				postAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddressHttpResponse(
+					null, 0L, null));
+	}
+
+	protected AccountRole
+			testPostAccountByExternalReferenceCodeAccountRoleUserAccountByEmailAddress_addAccountRole()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage()
+		throws Exception {
+
+		String externalReferenceCode =
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getExternalReferenceCode();
+		String irrelevantExternalReferenceCode =
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getIrrelevantExternalReferenceCode();
+		String emailAddress =
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getEmailAddress();
+		String irrelevantEmailAddress =
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getIrrelevantEmailAddress();
+
+		Page<AccountRole> page =
+			accountRoleResource.
+				getAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage(
+					externalReferenceCode, emailAddress);
 
 		Assert.assertEquals(0, page.getTotalCount());
 
+		if ((irrelevantExternalReferenceCode != null) &&
+			(irrelevantEmailAddress != null)) {
+
+			AccountRole irrelevantAccountRole =
+				testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_addAccountRole(
+					irrelevantExternalReferenceCode, irrelevantEmailAddress,
+					randomIrrelevantAccountRole());
+
+			page =
+				accountRoleResource.
+					getAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage(
+						irrelevantExternalReferenceCode,
+						irrelevantEmailAddress);
+
+			Assert.assertEquals(1, page.getTotalCount());
+
+			assertEquals(
+				Arrays.asList(irrelevantAccountRole),
+				(List<AccountRole>)page.getItems());
+			assertValid(page);
+		}
+
+		AccountRole accountRole1 =
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_addAccountRole(
+				externalReferenceCode, emailAddress, randomAccountRole());
+
+		AccountRole accountRole2 =
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_addAccountRole(
+				externalReferenceCode, emailAddress, randomAccountRole());
+
+		page =
+			accountRoleResource.
+				getAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage(
+					externalReferenceCode, emailAddress);
+
+		Assert.assertEquals(2, page.getTotalCount());
+
+		assertEqualsIgnoringOrder(
+			Arrays.asList(accountRole1, accountRole2),
+			(List<AccountRole>)page.getItems());
+		assertValid(page);
+	}
+
+	protected AccountRole
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_addAccountRole(
+				String externalReferenceCode, String emailAddress,
+				AccountRole accountRole)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getExternalReferenceCode()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getIrrelevantExternalReferenceCode()
+		throws Exception {
+
+		return null;
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getEmailAddress()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAccountByExternalReferenceCodeUserAccountByEmailAddressAccountRolesPage_getIrrelevantEmailAddress()
+		throws Exception {
+
+		return null;
+	}
+
+	@Test
+	public void testGetAccountAccountRolesPage() throws Exception {
 		Long accountId = testGetAccountAccountRolesPage_getAccountId();
 		Long irrelevantAccountId =
 			testGetAccountAccountRolesPage_getIrrelevantAccountId();
+
+		Page<AccountRole> page = accountRoleResource.getAccountAccountRolesPage(
+			accountId, RandomTestUtil.randomString(), Pagination.of(1, 10),
+			null);
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantAccountId != null) {
 			AccountRole irrelevantAccountRole =
@@ -577,7 +840,7 @@ public abstract class BaseAccountRoleResourceTestCase {
 				accountId, randomAccountRole());
 
 		page = accountRoleResource.getAccountAccountRolesPage(
-			accountId, null, Pagination.of(1, 2), null);
+			accountId, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -855,6 +1118,23 @@ public abstract class BaseAccountRoleResourceTestCase {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
+	}
+
+	protected void assertContains(
+		AccountRole accountRole, List<AccountRole> accountRoles) {
+
+		boolean contains = false;
+
+		for (AccountRole item : accountRoles) {
+			if (equals(accountRole, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			accountRoles + " does not contain " + accountRole, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -1388,8 +1668,8 @@ public abstract class BaseAccountRoleResourceTestCase {
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseAccountRoleResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseAccountRoleResourceTestCase.class);
 
 	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
 

@@ -4,7 +4,7 @@
 <service-builder auto-import-default-references="false" auto-namespace-tables="false" dependency-injector="ds" mvcc-enabled="true" package-path="com.liferay.list.type" short-no-such-exception-enabled="false">
 	<author>Gabriel Albuquerque</author>
 	<namespace>ListType</namespace>
-	<entity local-service="true" name="ListTypeDefinition" remote-service="false" uuid="true">
+	<entity local-service="true" name="ListTypeDefinition" remote-service="true" uuid="true">
 
 		<!-- PK fields -->
 
@@ -20,7 +20,11 @@
 
 		<!-- Other fields -->
 
-		<column localized="true" name="label" type="String" />
+		<column localized="true" name="name" type="String" />
+
+		<!-- References -->
+
+		<reference entity="Resource" package-path="com.liferay.portal" />
 	</entity>
 	<entity local-service="true" name="ListTypeEntry" remote-service="false" uuid="true">
 
@@ -39,6 +43,7 @@
 		<!-- Other fields -->
 
 		<column name="listTypeDefinitionId" type="long" />
+		<column name="key" type="String" />
 		<column localized="true" name="name" type="String" />
 		<column name="type" type="String" />
 
@@ -47,9 +52,14 @@
 		<finder name="ListTypeDefinitionId" return-type="Collection">
 			<finder-column name="listTypeDefinitionId" />
 		</finder>
+		<finder name="LTDI_K" return-type="ListTypeEntry">
+			<finder-column name="listTypeDefinitionId" />
+			<finder-column name="key" />
+		</finder>
 	</entity>
 	<exceptions>
 		<exception>DuplicateListTypeEntry</exception>
-		<exception>ListTypeEntryName</exception>
+		<exception>ListTypeEntryKey</exception>
+		<exception>RequiredListTypeDefinition</exception>
 	</exceptions>
 </service-builder>

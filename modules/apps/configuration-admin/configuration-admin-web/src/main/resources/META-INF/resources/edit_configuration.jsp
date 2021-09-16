@@ -211,7 +211,7 @@ renderResponse.setTitle(categoryDisplayName);
 
 					<c:if test="<%= !configurationModel.hasScopeConfiguration(configurationScopeDisplayContext.getScope()) %>">
 						<aui:alert closeable="<%= false %>" id="errorAlert" type="info">
-							<liferay-ui:message key="this-configuration-is-not-saved-yet" />
+							<liferay-ui:message key="this-configuration-is-not-saved-yet.-the-values-shown-are-the-default" />
 						</aui:alert>
 					</c:if>
 
@@ -246,6 +246,15 @@ renderResponse.setTitle(categoryDisplayName);
 						</c:choose>
 
 						<aui:button href="<%= redirect %>" name="cancel" type="cancel" />
+
+						<c:if test="<%= Validator.isNotNull(configurationModel.getLiferayLearnMessageKey()) && Validator.isNotNull(configurationModel.getLiferayLearnMessageResource()) %>">
+							<div class="btn float-right">
+								<liferay-learn:message
+									key="<%= configurationModel.getLiferayLearnMessageKey() %>"
+									resource="<%= configurationModel.getLiferayLearnMessageResource() %>"
+								/>
+							</div>
+						</c:if>
 					</aui:button-row>
 				</aui:form>
 			</clay:sheet>

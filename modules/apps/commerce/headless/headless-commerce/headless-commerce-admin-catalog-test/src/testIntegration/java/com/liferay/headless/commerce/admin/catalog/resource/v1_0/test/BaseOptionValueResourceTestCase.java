@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
@@ -440,18 +439,17 @@ public abstract class BaseOptionValueResourceTestCase {
 	public void testGetOptionByExternalReferenceCodeOptionValuesPage()
 		throws Exception {
 
-		Page<OptionValue> page =
-			optionValueResource.
-				getOptionByExternalReferenceCodeOptionValuesPage(
-					testGetOptionByExternalReferenceCodeOptionValuesPage_getExternalReferenceCode(),
-					RandomTestUtil.randomString(), Pagination.of(1, 2), null);
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		String externalReferenceCode =
 			testGetOptionByExternalReferenceCodeOptionValuesPage_getExternalReferenceCode();
 		String irrelevantExternalReferenceCode =
 			testGetOptionByExternalReferenceCodeOptionValuesPage_getIrrelevantExternalReferenceCode();
+
+		Page<OptionValue> page =
+			optionValueResource.
+				getOptionByExternalReferenceCodeOptionValuesPage(
+					externalReferenceCode, null, Pagination.of(1, 10), null);
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantExternalReferenceCode != null) {
 			OptionValue irrelevantOptionValue =
@@ -484,7 +482,7 @@ public abstract class BaseOptionValueResourceTestCase {
 		page =
 			optionValueResource.
 				getOptionByExternalReferenceCodeOptionValuesPage(
-					externalReferenceCode, null, Pagination.of(1, 2), null);
+					externalReferenceCode, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -727,15 +725,14 @@ public abstract class BaseOptionValueResourceTestCase {
 
 	@Test
 	public void testGetOptionIdOptionValuesPage() throws Exception {
-		Page<OptionValue> page =
-			optionValueResource.getOptionIdOptionValuesPage(
-				testGetOptionIdOptionValuesPage_getId(),
-				RandomTestUtil.randomString(), Pagination.of(1, 2), null);
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long id = testGetOptionIdOptionValuesPage_getId();
 		Long irrelevantId = testGetOptionIdOptionValuesPage_getIrrelevantId();
+
+		Page<OptionValue> page =
+			optionValueResource.getOptionIdOptionValuesPage(
+				id, null, Pagination.of(1, 10), null);
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantId != null) {
 			OptionValue irrelevantOptionValue =
@@ -762,7 +759,7 @@ public abstract class BaseOptionValueResourceTestCase {
 				id, randomOptionValue());
 
 		page = optionValueResource.getOptionIdOptionValuesPage(
-			id, null, Pagination.of(1, 2), null);
+			id, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -990,6 +987,23 @@ public abstract class BaseOptionValueResourceTestCase {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
+	}
+
+	protected void assertContains(
+		OptionValue optionValue, List<OptionValue> optionValues) {
+
+		boolean contains = false;
+
+		for (OptionValue item : optionValues) {
+			if (equals(optionValue, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			optionValues + " does not contain " + optionValue, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -1522,8 +1536,8 @@ public abstract class BaseOptionValueResourceTestCase {
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseOptionValueResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseOptionValueResourceTestCase.class);
 
 	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
 

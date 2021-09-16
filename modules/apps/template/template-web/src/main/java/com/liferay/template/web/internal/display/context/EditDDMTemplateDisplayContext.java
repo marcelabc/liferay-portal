@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.template.TemplateVariableDefinition;
 import com.liferay.portal.kernel.template.TemplateVariableGroup;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
@@ -45,8 +46,9 @@ import com.liferay.template.web.internal.util.TemplateDDMTemplateUtil;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
 import java.util.ResourceBundle;
+
+import javax.portlet.PortletConfig;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -68,7 +70,7 @@ public class EditDDMTemplateDisplayContext {
 		_ddmTemplateHelper =
 			(DDMTemplateHelper)liferayPortletRequest.getAttribute(
 				DDMTemplateHelper.class.getName());
-		_httpServletRequest = PortalUtil.getHttpServletRequest(
+		httpServletRequest = PortalUtil.getHttpServletRequest(
 			liferayPortletRequest);
 		_themeDisplay = (ThemeDisplay)liferayPortletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -105,18 +107,7 @@ public class EditDDMTemplateDisplayContext {
 			"editorAutocompleteData",
 			JSONFactoryUtil.createJSONObject(
 				_ddmTemplateHelper.getAutocompleteJSON(
-					_httpServletRequest, getLanguageType()))
-		).put(
-			"editorMode",
-			() -> {
-				if (Objects.equals(
-						getLanguageType(), TemplateConstants.LANG_TYPE_FTL)) {
-
-					return TemplateConstants.LANG_TYPE_FTL;
-				}
-
-				return TemplateConstants.LANG_TYPE_VM;
-			}
+					httpServletRequest, TemplateConstants.LANG_TYPE_FTL))
 		).put(
 			"propertiesViewURL",
 			() -> PortletURLBuilder.createRenderURL(
@@ -137,34 +128,24 @@ public class EditDDMTemplateDisplayContext {
 		).put(
 			"script", _getScript()
 		).put(
-			"showLanguageChangeWarning", _getShowLanguageChangeWarning()
-		).put(
 			"templateVariableGroups", _getTemplateVariableGroupJSONArray()
 		).build();
 	}
 
-	public String getLanguageType() {
-		if (_languageType != null) {
-			return _languageType;
+	public String getRefererWebDAVToken() {
+		if (_refererWebDAVToken != null) {
+			return _refererWebDAVToken;
 		}
 
-		String languageType = TemplateConstants.LANG_TYPE_FTL;
+		PortletConfig portletConfig =
+			(PortletConfig)httpServletRequest.getAttribute(
+				JavaConstants.JAVAX_PORTLET_CONFIG);
 
-		DDMTemplate ddmTemplate = getDDMTemplate();
+		_refererWebDAVToken = ParamUtil.getString(
+			httpServletRequest, "refererWebDAVToken",
+			portletConfig.getInitParameter("refererWebDAVToken"));
 
-		if (ddmTemplate != null) {
-			languageType = ddmTemplate.getLanguage();
-		}
-
-		_languageType = languageType;
-
-		return _languageType;
-	}
-
-	public String[] getLanguageTypes() {
-		return new String[] {
-			TemplateConstants.LANG_TYPE_FTL, TemplateConstants.LANG_TYPE_VM
-		};
+		return _refererWebDAVToken;
 	}
 
 	public String getSmallImageSource() {
@@ -208,7 +189,7 @@ public class EditDDMTemplateDisplayContext {
 		}
 
 		_tabs1 = ParamUtil.getString(
-			_liferayPortletRequest, "tabs1", "information-templates");
+			_liferayPortletRequest, "tabs1", "widget-templates");
 
 		return _tabs1;
 	}
@@ -269,39 +250,33 @@ public class EditDDMTemplateDisplayContext {
 		return getClassNameId();
 	}
 
-	protected String[] getTemplateLanguageTypes() {
-		return new String[] {TemplateConstants.LANG_TYPE_FTL};
-	}
-
 	protected Collection<TemplateVariableGroup> getTemplateVariableGroups()
 		throws Exception {
 
 		Map<String, TemplateVariableGroup> templateVariableGroups =
 			TemplateContextHelper.getTemplateVariableGroups(
 				getTemplateHandlerClassNameId(), getClassPK(),
-				getLanguageType(), _themeDisplay.getLocale());
+				TemplateConstants.LANG_TYPE_FTL, _themeDisplay.getLocale());
 
 		return templateVariableGroups.values();
 	}
+
+	protected final HttpServletRequest httpServletRequest;
 
 	private String _getScript() {
 		if (_script != null) {
 			return _script;
 		}
 
-		_languageType = BeanParamUtil.getString(
-			getDDMTemplate(), _httpServletRequest, "language",
-			TemplateConstants.LANG_TYPE_FTL);
-
 		String script = BeanParamUtil.getString(
-			getDDMTemplate(), _httpServletRequest, "script");
+			getDDMTemplate(), httpServletRequest, "script");
 
 		if (Validator.isNull(script)) {
 			script = getDefaultScript();
 		}
 
 		String scriptContent = ParamUtil.getString(
-			_httpServletRequest, "scriptContent");
+			httpServletRequest, "scriptContent");
 
 		if (Validator.isNotNull(scriptContent)) {
 			script = scriptContent;
@@ -310,18 +285,6 @@ public class EditDDMTemplateDisplayContext {
 		_script = script;
 
 		return _script;
-	}
-
-	private boolean _getShowLanguageChangeWarning() {
-		DDMTemplate ddmTemplate = getDDMTemplate();
-
-		if ((ddmTemplate != null) && (getTemplateLanguageTypes().length > 1) &&
-			!Objects.equals(ddmTemplate.getLanguage(), getLanguageType())) {
-
-			return true;
-		}
-
-		return false;
 	}
 
 	private ResourceBundle _getTemplateHandlerResourceBundle() {
@@ -360,7 +323,7 @@ public class EditDDMTemplateDisplayContext {
 					JSONUtil.put(
 						"content",
 						TemplateDDMTemplateUtil.getDataContent(
-							templateVariableDefinition, getLanguageType())
+							templateVariableDefinition)
 					).put(
 						"label",
 						LanguageUtil.get(
@@ -397,10 +360,9 @@ public class EditDDMTemplateDisplayContext {
 	private DDMTemplate _ddmTemplate;
 	private final DDMTemplateHelper _ddmTemplateHelper;
 	private Long _ddmTemplateId;
-	private final HttpServletRequest _httpServletRequest;
-	private String _languageType;
 	private final LiferayPortletRequest _liferayPortletRequest;
 	private final LiferayPortletResponse _liferayPortletResponse;
+	private String _refererWebDAVToken;
 	private String _script;
 	private Boolean _smallImage;
 	private String _smallImageSource;

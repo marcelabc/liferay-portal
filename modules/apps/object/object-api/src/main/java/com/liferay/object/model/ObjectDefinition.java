@@ -57,7 +57,7 @@ public interface ObjectDefinition
 
 		};
 
-	public String getClassName();
+	public String getDestinationName();
 
 	public String getExtensionDBTableName();
 
@@ -68,5 +68,7 @@ public interface ObjectDefinition
 	public String getRESTContextPath();
 
 	public String getShortName();
+
+	public boolean isApproved();
 
 }

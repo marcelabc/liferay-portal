@@ -23,12 +23,7 @@ export {getUid} from './utils/formId.es';
 export * as FormSupport from './utils/FormSupport.es';
 export {parseProps} from './utils/parseProps.es';
 export {getConnectedReactComponentAdapter} from './utils/ReactComponentAdapter.es';
-export {
-	generateInstanceId,
-	generateName,
-	getRepeatedIndex,
-	parseName,
-} from './utils/repeatable.es';
+export {generateName, getRepeatedIndex, parseName} from './utils/repeatable.es';
 export * as RulesSupport from './utils/rulesSupport';
 export {default as setDataRecord} from './utils/setDataRecord.es';
 export * as StringUtils from './utils/strings';
@@ -36,7 +31,7 @@ export {PagesVisitor} from './utils/visitors.es';
 
 // Form/Data Engine Core
 
-export {EVENT_TYPES, MAPPED_EVENT_TYPES} from './core/actions/eventTypes.es';
+export {EVENT_TYPES} from './core/actions/eventTypes.es';
 export {Field} from './core/components/Field/Field.es';
 export {FieldStateless} from './core/components/Field/FieldStateless.es';
 export * as DefaultVariant from './core/components/PageRenderer/DefaultVariant.es';
@@ -50,6 +45,7 @@ export {useFieldTypesResource} from './core/hooks/useResource.es';
 export {elementSetAdded} from './core/thunks/elementSetAdded.es';
 export * as FieldUtil from './core/utils/fields';
 export {default as sectionAdded} from './core/utils/sectionAddedHandler';
+export {capitalize} from './utils/strings';
 export {enableSubmitButton} from './core/utils/submitButtonController.es';
 
 // Custom Form
@@ -58,9 +54,5 @@ export {EVENT_TYPES as FORM_EVENT_TYPES} from './custom/form/eventTypes.es';
 
 // Containers
 
-export {
-	FormFieldSettings,
-	FormFieldSettingsAdapter,
-} from './custom/form/FormFieldSettings.es';
+export {FormFieldSettings} from './custom/form/FormFieldSettings.es';
 export {FormView} from './custom/form/FormView.es';
-export {default as LegacyFormBuilder} from './custom/form/LegacyFormBuilder.es';

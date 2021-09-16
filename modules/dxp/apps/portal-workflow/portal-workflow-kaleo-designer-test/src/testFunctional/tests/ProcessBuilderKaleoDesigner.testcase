@@ -238,6 +238,8 @@ definition {
 	@description = "LPS-135888 - Verify that is possible to select Account role type for role assignments"
 	@priority = "5"
 	test CanAssignAccountRole {
+		property test.name.skip.portal.instance = "ProcessBuilderKaleoDesigner#CanAssignAccountRole";
+
 		ApplicationsMenu.gotoPortlet(
 			category = "Workflow",
 			panel = "Applications",
@@ -542,14 +544,6 @@ definition {
 
 		Workflow.addNewDefinition(workflowDefinitionTitle = "New Workflow");
 
-		KaleoDesigner.addConnectorAndNodeViaViewTab(
-			connectorName = "Connector1",
-			newNode = "Fork",
-			newNodeDescription = "Fork Node Description",
-			newNodeName = "Fork",
-			newNodeType = "fork",
-			nodeType = "start");
-
 		AssertElementPresent(locator1 = "KaleoDesignerEditWorkflow#VIEW_FORM_CONNECTOR_DEFAULT");
 	}
 
@@ -677,25 +671,25 @@ definition {
 
 		AssertElementPresent(locator1 = "KaleoDesignerEditWorkflow#SETTINGS_ACTIONS");
 
-		KaleoDesigner.addNodeViaViewTab(
+		KaleoDesigner.addAndFillNodesByDragAndDrop(
 			nodeDescription = "Join Node Description",
 			nodeName = "Join",
 			nodeNodeLabel = "Join",
+			nodeTitleAndPositionList = "Join;Task;400.100",
 			nodeType = "join");
 
 		KaleoDesigner.selectNode(nodeNodeLabel = "Join");
 
 		AssertElementPresent(locator1 = "KaleoDesignerEditWorkflow#SETTINGS_ACTIONS");
 
-		KaleoDesigner.addConnectorAndNodeViaViewTab(
-			connectorName = "Submit",
-			newNode = "Join XOR",
-			newNodeDescription = "JoinXOR Description",
-			newNodeName = "JoinXOR",
-			newNodeType = "join-xor",
-			nodeType = "start");
+		KaleoDesigner.addAndFillNodesByDragAndDrop(
+			nodeDescription = "Join XOR Node Description",
+			nodeName = "Join XOR",
+			nodeNodeLabel = "Join XOR",
+			nodeTitleAndPositionList = "Join XOR;360.200",
+			nodeType = "join-xor");
 
-		KaleoDesigner.selectNode(nodeNodeLabel = "JoinXOR");
+		KaleoDesigner.selectNode(nodeNodeLabel = "Join XOR");
 
 		AssertElementPresent(locator1 = "KaleoDesignerEditWorkflow#SETTINGS_ACTIONS");
 	}

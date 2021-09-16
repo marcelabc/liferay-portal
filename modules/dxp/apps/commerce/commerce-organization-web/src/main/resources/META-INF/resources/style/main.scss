@@ -15,6 +15,7 @@ $btn-size: 28px;
 		position: fixed;
 		right: 0;
 		top: 0;
+		z-index: 100;
 	}
 
 	.zoom-controls {
@@ -36,6 +37,10 @@ $btn-size: 28px;
 		fill: none;
 		stroke: $secondary-l2;
 		stroke-width: 1.5;
+
+		&.highlighted {
+			stroke: rgba($primary, 0.4);
+		}
 	}
 
 	.chart-rect {
@@ -60,10 +65,12 @@ $btn-size: 28px;
 		transform: scale(0.8);
 	}
 
-	.selected {
-		.chart-rect {
-			stroke: $primary;
-		}
+	.highlighted .chart-rect {
+		stroke: rgba($primary, 0.6);
+	}
+
+	.selected .chart-rect {
+		stroke: $primary;
 	}
 
 	.chart-data-wrapper {
@@ -130,20 +137,38 @@ $btn-size: 28px;
 		--icon-color: #ffd76e;
 	}
 
+	.node-description {
+		.entity-description {
+			fill: $text;
+			font-size: 14px;
+			text-anchor: start;
+			user-select: none;
+		}
+
+		.entity-divider {
+			stroke: $text;
+			stroke-width: 1;
+		}
+
+		.entity-icon {
+			fill: $text;
+		}
+
+		.node-description-content {
+			fill: $text;
+			font-size: 14px;
+			text-anchor: start;
+			transform: translate(#{16px * 4}, 15px);
+			transition: fill 0.2s ease-in;
+			user-select: none;
+		}
+	}
+
 	.node-title {
 		font-size: 14px;
 		font-weight: bold;
 		text-anchor: start;
 		transform: translate(#{16px * 4}, -3px);
-		transition: fill 0.2s ease-in;
-		user-select: none;
-	}
-
-	.node-description {
-		fill: $text;
-		font-size: 14px;
-		text-anchor: start;
-		transform: translate(#{16px * 4}, 15px);
 		transition: fill 0.2s ease-in;
 		user-select: none;
 	}

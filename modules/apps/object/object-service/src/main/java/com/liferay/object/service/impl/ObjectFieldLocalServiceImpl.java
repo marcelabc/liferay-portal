@@ -19,25 +19,24 @@ import com.liferay.object.exception.ObjectDefinitionStatusException;
 import com.liferay.object.exception.ObjectFieldLabelException;
 import com.liferay.object.exception.ObjectFieldNameException;
 import com.liferay.object.exception.ObjectFieldTypeException;
+import com.liferay.object.exception.RequiredObjectFieldException;
 import com.liferay.object.exception.ReservedObjectFieldException;
 import com.liferay.object.internal.petra.sql.dsl.DynamicObjectDefinitionTable;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.base.ObjectFieldLocalServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.search.Indexable;
+import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.List;
 import java.util.Locale;
@@ -59,10 +58,11 @@ import org.osgi.service.component.annotations.Reference;
 public class ObjectFieldLocalServiceImpl
 	extends ObjectFieldLocalServiceBaseImpl {
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public ObjectField addCustomObjectField(
-			long userId, long objectDefinitionId, boolean indexed,
-			boolean indexedAsKeyword, String indexedLanguageId,
+			long userId, long listTypeDefinitionId, long objectDefinitionId,
+			boolean indexed, boolean indexedAsKeyword, String indexedLanguageId,
 			Map<Locale, String> labelMap, String name, boolean required,
 			String type)
 		throws PortalException {
@@ -74,24 +74,25 @@ public class ObjectFieldLocalServiceImpl
 
 		String dbTableName = objectDefinition.getDBTableName();
 
-		if (objectDefinition.getStatus() == WorkflowConstants.STATUS_APPROVED) {
+		if (objectDefinition.isApproved()) {
 			dbTableName = objectDefinition.getExtensionDBTableName();
 		}
 
 		ObjectField objectField = _addObjectField(
-			userId, objectDefinitionId, name + StringPool.UNDERLINE,
-			dbTableName, indexed, indexedAsKeyword, indexedLanguageId, labelMap,
-			name, required, type);
+			userId, listTypeDefinitionId, objectDefinitionId,
+			name + StringPool.UNDERLINE, dbTableName, indexed, indexedAsKeyword,
+			indexedLanguageId, labelMap, name, required, type);
 
-		if (objectDefinition.getStatus() == WorkflowConstants.STATUS_APPROVED) {
+		if (objectDefinition.isApproved()) {
 			runSQL(
-				_getAlterTableAddColumnSQL(
+				DynamicObjectDefinitionTable.getAlterTableAddColumnSQL(
 					dbTableName, objectField.getDBColumnName(), type));
 		}
 
 		return objectField;
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public ObjectField addSystemObjectField(
 			long userId, long objectDefinitionId, String dbColumnName,
@@ -110,9 +111,57 @@ public class ObjectFieldLocalServiceImpl
 		}
 
 		return _addObjectField(
-			userId, objectDefinitionId, dbColumnName,
+			userId, 0, objectDefinitionId, dbColumnName,
 			objectDefinition.getDBTableName(), indexed, indexedAsKeyword,
 			indexedLanguageId, labelMap, name, required, type);
+	}
+
+	@Indexable(type = IndexableType.DELETE)
+	@Override
+	public ObjectField deleteObjectField(long objectFieldId)
+		throws PortalException {
+
+		ObjectField objectField = objectFieldPersistence.findByPrimaryKey(
+			objectFieldId);
+
+		return deleteObjectField(objectField);
+	}
+
+	@Indexable(type = IndexableType.DELETE)
+	@Override
+	public ObjectField deleteObjectField(ObjectField objectField)
+		throws PortalException {
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionPersistence.findByPrimaryKey(
+				objectField.getObjectDefinitionId());
+
+		if ((objectDefinition.isApproved() || objectDefinition.isSystem()) &&
+			!Objects.equals(
+				objectDefinition.getExtensionDBTableName(),
+				objectField.getDBTableName())) {
+
+			throw new RequiredObjectFieldException();
+		}
+
+		objectField = objectFieldPersistence.remove(objectField);
+
+		if (Objects.equals(
+				objectDefinition.getExtensionDBTableName(),
+				objectField.getDBTableName())) {
+
+			runSQL(
+				DynamicObjectDefinitionTable.getAlterTableDropColumnSQL(
+					objectField.getDBTableName(),
+					objectField.getDBColumnName()));
+		}
+
+		return objectField;
+	}
+
+	@Override
+	public ObjectField fetchObjectField(long objectDefinitionId, String name) {
+		return objectFieldPersistence.fetchByODI_N(objectDefinitionId, name);
 	}
 
 	@Override
@@ -129,16 +178,34 @@ public class ObjectFieldLocalServiceImpl
 	}
 
 	@Override
+	public List<ObjectField> getObjectFields(
+		long objectDefinitionId, String dbTableName) {
+
+		return objectFieldPersistence.findByODI_DTN(
+			objectDefinitionId, dbTableName);
+	}
+
+	@Override
 	public int getObjectFieldsCount(long objectDefinitionId) {
 		return objectFieldPersistence.countByObjectDefinitionId(
 			objectDefinitionId);
 	}
 
 	@Override
+	public int getObjectFieldsCountByListTypeDefinitionId(
+		long listTypeDefinitionId) {
+
+		return objectFieldPersistence.countByListTypeDefinitionId(
+			listTypeDefinitionId);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
 	public ObjectField updateCustomObjectField(
-			long objectFieldId, boolean indexed, boolean indexedAsKeyword,
-			String indexedLanguageId, Map<Locale, String> labelMap,
-			boolean required)
+			long objectFieldId, long listTypeDefinitionId, boolean indexed,
+			boolean indexedAsKeyword, String indexedLanguageId,
+			Map<Locale, String> labelMap, String name, boolean required,
+			String type)
 		throws PortalException {
 
 		ObjectField objectField = objectFieldPersistence.findByPrimaryKey(
@@ -152,17 +219,25 @@ public class ObjectFieldLocalServiceImpl
 			throw new ObjectDefinitionStatusException();
 		}
 
-		_validateIndexed(
-			indexed, indexedAsKeyword, indexedLanguageId,
-			objectField.getType());
-
 		_validateLabel(labelMap, LocaleUtil.getSiteDefault());
 
+		objectField.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
+
+		if (objectDefinition.isApproved()) {
+			return objectFieldPersistence.update(objectField);
+		}
+
+		_validateIndexed(indexed, indexedAsKeyword, indexedLanguageId, type);
+		_validateName(objectFieldId, objectDefinition, name);
+		validateType(type);
+
+		objectField.setListTypeDefinitionId(listTypeDefinitionId);
 		objectField.setIndexed(indexed);
 		objectField.setIndexedAsKeyword(indexedAsKeyword);
 		objectField.setIndexedLanguageId(indexedLanguageId);
-		objectField.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
+		objectField.setName(name);
 		objectField.setRequired(required);
+		objectField.setType(type);
 
 		return objectFieldPersistence.update(objectField);
 	}
@@ -175,10 +250,11 @@ public class ObjectFieldLocalServiceImpl
 	}
 
 	private ObjectField _addObjectField(
-			long userId, long objectDefinitionId, String dbColumnName,
-			String dbTableName, boolean indexed, boolean indexedAsKeyword,
-			String indexedLanguageId, Map<Locale, String> labelMap, String name,
-			boolean required, String type)
+			long userId, long listTypeDefinitionId, long objectDefinitionId,
+			String dbColumnName, String dbTableName, boolean indexed,
+			boolean indexedAsKeyword, String indexedLanguageId,
+			Map<Locale, String> labelMap, String name, boolean required,
+			String type)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =
@@ -186,7 +262,7 @@ public class ObjectFieldLocalServiceImpl
 
 		_validateIndexed(indexed, indexedAsKeyword, indexedLanguageId, type);
 		_validateLabel(labelMap, LocaleUtil.getSiteDefault());
-		_validateName(objectDefinition, name);
+		_validateName(0, objectDefinition, name);
 		validateType(type);
 
 		ObjectField objectField = objectFieldPersistence.create(
@@ -198,6 +274,7 @@ public class ObjectFieldLocalServiceImpl
 		objectField.setUserId(user.getUserId());
 		objectField.setUserName(user.getFullName());
 
+		objectField.setListTypeDefinitionId(listTypeDefinitionId);
 		objectField.setObjectDefinitionId(objectDefinitionId);
 		objectField.setDBColumnName(dbColumnName);
 		objectField.setDBTableName(dbTableName);
@@ -206,36 +283,11 @@ public class ObjectFieldLocalServiceImpl
 		objectField.setIndexedLanguageId(indexedLanguageId);
 		objectField.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
 		objectField.setName(name);
+		objectField.setRelationshipType(null);
 		objectField.setRequired(required);
 		objectField.setType(type);
 
-		return objectFieldPersistence.update(objectField);
-	}
-
-	/**
-	 * @see com.liferay.portal.kernel.upgrade.UpgradeProcess#AlterTableAddColumn
-	 */
-	private String _getAlterTableAddColumnSQL(
-		String tableName, String columnName, String type) {
-
-		StringBundler sb = new StringBundler(8);
-
-		sb.append("alter table ");
-		sb.append(tableName);
-		sb.append(" add ");
-		sb.append(columnName);
-		sb.append(StringPool.SPACE);
-		sb.append(DynamicObjectDefinitionTable.getDataType(type));
-		sb.append(DynamicObjectDefinitionTable.getSQLColumnNull(type));
-		sb.append(StringPool.SEMICOLON);
-
-		String sql = sb.toString();
-
-		if (_log.isDebugEnabled()) {
-			_log.debug("SQL: " + sql);
-		}
-
-		return sql;
+		return objectFieldLocalService.updateObjectField(objectField);
 	}
 
 	private void _validateIndexed(
@@ -268,7 +320,8 @@ public class ObjectFieldLocalServiceImpl
 		}
 	}
 
-	private void _validateName(ObjectDefinition objectDefinition, String name)
+	private void _validateName(
+			long objectFieldId, ObjectDefinition objectDefinition, String name)
 		throws PortalException {
 
 		if (Validator.isNull(name)) {
@@ -304,13 +357,12 @@ public class ObjectFieldLocalServiceImpl
 		ObjectField objectField = objectFieldPersistence.fetchByODI_N(
 			objectDefinition.getObjectDefinitionId(), name);
 
-		if (objectField != null) {
+		if ((objectField != null) &&
+			(objectField.getObjectFieldId() != objectFieldId)) {
+
 			throw new DuplicateObjectFieldException("Duplicate name " + name);
 		}
 	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		ObjectFieldLocalServiceImpl.class);
 
 	@Reference
 	private ObjectDefinitionPersistence _objectDefinitionPersistence;

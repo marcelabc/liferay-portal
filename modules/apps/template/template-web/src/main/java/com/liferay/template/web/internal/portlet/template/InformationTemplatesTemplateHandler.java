@@ -29,9 +29,6 @@ import com.liferay.template.web.internal.constants.TemplateConstants;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.portlet.RenderRequest;
-import javax.portlet.RenderResponse;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
@@ -67,6 +64,12 @@ public class InformationTemplatesTemplateHandler extends BaseTemplateHandler {
 	}
 
 	@Override
+	public String getTemplatesHelpPath(String language) {
+		return "com/liferay/template/web/internal/portlet/template" +
+			"/dependencies/template.ftl";
+	}
+
+	@Override
 	public Map<String, TemplateVariableGroup> getTemplateVariableGroups(
 			long classPK, String language, Locale locale)
 		throws Exception {
@@ -82,8 +85,6 @@ public class InformationTemplatesTemplateHandler extends BaseTemplateHandler {
 				generalVariablesTemplateVariableGroup.addVariable(
 					"locale", Locale.class, "locale");
 				generalVariablesTemplateVariableGroup.addVariable(
-					"portlet-preferences", Map.class, "portletPreferences");
-				generalVariablesTemplateVariableGroup.addVariable(
 					"template-id", null, "template_id");
 				generalVariablesTemplateVariableGroup.addVariable(
 					"theme-display", ThemeDisplay.class, "themeDisplay");
@@ -98,10 +99,6 @@ public class InformationTemplatesTemplateHandler extends BaseTemplateHandler {
 
 				utilTemplateVariableGroup.addVariable(
 					"http-request", HttpServletRequest.class, "request");
-				utilTemplateVariableGroup.addVariable(
-					"render-request", RenderRequest.class, "renderRequest");
-				utilTemplateVariableGroup.addVariable(
-					"render-response", RenderResponse.class, "renderResponse");
 
 				return utilTemplateVariableGroup;
 			}

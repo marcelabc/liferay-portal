@@ -209,6 +209,20 @@ public interface ObjectFieldModel
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
+	 * Returns the list type definition ID of this object field.
+	 *
+	 * @return the list type definition ID of this object field
+	 */
+	public long getListTypeDefinitionId();
+
+	/**
+	 * Sets the list type definition ID of this object field.
+	 *
+	 * @param listTypeDefinitionId the list type definition ID of this object field
+	 */
+	public void setListTypeDefinitionId(long listTypeDefinitionId);
+
+	/**
 	 * Returns the object definition ID of this object field.
 	 *
 	 * @return the object definition ID of this object field
@@ -424,105 +438,19 @@ public interface ObjectFieldModel
 	public void setName(String name);
 
 	/**
-	 * Returns the plural label of this object field.
+	 * Returns the relationship type of this object field.
 	 *
-	 * @return the plural label of this object field
-	 */
-	public String getPluralLabel();
-
-	/**
-	 * Returns the localized plural label of this object field in the language. Uses the default language if no localization exists for the requested language.
-	 *
-	 * @param locale the locale of the language
-	 * @return the localized plural label of this object field
+	 * @return the relationship type of this object field
 	 */
 	@AutoEscape
-	public String getPluralLabel(Locale locale);
+	public String getRelationshipType();
 
 	/**
-	 * Returns the localized plural label of this object field in the language, optionally using the default language if no localization exists for the requested language.
+	 * Sets the relationship type of this object field.
 	 *
-	 * @param locale the local of the language
-	 * @param useDefault whether to use the default language if no localization exists for the requested language
-	 * @return the localized plural label of this object field. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
+	 * @param relationshipType the relationship type of this object field
 	 */
-	@AutoEscape
-	public String getPluralLabel(Locale locale, boolean useDefault);
-
-	/**
-	 * Returns the localized plural label of this object field in the language. Uses the default language if no localization exists for the requested language.
-	 *
-	 * @param languageId the ID of the language
-	 * @return the localized plural label of this object field
-	 */
-	@AutoEscape
-	public String getPluralLabel(String languageId);
-
-	/**
-	 * Returns the localized plural label of this object field in the language, optionally using the default language if no localization exists for the requested language.
-	 *
-	 * @param languageId the ID of the language
-	 * @param useDefault whether to use the default language if no localization exists for the requested language
-	 * @return the localized plural label of this object field
-	 */
-	@AutoEscape
-	public String getPluralLabel(String languageId, boolean useDefault);
-
-	@AutoEscape
-	public String getPluralLabelCurrentLanguageId();
-
-	@AutoEscape
-	public String getPluralLabelCurrentValue();
-
-	/**
-	 * Returns a map of the locales and localized plural labels of this object field.
-	 *
-	 * @return the locales and localized plural labels of this object field
-	 */
-	public Map<Locale, String> getPluralLabelMap();
-
-	/**
-	 * Sets the plural label of this object field.
-	 *
-	 * @param pluralLabel the plural label of this object field
-	 */
-	public void setPluralLabel(String pluralLabel);
-
-	/**
-	 * Sets the localized plural label of this object field in the language.
-	 *
-	 * @param pluralLabel the localized plural label of this object field
-	 * @param locale the locale of the language
-	 */
-	public void setPluralLabel(String pluralLabel, Locale locale);
-
-	/**
-	 * Sets the localized plural label of this object field in the language, and sets the default locale.
-	 *
-	 * @param pluralLabel the localized plural label of this object field
-	 * @param locale the locale of the language
-	 * @param defaultLocale the default locale
-	 */
-	public void setPluralLabel(
-		String pluralLabel, Locale locale, Locale defaultLocale);
-
-	public void setPluralLabelCurrentLanguageId(String languageId);
-
-	/**
-	 * Sets the localized plural labels of this object field from the map of locales and localized plural labels.
-	 *
-	 * @param pluralLabelMap the locales and localized plural labels of this object field
-	 */
-	public void setPluralLabelMap(Map<Locale, String> pluralLabelMap);
-
-	/**
-	 * Sets the localized plural labels of this object field from the map of locales and localized plural labels, and sets the default locale.
-	 *
-	 * @param pluralLabelMap the locales and localized plural labels of this object field
-	 * @param defaultLocale the default locale
-	 */
-	public void setPluralLabelMap(
-		Map<Locale, String> pluralLabelMap, Locale defaultLocale);
+	public void setRelationshipType(String relationshipType);
 
 	/**
 	 * Returns the required of this object field.
@@ -572,5 +500,8 @@ public interface ObjectFieldModel
 	@Override
 	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
 		throws LocaleException;
+
+	@Override
+	public ObjectField cloneWithOriginalValues();
 
 }

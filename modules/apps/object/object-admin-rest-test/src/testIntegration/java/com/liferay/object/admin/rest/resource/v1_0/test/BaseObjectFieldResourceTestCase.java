@@ -30,10 +30,10 @@ import com.liferay.object.admin.rest.client.resource.v1_0.ObjectFieldResource;
 import com.liferay.object.admin.rest.client.serdes.v1_0.ObjectFieldSerDes;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
@@ -182,7 +182,6 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 		objectField.setIndexedLanguageId(regex);
 		objectField.setName(regex);
-		objectField.setType(regex);
 
 		String json = ObjectFieldSerDes.toJSON(objectField);
 
@@ -192,22 +191,20 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 		Assert.assertEquals(regex, objectField.getIndexedLanguageId());
 		Assert.assertEquals(regex, objectField.getName());
-		Assert.assertEquals(regex, objectField.getType());
 	}
 
 	@Test
 	public void testGetObjectDefinitionObjectFieldsPage() throws Exception {
-		Page<ObjectField> page =
-			objectFieldResource.getObjectDefinitionObjectFieldsPage(
-				testGetObjectDefinitionObjectFieldsPage_getObjectDefinitionId(),
-				Pagination.of(1, 2));
-
-		Assert.assertEquals(0, page.getTotalCount());
-
 		Long objectDefinitionId =
 			testGetObjectDefinitionObjectFieldsPage_getObjectDefinitionId();
 		Long irrelevantObjectDefinitionId =
 			testGetObjectDefinitionObjectFieldsPage_getIrrelevantObjectDefinitionId();
+
+		Page<ObjectField> page =
+			objectFieldResource.getObjectDefinitionObjectFieldsPage(
+				objectDefinitionId, null, Pagination.of(1, 10));
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		if (irrelevantObjectDefinitionId != null) {
 			ObjectField irrelevantObjectField =
@@ -216,7 +213,7 @@ public abstract class BaseObjectFieldResourceTestCase {
 					randomIrrelevantObjectField());
 
 			page = objectFieldResource.getObjectDefinitionObjectFieldsPage(
-				irrelevantObjectDefinitionId, Pagination.of(1, 2));
+				irrelevantObjectDefinitionId, null, Pagination.of(1, 2));
 
 			Assert.assertEquals(1, page.getTotalCount());
 
@@ -235,7 +232,7 @@ public abstract class BaseObjectFieldResourceTestCase {
 				objectDefinitionId, randomObjectField());
 
 		page = objectFieldResource.getObjectDefinitionObjectFieldsPage(
-			objectDefinitionId, Pagination.of(1, 2));
+			objectDefinitionId, null, Pagination.of(1, 10));
 
 		Assert.assertEquals(2, page.getTotalCount());
 
@@ -243,6 +240,10 @@ public abstract class BaseObjectFieldResourceTestCase {
 			Arrays.asList(objectField1, objectField2),
 			(List<ObjectField>)page.getItems());
 		assertValid(page);
+
+		objectFieldResource.deleteObjectField(objectField1.getId());
+
+		objectFieldResource.deleteObjectField(objectField2.getId());
 	}
 
 	@Test
@@ -266,7 +267,7 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 		Page<ObjectField> page1 =
 			objectFieldResource.getObjectDefinitionObjectFieldsPage(
-				objectDefinitionId, Pagination.of(1, 2));
+				objectDefinitionId, null, Pagination.of(1, 2));
 
 		List<ObjectField> objectFields1 = (List<ObjectField>)page1.getItems();
 
@@ -274,7 +275,7 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 		Page<ObjectField> page2 =
 			objectFieldResource.getObjectDefinitionObjectFieldsPage(
-				objectDefinitionId, Pagination.of(2, 2));
+				objectDefinitionId, null, Pagination.of(2, 2));
 
 		Assert.assertEquals(3, page2.getTotalCount());
 
@@ -284,7 +285,7 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 		Page<ObjectField> page3 =
 			objectFieldResource.getObjectDefinitionObjectFieldsPage(
-				objectDefinitionId, Pagination.of(1, 3));
+				objectDefinitionId, null, Pagination.of(1, 3));
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(objectField1, objectField2, objectField3),
@@ -334,6 +335,63 @@ public abstract class BaseObjectFieldResourceTestCase {
 		return objectFieldResource.postObjectDefinitionObjectField(
 			testGetObjectDefinitionObjectFieldsPage_getObjectDefinitionId(),
 			objectField);
+	}
+
+	@Test
+	public void testDeleteObjectField() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		ObjectField objectField = testDeleteObjectField_addObjectField();
+
+		assertHttpResponseStatusCode(
+			204,
+			objectFieldResource.deleteObjectFieldHttpResponse(
+				objectField.getId()));
+
+		assertHttpResponseStatusCode(
+			404,
+			objectFieldResource.getObjectFieldHttpResponse(
+				objectField.getId()));
+
+		assertHttpResponseStatusCode(
+			404, objectFieldResource.getObjectFieldHttpResponse(0L));
+	}
+
+	protected ObjectField testDeleteObjectField_addObjectField()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLDeleteObjectField() throws Exception {
+		ObjectField objectField = testGraphQLObjectField_addObjectField();
+
+		Assert.assertTrue(
+			JSONUtil.getValueAsBoolean(
+				invokeGraphQLMutation(
+					new GraphQLField(
+						"deleteObjectField",
+						new HashMap<String, Object>() {
+							{
+								put("objectFieldId", objectField.getId());
+							}
+						})),
+				"JSONObject/data", "Object/deleteObjectField"));
+
+		JSONArray errorsJSONArray = JSONUtil.getValueAsJSONArray(
+			invokeGraphQLQuery(
+				new GraphQLField(
+					"objectField",
+					new HashMap<String, Object>() {
+						{
+							put("objectFieldId", objectField.getId());
+						}
+					},
+					new GraphQLField("id"))),
+			"JSONArray/errors");
+
+		Assert.assertTrue(errorsJSONArray.length() > 0);
 	}
 
 	@Test
@@ -396,6 +454,35 @@ public abstract class BaseObjectFieldResourceTestCase {
 	}
 
 	@Test
+	public void testPatchObjectField() throws Exception {
+		ObjectField postObjectField = testPatchObjectField_addObjectField();
+
+		ObjectField randomPatchObjectField = randomPatchObjectField();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		ObjectField patchObjectField = objectFieldResource.patchObjectField(
+			postObjectField.getId(), randomPatchObjectField);
+
+		ObjectField expectedPatchObjectField = postObjectField.clone();
+
+		_beanUtilsBean.copyProperties(
+			expectedPatchObjectField, randomPatchObjectField);
+
+		ObjectField getObjectField = objectFieldResource.getObjectField(
+			patchObjectField.getId());
+
+		assertEquals(expectedPatchObjectField, getObjectField);
+		assertValid(getObjectField);
+	}
+
+	protected ObjectField testPatchObjectField_addObjectField()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
 	public void testPutObjectField() throws Exception {
 		ObjectField postObjectField = testPutObjectField_addObjectField();
 
@@ -424,6 +511,23 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
+	}
+
+	protected void assertContains(
+		ObjectField objectField, List<ObjectField> objectFields) {
+
+		boolean contains = false;
+
+		for (ObjectField item : objectFields) {
+			if (equals(objectField, item)) {
+				contains = true;
+
+				break;
+			}
+		}
+
+		Assert.assertTrue(
+			objectFields + " does not contain " + objectField, contains);
 	}
 
 	protected void assertHttpResponseStatusCode(
@@ -522,6 +626,16 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 			if (Objects.equals("label", additionalAssertFieldName)) {
 				if (objectField.getLabel() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"listTypeDefinitionId", additionalAssertFieldName)) {
+
+				if (objectField.getListTypeDefinitionId() == null) {
 					valid = false;
 				}
 
@@ -709,6 +823,19 @@ public abstract class BaseObjectFieldResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"listTypeDefinitionId", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectField1.getListTypeDefinitionId(),
+						objectField2.getListTypeDefinitionId())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("name", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						objectField1.getName(), objectField2.getName())) {
@@ -868,6 +995,11 @@ public abstract class BaseObjectFieldResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("listTypeDefinitionId")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("name")) {
 			sb.append("'");
 			sb.append(String.valueOf(objectField.getName()));
@@ -882,11 +1014,8 @@ public abstract class BaseObjectFieldResourceTestCase {
 		}
 
 		if (entityFieldName.equals("type")) {
-			sb.append("'");
-			sb.append(String.valueOf(objectField.getType()));
-			sb.append("'");
-
-			return sb.toString();
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
 		}
 
 		throw new IllegalArgumentException(
@@ -938,9 +1067,9 @@ public abstract class BaseObjectFieldResourceTestCase {
 				indexedAsKeyword = RandomTestUtil.randomBoolean();
 				indexedLanguageId = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
+				listTypeDefinitionId = RandomTestUtil.randomLong();
 				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				required = RandomTestUtil.randomBoolean();
-				type = StringUtil.toLowerCase(RandomTestUtil.randomString());
 			}
 		};
 	}
@@ -1031,8 +1160,8 @@ public abstract class BaseObjectFieldResourceTestCase {
 
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BaseObjectFieldResourceTestCase.class);
+	private static final com.liferay.portal.kernel.log.Log _log =
+		LogFactoryUtil.getLog(BaseObjectFieldResourceTestCase.class);
 
 	private static BeanUtilsBean _beanUtilsBean = new BeanUtilsBean() {
 

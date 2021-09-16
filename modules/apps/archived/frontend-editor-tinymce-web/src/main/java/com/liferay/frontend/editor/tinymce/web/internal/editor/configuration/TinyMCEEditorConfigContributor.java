@@ -25,12 +25,10 @@ import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.servlet.BrowserSniffer;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -104,43 +102,38 @@ public class TinyMCEEditorConfigContributor
 	}
 
 	protected JSONArray getStyleFormatsJSONArray(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			locale, "com.liferay.frontend.editor.lang");
-
 		return JSONUtil.putAll(
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "normal"), "inline", "p",
+				LanguageUtil.get(locale, "normal"), "inline", "p", null),
+			getStyleFormatJSONObject(
+				LanguageUtil.format(locale, "heading-x", "1"), "block", "h1",
 				null),
 			getStyleFormatJSONObject(
-				LanguageUtil.format(resourceBundle, "heading-x", "1"), "block",
-				"h1", null),
+				LanguageUtil.format(locale, "heading-x", "2"), "block", "h2",
+				null),
 			getStyleFormatJSONObject(
-				LanguageUtil.format(resourceBundle, "heading-x", "2"), "block",
-				"h2", null),
+				LanguageUtil.format(locale, "heading-x", "3"), "block", "h3",
+				null),
 			getStyleFormatJSONObject(
-				LanguageUtil.format(resourceBundle, "heading-x", "3"), "block",
-				"h3", null),
+				LanguageUtil.format(locale, "heading-x", "4"), "block", "h4",
+				null),
 			getStyleFormatJSONObject(
-				LanguageUtil.format(resourceBundle, "heading-x", "4"), "block",
-				"h4", null),
+				LanguageUtil.get(locale, "preformatted-text"), "block", "pre",
+				null),
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "preformatted-text"), "block",
-				"pre", null),
+				LanguageUtil.get(locale, "cited-work"), "inline", "cite", null),
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "cited-work"), "inline",
-				"cite", null),
+				LanguageUtil.get(locale, "computer-code"), "inline", "code",
+				null),
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "computer-code"), "inline",
-				"code", null),
+				LanguageUtil.get(locale, "info-message"), "block", "div",
+				"portlet-msg-info"),
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "info-message"), "block",
-				"div", "portlet-msg-info"),
+				LanguageUtil.get(locale, "alert-message"), "block", "div",
+				"portlet-msg-alert"),
 			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "alert-message"), "block",
-				"div", "portlet-msg-alert"),
-			getStyleFormatJSONObject(
-				LanguageUtil.get(resourceBundle, "error-message"), "block",
-				"div", "portlet-msg-error"));
+				LanguageUtil.get(locale, "error-message"), "block", "div",
+				"portlet-msg-error"));
 	}
 
 	protected JSONArray getToolbarJSONArray(
@@ -173,11 +166,6 @@ public class TinyMCEEditorConfigContributor
 	protected JSONArray getToolbarsEmailJSONArray(
 		Map<String, Object> inputEditorTaglibAttributes) {
 
-		JSONArray jsonArray = JSONUtil.put(
-			"fontselect fontsizeselect | forecolor backcolor | bold italic " +
-				"underline strikethrough | alignleft aligncenter alignright " +
-					"alignjustify");
-
 		String buttons =
 			"cut copy paste bullist numlist | blockquote | undo redo | link " +
 				"unlink image ";
@@ -188,9 +176,11 @@ public class TinyMCEEditorConfigContributor
 
 		buttons += "| hr removeformat | preview print fullscreen";
 
-		jsonArray.put(buttons);
-
-		return jsonArray;
+		return JSONUtil.putAll(
+			"fontselect fontsizeselect | forecolor backcolor | bold italic " +
+				"underline strikethrough | alignleft aligncenter alignright " +
+					"alignjustify",
+			buttons);
 	}
 
 	protected JSONObject getToolbarsJSONObject(
@@ -251,20 +241,16 @@ public class TinyMCEEditorConfigContributor
 	protected JSONArray getToolbarsTabletJSONArray(
 		Map<String, Object> inputEditorTaglibAttributes) {
 
-		JSONArray jsonArray = JSONUtil.put(
-			"styleselect fontselect fontsizeselect | bold italic underline " +
-				"strikethrough | alignleft aligncenter alignright " +
-					"alignjustify");
-
 		String buttons = "bullist numlist | link unlink image";
 
 		if (isShowSource(inputEditorTaglibAttributes)) {
 			buttons += " code";
 		}
 
-		jsonArray.put(buttons);
-
-		return jsonArray;
+		return JSONUtil.putAll(
+			"styleselect fontselect fontsizeselect | bold italic underline " +
+				"strikethrough | alignleft aligncenter alignright alignjustify",
+			buttons);
 	}
 
 	@Reference

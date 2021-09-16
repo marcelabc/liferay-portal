@@ -42,24 +42,37 @@ import java.util.Map;
 public class DynamicObjectDefinitionTable
 	extends BaseTable<DynamicObjectDefinitionTable> {
 
-	public static String getDataType(String type) {
-		String dataType = _dataTypes.get(type);
+	/**
+	 * @see com.liferay.portal.kernel.upgrade.UpgradeProcess#AlterTableAddColumn
+	 */
+	public static String getAlterTableAddColumnSQL(
+		String tableName, String columnName, String type) {
 
-		if (dataType == null) {
-			throw new IllegalArgumentException("Invalid type " + type);
+		String sql = StringBundler.concat(
+			"alter table ", tableName, " add ", columnName, StringPool.SPACE,
+			_getDataType(type), _getSQLColumnNull(type), StringPool.SEMICOLON);
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("SQL: " + sql);
 		}
 
-		return dataType;
+		return sql;
 	}
 
-	public static String getSQLColumnNull(String type) {
-		if (type.equals("BigDecimal") || type.equals("Date") ||
-			type.equals("Map") || type.equals("String")) {
+	/**
+	 * @see com.liferay.portal.kernel.upgrade.UpgradeProcess#AlterTableDropColumn
+	 */
+	public static String getAlterTableDropColumnSQL(
+		String tableName, String columnName) {
 
-			return " null";
+		String sql = StringBundler.concat(
+			"alter table ", tableName, " drop column ", columnName);
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("SQL: " + sql);
 		}
 
-		return StringPool.BLANK;
+		return sql;
 	}
 
 	public DynamicObjectDefinitionTable(
@@ -110,11 +123,11 @@ public class DynamicObjectDefinitionTable
 			sb.append(", ");
 			sb.append(objectField.getDBColumnName());
 			sb.append(" ");
-			sb.append(getDataType(objectField.getType()));
-			sb.append(getSQLColumnNull(objectField.getType()));
+			sb.append(_getDataType(objectField.getType()));
+			sb.append(_getSQLColumnNull(objectField.getType()));
 		}
 
-		sb.append(");");
+		sb.append(")");
 
 		String sql = sb.toString();
 
@@ -134,8 +147,38 @@ public class DynamicObjectDefinitionTable
 			_primaryKeyColumnName);
 	}
 
+	public String getPrimaryKeyColumnName() {
+		return _primaryKeyColumnName;
+	}
+
 	public Expression<?>[] getSelectExpressions() {
 		return _selectExpressions;
+	}
+
+	private static String _getDataType(String type) {
+		String dataType = _dataTypes.get(type);
+
+		if (dataType == null) {
+			throw new IllegalArgumentException("Invalid type " + type);
+		}
+
+		return dataType;
+	}
+
+	private static String _getSQLColumnNull(String type) {
+		if (type.equals("BigDecimal") || type.equals("Double") ||
+			type.equals("Integer") || type.equals("Long")) {
+
+			return " default 0";
+		}
+		else if (type.equals("Boolean")) {
+			return " default FALSE";
+		}
+		else if (type.equals("Date")) {
+			return " null";
+		}
+
+		return StringPool.BLANK;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

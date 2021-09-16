@@ -22,7 +22,7 @@
 </tr>
 <tr>
 	<td>CONTENT_DISPLAY_FRAGMENT_IMAGE</td>
-	<td>//div[contains(@class,'content')]//div[@class='row'][${key_rowPosition}]/div[contains(@class,'col')][${key_colPosition}]//*[contains(@src,'${key_image}')]</td>
+	<td>//div[contains(@class,'content')]//div[@class='row'][${key_rowPosition}]/div[contains(@class,'col')][${key_colPosition}]//*[contains(@src,'${key_image}')] | //div[contains(@class,'content')]//div[@class='row'][${key_rowPosition}]/div[contains(@class,'col')][${key_colPosition}]//*[contains(@style,'${key_image}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -38,6 +38,11 @@
 <tr>
 	<td>FRAGMENT_BASIC_COMPONENT</td>
 	<td>//div[contains(@class,'layout-content')]//*[contains(@class,'component-${key_fragmentName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FRAGMENT_BASIC_COMPONENT_INDEX</td>
+	<td>xpath=(//div[contains(@class,'layout-content')]//*[contains(@class,'component-${key_fragmentName}')])[${key_index}]</td>
 	<td></td>
 </tr>
 <tr>
@@ -247,6 +252,11 @@
 <tr>
 	<td>FRAGMENT_CONFIGURATION_HEADER</td>
 	<td>//${key_headingLevel}[contains(@class,'component-${key_fragmentName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FRAGMENT_CONFIGURATION_HEADER_CARD</td>
+	<td>//div[contains(@class,'component-${key_fragmentName}')]//${key_headingLevel}[normalize-space(text())='${key_text}']</td>
 	<td></td>
 </tr>
 <tr>

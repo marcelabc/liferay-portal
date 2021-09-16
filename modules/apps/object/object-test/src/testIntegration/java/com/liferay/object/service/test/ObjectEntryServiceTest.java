@@ -15,13 +15,14 @@
 package com.liferay.object.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
-import com.liferay.object.model.ObjectField;
-import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
-import com.liferay.object.service.ObjectEntryLocalServiceUtil;
-import com.liferay.object.service.ObjectEntryServiceUtil;
-import com.liferay.object.service.ObjectFieldLocalServiceUtil;
+import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectEntryService;
+import com.liferay.object.util.LocalizedMapUtil;
+import com.liferay.object.util.ObjectFieldUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -35,16 +36,12 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.io.Serializable;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -77,21 +74,21 @@ public class ObjectEntryServiceTest {
 		_user = TestPropsValues.getUser();
 
 		_objectDefinition =
-			ObjectDefinitionLocalServiceUtil.addCustomObjectDefinition(
+			_objectDefinitionLocalService.addCustomObjectDefinition(
 				TestPropsValues.getUserId(),
-				Collections.singletonMap(LocaleUtil.US, "Test"), "Test",
+				LocalizedMapUtil.getLocalizedMap("Test"), "Test", null, null,
+				LocalizedMapUtil.getLocalizedMap("Tests"),
+				ObjectDefinitionConstants.SCOPE_COMPANY,
 				Arrays.asList(
-					_createObjectField(
-						true, false,
-						Collections.singletonMap(LocaleUtil.US, "First Name"),
-						"firstName", false, "String"),
-					_createObjectField(
-						true, false,
-						Collections.singletonMap(LocaleUtil.US, "Last Name"),
-						"lastName", false, "String")));
+					ObjectFieldUtil.createObjectField(
+						true, false, "First Name", "firstName", false,
+						"String"),
+					ObjectFieldUtil.createObjectField(
+						true, false, "Last Name", "lastName", false,
+						"String")));
 
 		_objectDefinition =
-			ObjectDefinitionLocalServiceUtil.publishCustomObjectDefinition(
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
 				TestPropsValues.getUserId(),
 				_objectDefinition.getObjectDefinitionId());
 	}
@@ -164,24 +161,24 @@ public class ObjectEntryServiceTest {
 		ObjectEntry objectEntry2 = _addObjectEntry(_user);
 
 		BaseModelSearchResult<ObjectEntry> baseModelSearchResult =
-			ObjectEntryLocalServiceUtil.searchObjectEntries(
-				_objectDefinition.getObjectDefinitionId(), null, 0, 20);
+			_objectEntryLocalService.searchObjectEntries(
+				0, _objectDefinition.getObjectDefinitionId(), null, 0, 20);
 
 		Assert.assertEquals(2, baseModelSearchResult.getLength());
 
 		_setUser(_defaultUser);
 
-		baseModelSearchResult = ObjectEntryLocalServiceUtil.searchObjectEntries(
-			_objectDefinition.getObjectDefinitionId(), null, 0, 20);
+		baseModelSearchResult = _objectEntryLocalService.searchObjectEntries(
+			0, _objectDefinition.getObjectDefinitionId(), null, 0, 20);
 
 		Assert.assertEquals(0, baseModelSearchResult.getLength());
 
-		ObjectEntryLocalServiceUtil.deleteObjectEntry(objectEntry1);
-		ObjectEntryLocalServiceUtil.deleteObjectEntry(objectEntry2);
+		_objectEntryLocalService.deleteObjectEntry(objectEntry1);
+		_objectEntryLocalService.deleteObjectEntry(objectEntry2);
 	}
 
 	private ObjectEntry _addObjectEntry(User user) throws Exception {
-		return ObjectEntryLocalServiceUtil.addObjectEntry(
+		return _objectEntryLocalService.addObjectEntry(
 			user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", RandomStringUtils.randomAlphabetic(5)
@@ -190,23 +187,6 @@ public class ObjectEntryServiceTest {
 			).build(),
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId(), user.getUserId()));
-	}
-
-	private ObjectField _createObjectField(
-		boolean indexed, boolean indexedAsKeyword, Map<Locale, String> labelMap,
-		String name, boolean required, String type) {
-
-		ObjectField objectField = ObjectFieldLocalServiceUtil.createObjectField(
-			0);
-
-		objectField.setIndexed(indexed);
-		objectField.setIndexedAsKeyword(indexedAsKeyword);
-		objectField.setLabelMap(labelMap);
-		objectField.setName(name);
-		objectField.setRequired(required);
-		objectField.setType(type);
-
-		return objectField;
 	}
 
 	private void _setUser(User user) {
@@ -222,7 +202,7 @@ public class ObjectEntryServiceTest {
 		try {
 			_setUser(user);
 
-			objectEntry = ObjectEntryServiceUtil.addObjectEntry(
+			objectEntry = _objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
@@ -234,7 +214,7 @@ public class ObjectEntryServiceTest {
 		}
 		finally {
 			if (objectEntry != null) {
-				ObjectEntryLocalServiceUtil.deleteObjectEntry(objectEntry);
+				_objectEntryLocalService.deleteObjectEntry(objectEntry);
 			}
 		}
 	}
@@ -248,12 +228,12 @@ public class ObjectEntryServiceTest {
 
 			objectEntry = _addObjectEntry(user);
 
-			deleteObjectEntry = ObjectEntryServiceUtil.deleteObjectEntry(
+			deleteObjectEntry = _objectEntryService.deleteObjectEntry(
 				objectEntry.getObjectEntryId());
 		}
 		finally {
 			if (deleteObjectEntry == null) {
-				ObjectEntryLocalServiceUtil.deleteObjectEntry(objectEntry);
+				_objectEntryLocalService.deleteObjectEntry(objectEntry);
 			}
 		}
 	}
@@ -266,12 +246,11 @@ public class ObjectEntryServiceTest {
 
 			objectEntry = _addObjectEntry(user);
 
-			ObjectEntryServiceUtil.getObjectEntry(
-				objectEntry.getObjectEntryId());
+			_objectEntryService.getObjectEntry(objectEntry.getObjectEntryId());
 		}
 		finally {
 			if (objectEntry != null) {
-				ObjectEntryLocalServiceUtil.deleteObjectEntry(objectEntry);
+				_objectEntryLocalService.deleteObjectEntry(objectEntry);
 			}
 		}
 	}
@@ -280,6 +259,15 @@ public class ObjectEntryServiceTest {
 
 	@DeleteAfterTestRun
 	private ObjectDefinition _objectDefinition;
+
+	@Inject
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Inject
+	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Inject
+	private ObjectEntryService _objectEntryService;
 
 	private String _originalName;
 	private PermissionChecker _originalPermissionChecker;

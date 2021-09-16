@@ -9,7 +9,6 @@
  * distribution rights of the Software.
  */
 
-import {getEntityId} from '../utils';
 import {
 	ACCOUNTS_PROPERTY_NAME,
 	ORGANIZATIONS_PROPERTY_NAME,
@@ -20,7 +19,7 @@ import {fetchFromHeadless} from '../utils/fetch';
 export const ORGANIZATIONS_ROOT_ENDPOINT =
 	'/o/headless-admin-user/v1.0/organizations';
 
-export const createOrganizations = (names, parentData) => {
+export const createOrganizations = (names, parentOrganizationId) => {
 	const url = new URL(
 		ORGANIZATIONS_ROOT_ENDPOINT,
 		themeDisplay.getPortalURL()
@@ -31,17 +30,13 @@ export const createOrganizations = (names, parentData) => {
 			fetchFromHeadless(url, {
 				body: JSON.stringify({
 					name,
-					parentOrganization: {id: getEntityId(parentData)},
+					parentOrganization: {id: parentOrganizationId},
 				}),
 				method: 'POST',
 			})
 		)
 	);
 };
-
-export function addUsersToOrganization() {
-	return Promise.reject();
-}
 
 export function getOrganization(id) {
 	const url = new URL(
@@ -55,6 +50,26 @@ export function getOrganization(id) {
 	);
 
 	return fetchFromHeadless(url);
+}
+
+export function getOrganizations(pageSize) {
+	const url = new URL(
+		ORGANIZATIONS_ROOT_ENDPOINT,
+		themeDisplay.getPortalURL()
+	);
+
+	url.searchParams.append('pageSize', pageSize);
+
+	return fetchFromHeadless(url);
+}
+
+export function deleteOrganization(id) {
+	const url = new URL(
+		`${ORGANIZATIONS_ROOT_ENDPOINT}/${id}`,
+		themeDisplay.getPortalURL()
+	);
+
+	return fetchFromHeadless(url, {method: 'DELETE'}, null, true);
 }
 
 export function updateOrganization(id, body) {
