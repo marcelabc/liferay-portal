@@ -49,6 +49,7 @@ import com.liferay.object.service.ObjectLayoutLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.web.internal.constants.ObjectWebKeys;
 import com.liferay.object.web.internal.display.context.util.ObjectRequestHelper;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -63,6 +64,7 @@ import com.liferay.taglib.servlet.PipingServletResponseFactory;
 
 import java.io.Serializable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +199,9 @@ public class ObjectEntryDisplayContext {
 	public String renderDDMForm(PageContext pageContext)
 		throws PortalException {
 
-		DDMForm ddmForm = _getDDMForm();
+		ObjectLayoutTab objectLayoutTab = getObjectLayoutTab();
+
+		DDMForm ddmForm = _getDDMForm(objectLayoutTab);
 
 		DDMFormRenderingContext ddmFormRenderingContext =
 			new DDMFormRenderingContext();
@@ -230,8 +234,6 @@ public class ObjectEntryDisplayContext {
 
 		ddmFormRenderingContext.setShowRequiredFieldsWarning(true);
 
-		ObjectLayoutTab objectLayoutTab = getObjectLayoutTab();
-
 		if (objectLayoutTab == null) {
 			return _ddmFormRenderer.render(ddmForm, ddmFormRenderingContext);
 		}
@@ -259,7 +261,7 @@ public class ObjectEntryDisplayContext {
 		return ddmFormFieldOptions;
 	}
 
-	private DDMForm _getDDMForm() {
+	private DDMForm _getDDMForm(ObjectLayoutTab objectLayoutTab) {
 		ObjectDefinition objectDefinition = getObjectDefinition();
 
 		DDMForm ddmForm = new DDMForm();
@@ -270,9 +272,57 @@ public class ObjectEntryDisplayContext {
 			_objectFieldLocalService.getObjectFields(
 				objectDefinition.getObjectDefinitionId());
 
-		for (ObjectField objectField : objectFields) {
-			ddmForm.addDDMFormField(_getDDMFormField(objectField));
+		List<ObjectLayoutBox> objectLayoutBoxes =
+			objectLayoutTab.getObjectLayoutBoxes();
+
+		for(ObjectLayoutBox objectLayoutBox : objectLayoutBoxes){
+
+			List<DDMFormField> nestedDDMFormFields = new ArrayList<>();
+
+			List<ObjectLayoutRow> objectLayoutRows =
+				objectLayoutBox.getObjectLayoutRows();
+
+			for(ObjectLayoutRow objectLayoutRow : objectLayoutRows){
+				List<ObjectLayoutColumn> objectLayoutColumns =
+					objectLayoutRow.getObjectLayoutColumns();
+
+				for(ObjectLayoutColumn objectLayoutColumn : objectLayoutColumns){
+
+					Stream<ObjectField> stream = objectFields.stream();
+
+					Optional<ObjectField> objectFieldOptional = stream.filter(
+						objectField -> objectField.getObjectFieldId() ==
+									   objectLayoutColumn.getObjectFieldId()).findFirst();
+
+					objectFieldOptional.ifPresent(
+						objectField -> nestedDDMFormFields.add(
+							_getDDMFormField(objectField)));
+
+				}
+			}
+
+			ddmForm.addDDMFormField(new DDMFormField(Long.toString(objectLayoutBox.getPrimaryKey()), "fieldset") {
+				{
+					setLabel(
+						new LocalizedValue() {
+							{
+								addString(_objectRequestHelper.getLocale(), objectLayoutBox.getName(_objectRequestHelper.getLocale()));
+							}
+						});
+					setLocalizable(false);
+					setNestedDDMFormFields(nestedDDMFormFields);
+					setProperty("collapsible", objectLayoutBox.getCollapsable());
+					setReadOnly(false);
+					setRepeatable(false);
+					setRequired(false);
+					setShowLabel(true);
+				}
+			});
 		}
+//
+//		for (ObjectField objectField : objectFields) {
+//			ddmForm.addDDMFormField(_getDDMFormField(objectField));
+//		}
 
 		ddmForm.setDefaultLocale(_objectRequestHelper.getLocale());
 
@@ -332,12 +382,20 @@ public class ObjectEntryDisplayContext {
 		for (ObjectLayoutBox objectLayoutBox :
 				objectLayoutTab.getObjectLayoutBoxes()) {
 
-			for (ObjectLayoutRow objectLayoutRow :
-					objectLayoutBox.getObjectLayoutRows()) {
 
-				ddmFormLayoutPage.addDDMFormLayoutRow(
-					_getDDMFormLayoutRow(objectLayoutRow));
-			}
+			DDMFormLayoutRow ddmFormLayoutRow = new DDMFormLayoutRow();
+
+			DDMFormLayoutColumn ddmFormLayoutColumn = new DDMFormLayoutColumn();
+
+			ddmFormLayoutColumn.setDDMFormFieldNames(
+				ListUtil.fromArray(Long.toString(objectLayoutBox.getPrimaryKey())));
+
+			ddmFormLayoutColumn.setSize(12);
+
+			ddmFormLayoutRow.addDDMFormLayoutColumn(ddmFormLayoutColumn);
+
+			ddmFormLayoutPage.addDDMFormLayoutRow(ddmFormLayoutRow);
+
 		}
 
 		ddmFormLayout.addDDMFormLayoutPage(ddmFormLayoutPage);
