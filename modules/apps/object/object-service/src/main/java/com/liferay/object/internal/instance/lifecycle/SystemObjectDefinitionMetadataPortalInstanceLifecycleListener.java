@@ -14,7 +14,11 @@
 
 package com.liferay.object.internal.instance.lifecycle;
 
+import com.liferay.item.selector.ItemSelectorView;
+import com.liferay.item.selector.ItemSelectorViewDescriptorRenderer;
+import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.object.constants.ObjectSAPConstants;
+import com.liferay.object.internal.item.selector.SystemObjectEntryItemSelectorView;
 import com.liferay.object.internal.related.models.ObjectEntry1toMObjectRelatedModelsProviderImpl;
 import com.liferay.object.internal.rest.context.path.RESTContextPathResolverImpl;
 import com.liferay.object.model.ObjectDefinition;
@@ -37,9 +41,11 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
@@ -202,6 +208,17 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 				HashMapDictionaryBuilder.<String, Object>put(
 					"model.class.name", objectDefinition.getClassName()
 				).build());
+			_bundleContext.registerService(
+				ItemSelectorView.class,
+				new SystemObjectEntryItemSelectorView(
+					_itemSelectorViewDescriptorRenderer, objectDefinition,
+					_objectDefinitionLocalService, _objectFieldLocalService,
+					_objectScopeProviderRegistry,
+					_persistedModelLocalServiceRegistry,
+					systemObjectDefinitionMetadata, _portal),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"item.selector.view.order", 500
+				).build());
 		}
 		catch (PortalException portalException) {
 			_log.error(portalException);
@@ -217,6 +234,10 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 	private CompanyLocalService _companyLocalService;
 
 	@Reference
+	private ItemSelectorViewDescriptorRenderer<InfoItemItemSelectorCriterion>
+		_itemSelectorViewDescriptorRenderer;
+
+	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Reference
@@ -230,6 +251,13 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 
 	@Reference
 	private ObjectScopeProviderRegistry _objectScopeProviderRegistry;
+
+	@Reference
+	private PersistedModelLocalServiceRegistry
+		_persistedModelLocalServiceRegistry;
+
+	@Reference
+	private Portal _portal;
 
 	@Reference
 	private SAPEntryLocalService _sapEntryLocalService;

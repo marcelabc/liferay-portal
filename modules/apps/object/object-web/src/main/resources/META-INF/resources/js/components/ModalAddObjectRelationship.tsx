@@ -168,8 +168,7 @@ const ModalAddObjectRelationship: React.FC<IProps> = ({
 				id,
 				name,
 				system,
-			}))
-			.filter(({system}: TObjectDefinition) => !system);
+			}));
 
 		setObjectDefinitions(objectDefinitions);
 	};

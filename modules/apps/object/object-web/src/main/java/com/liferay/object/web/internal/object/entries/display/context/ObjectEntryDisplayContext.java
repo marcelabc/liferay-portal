@@ -36,6 +36,7 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemBuilde
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemList;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorReturnType;
+import com.liferay.item.selector.criteria.InfoItemItemSelectorReturnType;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.exception.NoSuchObjectLayoutException;
@@ -317,7 +318,7 @@ public class ObjectEntryDisplayContext {
 
 		infoItemItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
 			Collections.<ItemSelectorReturnType>singletonList(
-				new ObjectEntryItemSelectorReturnType()));
+				new InfoItemItemSelectorReturnType()));
 
 		ObjectLayoutTab objectLayoutTab = getObjectLayoutTab();
 
