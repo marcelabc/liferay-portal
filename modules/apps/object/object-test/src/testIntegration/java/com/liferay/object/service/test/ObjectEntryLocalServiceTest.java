@@ -77,6 +77,7 @@ import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 import java.math.BigDecimal;
@@ -1083,6 +1084,164 @@ public class ObjectEntryLocalServiceTest {
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 		Assert.assertEquals(valuesList.toString(), 0, valuesList.size());
+	}
+
+	@Test
+	public void testObjectValidationRuleAddObjectEntry() throws Exception {
+		ObjectValidationRule objectValidationRule =
+			_objectValidationRuleLocalService.addObjectValidationRule(
+				TestPropsValues.getUserId(),
+				_objectDefinition.getObjectDefinitionId(), true,
+				LocalizedMapUtil.getLocalizedMap("Field must be an email"),
+				LocalizedMapUtil.getLocalizedMap("Email Validation"),
+				ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
+				"isEmailAddress(emailAddress)");
+
+		ObjectEntry objectEntry = null;
+
+		try {
+			objectEntry = _addObjectEntry(
+				HashMapBuilder.<String, Serializable>put(
+					"emailAddress", RandomTestUtil.randomString()
+				).put(
+					"emailAddressRequired", "john@liferay.com"
+				).put(
+					"listTypeEntryKeyRequired", "listTypeEntryKey1"
+				).build());
+
+			Assert.fail();
+		}
+		catch (ModelListenerException modelListenerException) {
+			String message = modelListenerException.getMessage();
+
+			Assert.assertTrue(message.contains("Field must be an email"));
+		}
+
+		objectEntry = _addObjectEntry(
+			HashMapBuilder.<String, Serializable>put(
+				"emailAddress", "john@liferay.com"
+			).put(
+				"emailAddressRequired", "bob@liferay.com"
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).build());
+
+		Assert.assertNotNull(objectEntry);
+
+		Map<String, Serializable> values = _objectEntryLocalService.getValues(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertEquals("john@liferay.com", values.get("emailAddress"));
+
+		_objectValidationRuleLocalService.updateObjectValidationRule(
+			objectValidationRule.getObjectValidationRuleId(), false,
+			LocalizedMapUtil.getLocalizedMap("Field must be an email"),
+			LocalizedMapUtil.getLocalizedMap("Email Validation"),
+			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
+			"isEmailAddress(emailAddress)");
+
+		objectEntry = _addObjectEntry(
+			HashMapBuilder.<String, Serializable>put(
+				"emailAddress", RandomTestUtil.randomString()
+			).put(
+				"emailAddressRequired", "john@liferay.com"
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).build());
+
+		Assert.assertNotNull(objectEntry);
+
+		_objectValidationRuleLocalService.addObjectValidationRule(
+			TestPropsValues.getUserId(),
+			_objectDefinition.getObjectDefinitionId(), true,
+			LocalizedMapUtil.getLocalizedMap("Names must be equals"),
+			LocalizedMapUtil.getLocalizedMap("Name Validation"),
+			ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
+			"equals(lastName, middleName)");
+
+		try {
+			objectEntry = _addObjectEntry(
+				HashMapBuilder.<String, Serializable>put(
+					"emailAddress", "john@liferay.com"
+				).put(
+					"emailAddressRequired", "bob@liferay.com"
+				).put(
+					"lastName", RandomTestUtil.randomString()
+				).put(
+					"listTypeEntryKeyRequired", "listTypeEntryKey1"
+				).put(
+					"middleName", RandomTestUtil.randomString()
+				).build());
+
+			Assert.fail();
+		}
+		catch (ModelListenerException modelListenerException) {
+			String message = modelListenerException.getMessage();
+
+			Assert.assertTrue(message.contains("Names must be equals"));
+		}
+
+		objectEntry = _addObjectEntry(
+			HashMapBuilder.<String, Serializable>put(
+				"emailAddress", "john@liferay.com"
+			).put(
+				"emailAddressRequired", "bob@liferay.com"
+			).put(
+				"lastName", "Doe"
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).put(
+				"middleName", "Doe"
+			).build());
+
+		Assert.assertNotNull(objectEntry);
+
+		values = _objectEntryLocalService.getValues(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertEquals("Doe", values.get("lastName"));
+		Assert.assertEquals("Doe", values.get("middleName"));
+	}
+
+	@Test
+	public void testGroovy() throws Exception {
+		Class<?> clazz = getClass();
+
+		String scriptGroovy = StringUtil.read(
+			clazz.getClassLoader(),
+			"com/liferay/object/dependencies/groovy_script.xsd");
+
+		Assert.assertNotNull(scriptGroovy);
+
+		ObjectValidationRule objectValidationRule =
+			_objectValidationRuleLocalService.addObjectValidationRule(
+				TestPropsValues.getUserId(),
+				_objectDefinition.getObjectDefinitionId(), true,
+				LocalizedMapUtil.getLocalizedMap("Field must be an email"),
+				LocalizedMapUtil.getLocalizedMap("Email Validation"),
+				ObjectValidationRuleConstants.ENGINE_TYPE_GROOVY,
+				scriptGroovy);
+
+		Assert.assertNotNull(objectValidationRule);
+
+		Calendar calendar = new GregorianCalendar();
+
+		calendar.set(6, Calendar.DECEMBER, 27);
+
+		Date birthdayDate = calendar.getTime();
+
+		ObjectEntry objectEntry = null;
+
+		objectEntry = _addObjectEntry(
+			HashMapBuilder.<String, Serializable>put(
+				"birthday", birthdayDate
+			).put(
+				"emailAddressRequired", "bob@liferay.com"
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).build());
+
+		Assert.assertNotNull(objectEntry);
 	}
 
 	@Test
