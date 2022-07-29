@@ -225,6 +225,13 @@ public class AggregationObjectFieldBusinessType
 				(List<ObjectFilter>)objectFieldSettingsValuesMap.get(
 					"filters"));
 		}
+		catch (NoSuchObjectFieldException noSuchObjectFieldException) {
+			throw new ObjectFieldSettingValueException.InvalidValue(
+				objectFieldName, "objectFieldName",
+				GetterUtil.getString(
+					objectFieldSettingsValuesMap.get("objectFieldName")),
+				noSuchObjectFieldException);
+		}
 		catch (NoSuchObjectRelationshipException
 					noSuchObjectRelationshipException) {
 
@@ -233,13 +240,6 @@ public class AggregationObjectFieldBusinessType
 				GetterUtil.getString(
 					objectFieldSettingsValuesMap.get("objectRelationshipName")),
 				noSuchObjectRelationshipException);
-		}
-		catch (NoSuchObjectFieldException noSuchObjectFieldException) {
-			throw new ObjectFieldSettingValueException.InvalidValue(
-				objectFieldName, "objectFieldName",
-				GetterUtil.getString(
-					objectFieldSettingsValuesMap.get("objectFieldName")),
-				noSuchObjectFieldException);
 		}
 		catch (PortalException portalException) {
 			throw new RuntimeException(portalException);
