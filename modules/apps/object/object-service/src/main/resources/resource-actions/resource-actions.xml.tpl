@@ -10,9 +10,12 @@
 		<weight>2</weight>
 		<permissions>
 			<supports>
+				<action-key>ADD_DISCUSSION</action-key>
 				<action-key>DELETE</action-key>
+				<action-key>DELETE_DISCUSSION</action-key>
 				<action-key>PERMISSIONS</action-key>
 				<action-key>UPDATE</action-key>
+				<action-key>UPDATE_DISCUSSION</action-key>
 				<action-key>VIEW</action-key>
 			</supports>
 			<site-member-defaults>
@@ -21,8 +24,10 @@
 			</guest-defaults>
 			<guest-unsupported>
 				<action-key>DELETE</action-key>
+				<action-key>DELETE_DISCUSSION</action-key>
 				<action-key>PERMISSIONS</action-key>
 				<action-key>UPDATE</action-key>
+				<action-key>UPDATE_DISCUSSION</action-key>
 			</guest-unsupported>
 		</permissions>
 	</model-resource>
