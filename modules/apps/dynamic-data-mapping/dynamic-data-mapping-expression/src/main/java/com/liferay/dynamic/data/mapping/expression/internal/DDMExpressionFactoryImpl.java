@@ -19,6 +19,7 @@ import com.liferay.dynamic.data.mapping.expression.DDMExpression;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionException;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionTracker;
+import com.liferay.object.service.ObjectFieldLocalService;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -49,6 +50,33 @@ public class DDMExpressionFactoryImpl implements DDMExpressionFactory {
 
 		return ddmExpressionImpl;
 	}
+
+	@Override
+	public <T> FormulaDDMExpressionImpl<T> createFormulaExpression(
+			long objectDefinitionId,
+			CreateExpressionRequest createExpressionRequest)
+		throws DDMExpressionException {
+
+		FormulaDDMExpressionImpl<T> formulaDDMExpressionImpl =
+			new FormulaDDMExpressionImpl<>(
+				objectDefinitionId, createExpressionRequest.getExpression());
+
+		formulaDDMExpressionImpl.setDDMExpressionActionHandler(
+			createExpressionRequest.getDDMExpressionActionHandler());
+		formulaDDMExpressionImpl.setDDMExpressionFieldAccessor(
+			createExpressionRequest.getDDMExpressionFieldAccessor());
+		formulaDDMExpressionImpl.setDDMExpressionObserver(
+			createExpressionRequest.getDDMExpressionObserver());
+		formulaDDMExpressionImpl.setDDMExpressionParameterAccessor(
+			createExpressionRequest.getDDMExpressionParameterAccessor());
+		formulaDDMExpressionImpl.setObjectFieldLocalService(
+			_objectFieldLocalService);
+
+		return formulaDDMExpressionImpl;
+	}
+
+	@Reference
+	protected ObjectFieldLocalService _objectFieldLocalService;
 
 	@Reference
 	protected DDMExpressionFunctionTracker ddmExpressionFunctionTracker;

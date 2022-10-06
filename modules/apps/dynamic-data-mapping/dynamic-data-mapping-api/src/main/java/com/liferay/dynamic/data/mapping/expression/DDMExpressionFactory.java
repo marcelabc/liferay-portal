@@ -26,4 +26,9 @@ public interface DDMExpressionFactory {
 			CreateExpressionRequest createExpressionRequest)
 		throws DDMExpressionException;
 
+	public <T> DDMExpression<T> createFormulaExpression(
+			long objectDefinitionId,
+			CreateExpressionRequest createExpressionRequest)
+		throws DDMExpressionException;
+
 }
