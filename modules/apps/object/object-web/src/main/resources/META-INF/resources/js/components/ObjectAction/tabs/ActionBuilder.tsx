@@ -320,7 +320,9 @@ export default function ActionBuilder({
 		setValues({
 			parameters: {
 				...normalizedParameters,
-				...parameters,
+				...(values.objectActionExecutorKey === 'add-object-entry' && {
+					...parameters,
+				}),
 			},
 		});
 
