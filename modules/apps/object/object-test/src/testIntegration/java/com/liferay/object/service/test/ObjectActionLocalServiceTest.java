@@ -21,6 +21,7 @@ import com.liferay.object.constants.ObjectActionConstants;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.exception.ObjectActionTriggerKeyException;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
@@ -32,6 +33,7 @@ import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
 import com.liferay.object.util.LocalizedMapUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -45,6 +47,7 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ProxyUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
@@ -55,6 +58,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 
@@ -114,8 +118,46 @@ public class ObjectActionLocalServiceTest {
 
 	@Test
 	public void testAddObjectAction() throws Exception {
+		try {
+			_objectActionLocalService.addObjectAction(
+				TestPropsValues.getUserId(),
+				_objectDefinition.getObjectDefinitionId(), true,
+				StringPool.BLANK, RandomTestUtil.randomString(),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				RandomTestUtil.randomString(),
+				ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
+				ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
+				UnicodePropertiesBuilder.put(
+					"objectDefinitionId",
+					_objectDefinition.getObjectDefinitionId()
+				).build());
+
+			Assert.fail();
+		}
+		catch (ObjectActionTriggerKeyException
+					objectActionTriggerKeyException) {
+
+			Assert.assertEquals(
+				StringBundler.concat(
+					"The object action executor key ",
+					ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
+					" cannot be associated with the object action trigger key",
+					ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE),
+				objectActionTriggerKeyException.getMessage());
+		}
 
 		// Add object actions
+
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
+
+		jsonArray.put(JSONUtil.put(
+			"inputAsValue", true
+		).put(
+			"name", "firstName"
+		).put(
+			"value", "First Name Updated"
+		));
 
 		ObjectAction objectAction1 = _objectActionLocalService.addObjectAction(
 			TestPropsValues.getUserId(),
@@ -124,12 +166,13 @@ public class ObjectActionLocalServiceTest {
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			RandomTestUtil.randomString(),
-			ObjectActionExecutorConstants.KEY_WEBHOOK,
+			ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_ADD,
 			UnicodePropertiesBuilder.put(
-				"secret", "onafteradd"
+				"objectDefinitionId",
+				String.valueOf(_objectDefinition.getObjectDefinitionId())
 			).put(
-				"url", "https://onafteradd.com"
+				"predefinedValues", jsonArray.toString()
 			).build());
 		ObjectAction objectAction2 = _objectActionLocalService.addObjectAction(
 			TestPropsValues.getUserId(),
@@ -172,47 +215,16 @@ public class ObjectActionLocalServiceTest {
 			).build(),
 			ServiceContextTestUtil.getServiceContext());
 
-		Assert.assertEquals(1, _argumentsList.size());
-
 		// On after create
 
-		Object[] arguments = _argumentsList.poll();
+		objectEntry = _objectEntryLocalService.getObjectEntry(objectEntry.getObjectEntryId());
 
-		Http.Options options = (Http.Options)arguments[0];
+		Map<String, Serializable> values = _objectEntryLocalService.getValues(
+			objectEntry.getObjectEntryId());
 
-		Http.Body body = options.getBody();
+		values = objectEntry.getValues();
 
-		Assert.assertEquals(StringPool.UTF8, body.getCharset());
-		Assert.assertEquals(
-			ContentTypes.APPLICATION_JSON, body.getContentType());
-
-		JSONObject payloadJSONObject = _jsonFactory.createJSONObject(
-			body.getContent());
-
-		Assert.assertEquals(
-			ObjectActionTriggerConstants.KEY_ON_AFTER_ADD,
-			payloadJSONObject.getString("objectActionTriggerKey"));
-		Assert.assertEquals(
-			WorkflowConstants.STATUS_DRAFT,
-			JSONUtil.getValue(
-				payloadJSONObject, "JSONObject/objectEntry", "Object/status"));
-		Assert.assertEquals(
-			"John",
-			JSONUtil.getValue(
-				payloadJSONObject, "JSONObject/objectEntry",
-				"JSONObject/values", "Object/firstName"));
-		Assert.assertEquals(
-			"John",
-			JSONUtil.getValue(
-				payloadJSONObject,
-				"JSONObject/objectEntryDTO" + _objectDefinition.getShortName(),
-				"JSONObject/properties", "Object/firstName"));
-		Assert.assertNull(
-			JSONUtil.getValue(
-				payloadJSONObject, "JSONObject/originalObjectEntry"));
-
-		Assert.assertEquals("onafteradd", options.getHeader("x-api-key"));
-		Assert.assertEquals("https://onafteradd.com", options.getLocation());
+		Assert.assertEquals("First Name Updated", values.get("firstName"));
 
 		// Update object entry
 
@@ -229,17 +241,17 @@ public class ObjectActionLocalServiceTest {
 
 		// On after update
 
-		arguments = _argumentsList.poll();
+		Object[] arguments = _argumentsList.poll();
 
-		options = (Http.Options)arguments[0];
+		Http.Options options = (Http.Options)arguments[0];
 
-		body = options.getBody();
+		Http.Body body = options.getBody();
 
 		Assert.assertEquals(StringPool.UTF8, body.getCharset());
 		Assert.assertEquals(
 			ContentTypes.APPLICATION_JSON, body.getContentType());
 
-		payloadJSONObject = _jsonFactory.createJSONObject(body.getContent());
+		JSONObject payloadJSONObject = _jsonFactory.createJSONObject(body.getContent());
 
 		Assert.assertEquals(
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
@@ -513,6 +525,36 @@ public class ObjectActionLocalServiceTest {
 			objectAction.getParametersUnicodeProperties());
 		Assert.assertEquals(
 			ObjectActionConstants.STATUS_NEVER_RAN, objectAction.getStatus());
+
+		try {
+			_objectActionLocalService.updateObjectAction(
+				objectAction.getObjectActionId(), false,
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				RandomTestUtil.randomString(),
+				ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
+				ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
+				UnicodePropertiesBuilder.put(
+					"objectDefinitionId",
+					_objectDefinition.getObjectDefinitionId()
+				).build());
+
+			Assert.fail();
+		}
+		catch (ObjectActionTriggerKeyException
+					objectActionTriggerKeyException) {
+
+			Assert.assertEquals(
+				StringBundler.concat(
+					"The object action executor key ",
+					ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
+					" cannot be associated with the object action trigger key",
+					ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE),
+				objectActionTriggerKeyException.getMessage());
+		}
+
+		_objectActionLocalService.deleteObjectAction(objectAction);
 	}
 
 	private Object _getAndSetFieldValue(
