@@ -84,6 +84,9 @@ export declare function fetchJSON<T>(
 	init?: RequestInit
 ): Promise<T>;
 export declare function getList<T>(url: string): Promise<T[]>;
+export declare function getNotificationTemplateByExternalReferenceCode(
+	notificationTemplateExternalReferenceCode: string
+): Promise<NotificationTemplate>;
 export declare function getNotificationTemplate(
 	notificationTemplateId: number
 ): Promise<NotificationTemplate>;

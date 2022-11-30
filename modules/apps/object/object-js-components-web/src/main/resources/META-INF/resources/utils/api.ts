@@ -134,6 +134,14 @@ export async function getList<T>(url: string) {
 	return items;
 }
 
+export async function getNotificationTemplateByExternalReferenceCode(
+	notificationTemplateExternalReferenceCode: string
+) {
+	return await fetchJSON<NotificationTemplate>(
+		`/o/notification/v1.0/notification-templates/by-external-reference-code/${notificationTemplateExternalReferenceCode}`
+	);
+}
+
 export async function getNotificationTemplate(notificationTemplateId: number) {
 	return await fetchJSON<NotificationTemplate>(
 		`/o/notification/v1.0/notification-templates/${notificationTemplateId}`
