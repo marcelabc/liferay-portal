@@ -16,6 +16,8 @@ package com.liferay.object.service.impl;
 
 import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
+import com.liferay.notification.model.NotificationTemplate;
+import com.liferay.notification.service.NotificationTemplateLocalService;
 import com.liferay.object.action.executor.ObjectActionExecutorRegistry;
 import com.liferay.object.constants.ObjectActionConstants;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
@@ -96,8 +98,11 @@ public class ObjectActionLocalServiceImpl
 		_validateObjectActionExecutorKey(objectActionExecutorKey);
 		_validateObjectActionTriggerKey(
 			conditionExpression, objectActionTriggerKey);
+
+		User user = _userLocalService.getUser(userId);
+
 		_validateParametersUnicodeProperties(
-			conditionExpression, objectActionExecutorKey,
+			user.getCompanyId(), conditionExpression, objectActionExecutorKey,
 			objectActionTriggerKey, parametersUnicodeProperties);
 
 		ObjectDefinition objectDefinition =
@@ -105,8 +110,6 @@ public class ObjectActionLocalServiceImpl
 
 		ObjectAction objectAction = objectActionPersistence.create(
 			counterLocalService.increment());
-
-		User user = _userLocalService.getUser(userId);
 
 		objectAction.setCompanyId(user.getCompanyId());
 		objectAction.setUserId(user.getUserId());
@@ -195,12 +198,14 @@ public class ObjectActionLocalServiceImpl
 		_validateErrorMessage(errorMessageMap, objectActionTriggerKey);
 		_validateLabel(labelMap);
 		_validateObjectActionExecutorKey(objectActionExecutorKey);
-		_validateParametersUnicodeProperties(
-			conditionExpression, objectActionExecutorKey,
-			objectActionTriggerKey, parametersUnicodeProperties);
 
 		ObjectAction objectAction = objectActionPersistence.findByPrimaryKey(
 			objectActionId);
+
+		_validateParametersUnicodeProperties(
+			objectAction.getCompanyId(), conditionExpression,
+			objectActionExecutorKey, objectActionTriggerKey,
+			parametersUnicodeProperties);
 
 		objectAction.setActive(active);
 		objectAction.setConditionExpression(conditionExpression);
@@ -359,8 +364,8 @@ public class ObjectActionLocalServiceImpl
 	}
 
 	private void _validateParametersUnicodeProperties(
-			String conditionExpression, String objectActionExecutorKey,
-			String objectActionTriggerKey,
+			long companyId, String conditionExpression,
+			String objectActionExecutorKey, String objectActionTriggerKey,
 			UnicodeProperties parametersUnicodeProperties)
 		throws PortalException {
 
@@ -438,6 +443,45 @@ public class ObjectActionLocalServiceImpl
 					errorMessageKeys.put(
 						"script", objectScriptingException.getMessageKey());
 				}
+			}
+		}
+		else if (Objects.equals(
+					objectActionExecutorKey,
+					ObjectActionExecutorConstants.KEY_NOTIFICATION)) {
+
+			NotificationTemplate notificationTemplate =
+				_notificationTemplateLocalService.fetchNotificationTemplate(
+					GetterUtil.getLong(
+						parametersUnicodeProperties.get(
+							"notificationTemplateId")));
+
+			String notificationTemplateExternalReferenceCode =
+				GetterUtil.getString(
+					parametersUnicodeProperties.remove(
+						"notificationTemplateExternalReferenceCode"));
+
+			if (Validator.isNotNull(
+					notificationTemplateExternalReferenceCode)) {
+
+				NotificationTemplate existingNotificationTemplate =
+					_notificationTemplateLocalService.
+						fetchNotificationTemplateByExternalReferenceCode(
+							notificationTemplateExternalReferenceCode,
+							companyId);
+
+				if (existingNotificationTemplate != null) {
+					parametersUnicodeProperties.put(
+						"notificationTemplateId",
+						String.valueOf(
+							existingNotificationTemplate.
+								getNotificationTemplateId()));
+
+					notificationTemplate = existingNotificationTemplate;
+				}
+			}
+
+			if (notificationTemplate == null) {
+				errorMessageKeys.put("notificationTemplateId", "invalid");
 			}
 		}
 		else if (Objects.equals(
@@ -552,6 +596,9 @@ public class ObjectActionLocalServiceImpl
 
 	@Reference
 	private MessageBus _messageBus;
+
+	@Reference
+	private NotificationTemplateLocalService _notificationTemplateLocalService;
 
 	@Reference
 	private ObjectActionExecutorRegistry _objectActionExecutorRegistry;
