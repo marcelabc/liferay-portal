@@ -215,6 +215,8 @@ public class ViewObjectEntriesDisplayContext {
 	}
 
 	public String getFDSId() {
+		System.out.println(_objectRequestHelper.getPortletId());
+
 		return _objectRequestHelper.getPortletId();
 	}
 
