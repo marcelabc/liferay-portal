@@ -831,13 +831,24 @@ public class ObjectDefinitionResourceImpl
 						_objectRelationshipLocalService.
 							fetchObjectRelationshipByExternalReferenceCode(
 								objectRelationship.getExternalReferenceCode(),
+								contextCompany.getCompanyId(),
 								objectDefinitionId);
 
 				if (serviceBuilderObjectRelationship != null) {
-					if (serviceBuilderObjectRelationship.isReverse()) {
-						continue;
-					}
+					objectRelationshipResource.putObjectRelationship(
+						serviceBuilderObjectRelationship.
+							getObjectRelationshipId(),
+						objectRelationship);
 
+					continue;
+				}
+
+				serviceBuilderObjectRelationship =
+					_objectRelationshipLocalService.
+						fetchObjectRelationshipByObjectDefinitionId1(
+							objectDefinitionId, objectRelationship.getName());
+
+				if (serviceBuilderObjectRelationship != null) {
 					objectRelationshipResource.putObjectRelationship(
 						serviceBuilderObjectRelationship.
 							getObjectRelationshipId(),
