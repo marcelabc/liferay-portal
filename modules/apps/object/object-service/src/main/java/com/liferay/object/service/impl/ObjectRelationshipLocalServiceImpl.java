@@ -851,6 +851,31 @@ public class ObjectRelationshipLocalServiceImpl
 		return objectRelationship;
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public ObjectRelationship updateReverseObjectRelationship(
+			String externalReferenceCode, ObjectRelationship objectRelationship)
+		throws PortalException {
+
+		if (!objectRelationship.isReverse()) {
+			objectRelationship = fetchReverseObjectRelationship(
+				objectRelationship, true);
+
+			if (objectRelationship == null) {
+				throw new NoSuchObjectRelationshipException();
+			}
+		}
+
+		_validateExternalReferenceCode(
+			externalReferenceCode, objectRelationship.getObjectRelationshipId(),
+			objectRelationship.getCompanyId(),
+			objectRelationship.getObjectDefinitionId1());
+
+		objectRelationship.setExternalReferenceCode(externalReferenceCode);
+
+		return objectRelationshipPersistence.update(objectRelationship);
+	}
+
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_bundleContext = bundleContext;
