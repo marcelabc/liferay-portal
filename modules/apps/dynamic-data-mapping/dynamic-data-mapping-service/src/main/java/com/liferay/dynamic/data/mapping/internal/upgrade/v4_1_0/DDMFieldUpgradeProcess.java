@@ -128,7 +128,7 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 					"delete from DDMContent where contentId = ? and " +
 						"ctCollectionId = 0");
 			ResultSet resultSet = selectPreparedStatement.executeQuery()) {
-
+			// goes N times (N * (M + M* K))
 			while (resultSet.next()) {
 				_upgradeDDMContent(
 					resultSet.getLong("companyId"),
@@ -224,7 +224,17 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 
 	private void _collectDDMFieldInfos(
 		Map<String, DDMFieldInfo> ddmFieldInfoMap,
-		List<DDMFormFieldValue> ddmFormValues, String parentInstanceId) {
+		List<DDMFormFieldValue> ddmFormValues, String parentInstanceId,
+		Map<String, Long> instanceToFieldIdMap,
+		Map<String, DDMFormField> ddmFormFieldsMap,
+		DDMFieldInfo rootDDMFieldInfo,
+		PreparedStatement insertDDMFieldPreparedStatement,
+		PreparedStatement insertDDMFieldAttributePreparedStatement,
+		PreparedStatement deleteDDMContentPreparedStatement,
+		long companyId, long contentId,  long structureVersionId)
+		throws Exception {
+
+		int priority = 0;
 
 		for (DDMFormFieldValue ddmFormFieldValue : ddmFormValues) {
 			DDMFieldInfo ddmFieldInfo = new DDMFieldInfo(
@@ -246,10 +256,96 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 				}
 			}
 
+			long fieldId = increment(DDMField.class.getName());
+
+			long parentFieldId = 0;
+
+			if (ddmFieldInfo._parentInstanceId != null) {
+				parentFieldId = instanceToFieldIdMap.get(
+					ddmFieldInfo._parentInstanceId);
+			}
+
+			String fieldType = StringPool.BLANK;
+			boolean localizable = false;
+
+			if (ddmFieldInfo != rootDDMFieldInfo) {
+				DDMFormField ddmFormField = ddmFormFieldsMap.get(
+					ddmFieldInfo._fieldName);
+
+				if (ddmFormField != null) {
+					fieldType = ddmFormField.getType();
+					localizable = ddmFormField.isLocalizable();
+				}
+			}
+
+			insertDDMFieldPreparedStatement.setLong(1, fieldId);
+			insertDDMFieldPreparedStatement.setLong(2, companyId);
+			insertDDMFieldPreparedStatement.setLong(3, parentFieldId);
+			insertDDMFieldPreparedStatement.setLong(4, contentId);
+			insertDDMFieldPreparedStatement.setLong(5, structureVersionId);
+			insertDDMFieldPreparedStatement.setString(
+				6, ddmFieldInfo._fieldName);
+			insertDDMFieldPreparedStatement.setString(7, fieldType);
+			insertDDMFieldPreparedStatement.setString(
+				8, ddmFieldInfo._instanceId);
+			insertDDMFieldPreparedStatement.setBoolean(9, localizable);
+			insertDDMFieldPreparedStatement.setInt(10, priority);
+
+			insertDDMFieldPreparedStatement.addBatch();
+
+			priority++;
+			instanceToFieldIdMap.put(ddmFieldInfo._instanceId, fieldId);
+			// For K atributes of field (possible values, default value, etc)
+			for (DDMFieldAttributeInfo ddmFieldAttributeInfo :
+				ddmFieldInfo._ddmFieldAttributeInfos) {
+
+				String smallAttributeValue = null;
+				String largeAttributeValue = null;
+
+				if (ddmFieldAttributeInfo._attributeValue != null) {
+					if (ddmFieldAttributeInfo._attributeValue.length() > 255) {
+						largeAttributeValue =
+							ddmFieldAttributeInfo._attributeValue;
+					}
+					else {
+						smallAttributeValue =
+							ddmFieldAttributeInfo._attributeValue;
+					}
+				}
+
+				insertDDMFieldAttributePreparedStatement.setLong(
+					1, increment(DDMFieldAttribute.class.getName()));
+				insertDDMFieldAttributePreparedStatement.setLong(2, companyId);
+				insertDDMFieldAttributePreparedStatement.setLong(3, fieldId);
+				insertDDMFieldAttributePreparedStatement.setLong(4, contentId);
+				insertDDMFieldAttributePreparedStatement.setString(
+					5, ddmFieldAttributeInfo._attributeName);
+				insertDDMFieldAttributePreparedStatement.setString(
+					6, ddmFieldAttributeInfo._languageId);
+				insertDDMFieldAttributePreparedStatement.setString(
+					7, largeAttributeValue);
+				insertDDMFieldAttributePreparedStatement.setString(
+					8, smallAttributeValue);
+
+				insertDDMFieldAttributePreparedStatement.addBatch();
+			}
+
+
+		deleteDDMContentPreparedStatement.setLong(1, contentId);
+
+		deleteDDMContentPreparedStatement.addBatch();
+
 			_collectDDMFieldInfos(
 				ddmFieldInfoMap,
 				ddmFormFieldValue.getNestedDDMFormFieldValues(),
-				ddmFieldInfo._instanceId);
+				ddmFieldInfo._instanceId,
+				instanceToFieldIdMap,
+				ddmFormFieldsMap,
+				rootDDMFieldInfo,
+				insertDDMFieldPreparedStatement,
+				insertDDMFieldAttributePreparedStatement,
+				deleteDDMContentPreparedStatement,
+				companyId,contentId,structureVersionId);
 		}
 	}
 
@@ -427,94 +523,21 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 				"defaultLanguageId",
 				LocaleUtil.toLanguageId(ddmFormValues.getDefaultLocale()),
 				StringPool.BLANK));
-
-		_collectDDMFieldInfos(
-			ddmFieldInfoMap, ddmFormValues.getDDMFormFieldValues(), null);
-
-		int priority = 0;
-
+		// runs M times, (number of fields)
 		Map<String, Long> instanceToFieldIdMap = new HashMap<>();
 
-		for (DDMFieldInfo ddmFieldInfo : ddmFieldInfoMap.values()) {
-			long fieldId = increment(DDMField.class.getName());
+		_collectDDMFieldInfos(
+			ddmFieldInfoMap,
+			ddmFormValues.getDDMFormFieldValues(),
+			null,
+			instanceToFieldIdMap,
+			ddmFormFieldsMap,
+			rootDDMFieldInfo,
+			insertDDMFieldPreparedStatement,
+			insertDDMFieldAttributePreparedStatement,
+			deleteDDMContentPreparedStatement,
+			companyId,contentId,structureVersionId);
 
-			long parentFieldId = 0;
-
-			if (ddmFieldInfo._parentInstanceId != null) {
-				parentFieldId = instanceToFieldIdMap.get(
-					ddmFieldInfo._parentInstanceId);
-			}
-
-			String fieldType = StringPool.BLANK;
-			boolean localizable = false;
-
-			if (ddmFieldInfo != rootDDMFieldInfo) {
-				DDMFormField ddmFormField = ddmFormFieldsMap.get(
-					ddmFieldInfo._fieldName);
-
-				if (ddmFormField != null) {
-					fieldType = ddmFormField.getType();
-					localizable = ddmFormField.isLocalizable();
-				}
-			}
-
-			insertDDMFieldPreparedStatement.setLong(1, fieldId);
-			insertDDMFieldPreparedStatement.setLong(2, companyId);
-			insertDDMFieldPreparedStatement.setLong(3, parentFieldId);
-			insertDDMFieldPreparedStatement.setLong(4, contentId);
-			insertDDMFieldPreparedStatement.setLong(5, structureVersionId);
-			insertDDMFieldPreparedStatement.setString(
-				6, ddmFieldInfo._fieldName);
-			insertDDMFieldPreparedStatement.setString(7, fieldType);
-			insertDDMFieldPreparedStatement.setString(
-				8, ddmFieldInfo._instanceId);
-			insertDDMFieldPreparedStatement.setBoolean(9, localizable);
-			insertDDMFieldPreparedStatement.setInt(10, priority);
-
-			insertDDMFieldPreparedStatement.addBatch();
-
-			priority++;
-
-			instanceToFieldIdMap.put(ddmFieldInfo._instanceId, fieldId);
-
-			for (DDMFieldAttributeInfo ddmFieldAttributeInfo :
-					ddmFieldInfo._ddmFieldAttributeInfos) {
-
-				String smallAttributeValue = null;
-				String largeAttributeValue = null;
-
-				if (ddmFieldAttributeInfo._attributeValue != null) {
-					if (ddmFieldAttributeInfo._attributeValue.length() > 255) {
-						largeAttributeValue =
-							ddmFieldAttributeInfo._attributeValue;
-					}
-					else {
-						smallAttributeValue =
-							ddmFieldAttributeInfo._attributeValue;
-					}
-				}
-
-				insertDDMFieldAttributePreparedStatement.setLong(
-					1, increment(DDMFieldAttribute.class.getName()));
-				insertDDMFieldAttributePreparedStatement.setLong(2, companyId);
-				insertDDMFieldAttributePreparedStatement.setLong(3, fieldId);
-				insertDDMFieldAttributePreparedStatement.setLong(4, contentId);
-				insertDDMFieldAttributePreparedStatement.setString(
-					5, ddmFieldAttributeInfo._attributeName);
-				insertDDMFieldAttributePreparedStatement.setString(
-					6, ddmFieldAttributeInfo._languageId);
-				insertDDMFieldAttributePreparedStatement.setString(
-					7, largeAttributeValue);
-				insertDDMFieldAttributePreparedStatement.setString(
-					8, smallAttributeValue);
-
-				insertDDMFieldAttributePreparedStatement.addBatch();
-			}
-		}
-
-		deleteDDMContentPreparedStatement.setLong(1, contentId);
-
-		deleteDDMContentPreparedStatement.addBatch();
 	}
 
 	private List<DDMFormFieldValue> _upgradeDDMFormValuesHierarchy(
