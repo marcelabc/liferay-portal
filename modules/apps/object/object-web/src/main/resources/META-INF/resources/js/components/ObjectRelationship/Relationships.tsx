@@ -27,6 +27,7 @@ import {ModalDeleteObjectRelationship} from './ModalDeleteObjectRelationship';
 interface ItemData {
 	id: number;
 	reverse: boolean;
+	system?: boolean;
 }
 
 interface RelationshipsProps extends IFDSTableProps {
@@ -121,6 +122,25 @@ export default function Relationships({
 		);
 	}
 
+	function objectRelationshipSourceDataRenderer({
+		itemData,
+	}: {
+		itemData: ItemData;
+	}) {
+		return (
+			<strong
+				className={classNames(
+					itemData.system ? 'label-info' : 'label-warning',
+					'label'
+				)}
+			>
+				{itemData.system
+					? Liferay.Language.get('system')
+					: Liferay.Language.get('custom')}
+			</strong>
+		);
+	}
+
 	const dataSetProps = {
 		...defaultDataSetProps,
 		apiURL,
@@ -128,6 +148,7 @@ export default function Relationships({
 		customDataRenderers: {
 			ObjectFieldHierarchyDataRenderer,
 			objectFieldLabelDataRenderer,
+			objectRelationshipSourceDataRenderer,
 		},
 		formName,
 		id,
@@ -188,6 +209,15 @@ export default function Relationships({
 							expand: false,
 							fieldName: 'type',
 							label: Liferay.Language.get('type'),
+							localizeLabel: true,
+							sortable: false,
+						},
+						{
+							contentRenderer:
+								'objectRelationshipSourceDataRenderer',
+							expand: false,
+							fieldName: 'source',
+							label: Liferay.Language.get('source'),
 							localizeLabel: true,
 							sortable: false,
 						},
