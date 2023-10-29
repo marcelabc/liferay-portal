@@ -619,6 +619,17 @@ public class ObjectRelationshipLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.object.model.ObjectRelationship
+			updateReverseObjectRelationship(
+				String externalReferenceCode,
+				com.liferay.object.model.ObjectRelationship objectRelationship)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectRelationshipLocalService.updateReverseObjectRelationship(
+			externalReferenceCode, objectRelationship);
+	}
+
+	@Override
 	public BasePersistence<?> getBasePersistence() {
 		return _objectRelationshipLocalService.getBasePersistence();
 	}

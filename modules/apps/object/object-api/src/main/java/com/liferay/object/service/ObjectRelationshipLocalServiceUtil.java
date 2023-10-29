@@ -532,6 +532,14 @@ public class ObjectRelationshipLocalServiceUtil {
 			deletionType, edge, labelMap);
 	}
 
+	public static ObjectRelationship updateReverseObjectRelationship(
+			String externalReferenceCode, ObjectRelationship objectRelationship)
+		throws PortalException {
+
+		return getService().updateReverseObjectRelationship(
+			externalReferenceCode, objectRelationship);
+	}
+
 	public static ObjectRelationshipLocalService getService() {
 		return _service;
 	}
