@@ -799,8 +799,9 @@ public class ObjectRelationshipLocalServiceImpl
 		}
 
 		if (objectRelationship.isReverse()) {
-			throw new ObjectRelationshipReverseException(
-				"Reverse object relationships cannot be updated");
+			return objectRelationshipLocalService.
+				updateReverseObjectRelationship(
+					externalReferenceCode, objectRelationship);
 		}
 
 		_validateExternalReferenceCode(
