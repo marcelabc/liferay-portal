@@ -12,12 +12,15 @@ import com.liferay.data.engine.rest.dto.v2_0.DataLayoutColumn;
 import com.liferay.data.engine.rest.dto.v2_0.DataLayoutPage;
 import com.liferay.data.engine.rest.dto.v2_0.DataLayoutRow;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.util.DDMFormFieldUtil;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -82,6 +85,30 @@ public class ImportDataDefinitionMVCActionCommand extends BaseMVCActionCommand {
 				).build();
 
 			_uniquifyDataDefinitionFields(dataDefinition);
+
+			for (DataDefinitionField dataDefinitionField :
+					dataDefinition.getDataDefinitionFields()) {
+
+				Map<String, Object> customProperties =
+					dataDefinitionField.getCustomProperties();
+
+				if (customProperties.containsKey("ddmStructureKey")) {
+					long groupId = themeDisplay.getScopeGroupId();
+
+					long classNameId = _classNameLocalService.getClassNameId(
+						"com.liferay.journal.model.JournalArticle");
+
+					String ddmStructureKey = String.valueOf(
+						customProperties.get("ddmStructureKey"));
+
+					DDMStructure ddmStructure =
+						_ddmStructureLocalService.getStructure(
+							groupId, classNameId, ddmStructureKey);
+
+					customProperties.put(
+						"ddmStructureId", ddmStructure.getStructureId());
+				}
+			}
 
 			dataDefinitionResource.postSiteDataDefinitionByContentType(
 				themeDisplay.getScopeGroupId(), "journal", dataDefinition);
@@ -257,7 +284,13 @@ public class ImportDataDefinitionMVCActionCommand extends BaseMVCActionCommand {
 		ImportDataDefinitionMVCActionCommand.class);
 
 	@Reference
+	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
 	private DataDefinitionResource.Factory _dataDefinitionResourceFactory;
+
+	@Reference
+	private DDMStructureLocalService _ddmStructureLocalService;
 
 	private final Set<String> _fieldNames = new HashSet<>();
 

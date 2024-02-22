@@ -6,8 +6,11 @@
 package com.liferay.journal.web.internal.portlet.action;
 
 import com.liferay.data.engine.rest.dto.v2_0.DataDefinition;
+import com.liferay.data.engine.rest.dto.v2_0.DataDefinitionField;
 import com.liferay.data.engine.rest.dto.v2_0.DataLayout;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
+import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -16,6 +19,8 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -64,6 +69,26 @@ public class ExportDataDefinitionMVCResourceCommand
 		DataDefinition dataDefinition =
 			dataDefinitionResource.getDataDefinition(dataDefinitionId);
 
+		for (DataDefinitionField dataDefinitionField :
+				dataDefinition.getDataDefinitionFields()) {
+
+			Map<String, Object> customProperties =
+				dataDefinitionField.getCustomProperties();
+
+			if (customProperties.containsKey("ddmStructureId")) {
+				long ddmStructureId = MapUtil.getLong(
+					customProperties, "ddmStructureId");
+
+				DDMStructure ddmStructure =
+					_ddmStructureLocalService.getDDMStructure(ddmStructureId);
+
+				long ddmStructureKey = GetterUtil.getLong(
+					ddmStructure.getStructureKey());
+
+				customProperties.put("ddmStructureKey", ddmStructureKey);
+			}
+		}
+
 		Map<String, Object> nameMap = dataDefinition.getName();
 
 		_sanitize(dataDefinition);
@@ -101,5 +126,8 @@ public class ExportDataDefinitionMVCResourceCommand
 
 	@Reference
 	private DataDefinitionResource.Factory _dataDefinitionResourceFactory;
+
+	@Reference
+	private DDMStructureLocalService _ddmStructureLocalService;
 
 }
