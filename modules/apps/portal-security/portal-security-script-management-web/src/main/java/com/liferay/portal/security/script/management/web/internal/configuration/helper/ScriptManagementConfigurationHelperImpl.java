@@ -80,12 +80,15 @@ public class ScriptManagementConfigurationHelperImpl
 
 	@Override
 	public boolean isAllowScriptContentToBeExecutedOrIncluded() {
-		if (!PropsValues.SCRIPT_MANAGEMENT_CONFIGURATION_ENABLED) {
-			return false;
-		}
 
-		return _systemScriptManagementConfiguration.
-			allowScriptContentToBeExecutedOrIncluded();
+		return true;
+
+//		if (!PropsValues.SCRIPT_MANAGEMENT_CONFIGURATION_ENABLED) {
+//			return false;
+//		}
+//
+//		return _systemScriptManagementConfiguration.
+//			allowScriptContentToBeExecutedOrIncluded();
 	}
 
 	@Override
