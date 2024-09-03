@@ -112,7 +112,12 @@ public class AcceptLanguageImpl implements AcceptLanguage {
 		List<Locale> locales = getLocales();
 
 		if (ListUtil.isNotEmpty(locales)) {
-			return locales.get(0);
+			if(locales.size() == 1) {
+				return locales.get(0);
+			}
+
+			return LocaleUtil.fromLanguageId(
+				_httpServletRequest.getHeader(HttpHeaders.ACCEPT_LANGUAGE));
 		}
 
 		try {
