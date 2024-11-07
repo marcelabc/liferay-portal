@@ -38,6 +38,7 @@ import com.liferay.object.exception.ObjectDefinitionScopeException;
 import com.liferay.object.exception.ObjectEntryStatusException;
 import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.exception.ObjectValidationRuleEngineException;
+import com.liferay.object.field.builder.AggregationObjectFieldBuilder;
 import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
 import com.liferay.object.field.builder.AutoIncrementObjectFieldBuilder;
 import com.liferay.object.field.builder.DateObjectFieldBuilder;
@@ -885,6 +886,62 @@ public class ObjectEntryLocalServiceTest {
 		finally {
 			serviceContext.setWorkflowAction(originalWorkflowAction);
 		}
+	}
+
+	@Test
+	public void testAddObjectEntryWithAggregationObjectField() throws Exception {
+
+		ObjectDefinition objectDefinition =
+			_publishCustomObjectDefinition(
+				false,
+				Collections.singletonList(
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_LONG_INTEGER,
+						ObjectFieldConstants.DB_TYPE_LONG,
+						"Long Integer", "longInteger")));
+
+		_objectRelationshipLocalService.addObjectRelationship(
+			null, TestPropsValues.getUserId(),
+			_objectDefinition.getObjectDefinitionId(),
+			objectDefinition.getObjectDefinitionId(), 0,
+			ObjectRelationshipConstants.DELETION_TYPE_PREVENT, false,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			"oneToManyRelationshipName", false,
+			ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
+
+		_addCustomObjectField(
+			new AggregationObjectFieldBuilder(
+		).labelMap(
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+		).name(
+			"a" + RandomTestUtil.randomString()
+		).objectDefinitionId(
+				_objectDefinition.getObjectDefinitionId()
+		).objectFieldSettings(
+			Arrays.asList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_FUNCTION
+				).value(
+					"SUM"
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_OBJECT_FIELD_NAME
+				).value(
+					"longInteger"
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.
+						NAME_OBJECT_RELATIONSHIP_NAME
+				).value(
+					"oneToManyRelationshipName"
+				).build())
+		).build());
+
+
+
 	}
 
 	@Test
