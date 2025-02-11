@@ -130,9 +130,9 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			Map<String, Serializable> values, ServiceContext serviceContext)
 		throws PortalException {
 
-		ObjectEntry objectEntry = objectEntryPersistence.fetchByERC_C_ODI(
-			externalReferenceCode, serviceContext.getCompanyId(),
-			objectDefinitionId);
+		ObjectEntry objectEntry = objectEntryPersistence.fetchByERC_G_C_ODI(
+			externalReferenceCode, serviceContext.getScopeGroupId(),
+			serviceContext.getCompanyId(), objectDefinitionId);
 
 		if (objectEntry == null) {
 			_checkAddObjectEntryPortletResourcePermission(
@@ -176,11 +176,11 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 	@Override
 	public ObjectEntry deleteObjectEntry(
-			String externalReferenceCode, long companyId, long groupId)
+			String externalReferenceCode, long groupId, long objectDefinitionId)
 		throws PortalException {
 
 		ObjectEntry objectEntry = objectEntryLocalService.getObjectEntry(
-			externalReferenceCode, companyId, groupId);
+			externalReferenceCode, groupId, objectDefinitionId);
 
 		_checkPermission(
 			ActionKeys.DELETE, objectEntry.getObjectDefinitionId(),
@@ -293,28 +293,11 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 	@Override
 	public ObjectEntry getObjectEntry(
-			String externalReferenceCode, long objectDefinitionId)
+			String externalReferenceCode, long groupId, long objectDefinitionId)
 		throws PortalException {
 
 		ObjectEntry objectEntry = objectEntryLocalService.getObjectEntry(
-			externalReferenceCode, objectDefinitionId);
-
-		if (!ObjectEntryThreadLocal.isSkipObjectEntryResourcePermission()) {
-			_checkPermission(
-				ActionKeys.VIEW, objectEntry.getObjectDefinitionId(),
-				objectEntry);
-		}
-
-		return objectEntry;
-	}
-
-	@Override
-	public ObjectEntry getObjectEntry(
-			String externalReferenceCode, long companyId, long groupId)
-		throws PortalException {
-
-		ObjectEntry objectEntry = objectEntryLocalService.getObjectEntry(
-			externalReferenceCode, companyId, groupId);
+			externalReferenceCode, groupId, objectDefinitionId);
 
 		if (!ObjectEntryThreadLocal.isSkipObjectEntryResourcePermission()) {
 			_checkPermission(
