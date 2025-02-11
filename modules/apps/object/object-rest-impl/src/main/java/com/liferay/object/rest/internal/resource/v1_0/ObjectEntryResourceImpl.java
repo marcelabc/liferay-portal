@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.EntityModel;
@@ -587,7 +588,7 @@ public class ObjectEntryResourceImpl extends BaseObjectEntryResourceImpl {
 
 		com.liferay.object.model.ObjectEntry objectEntry =
 			_objectEntryLocalService.getObjectEntry(
-				externalReferenceCode,
+				externalReferenceCode, GroupThreadLocal.getGroupId(),
 				objectDefinition.getObjectDefinitionId());
 
 		return objectEntry.getObjectEntryId();

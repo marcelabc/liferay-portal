@@ -96,6 +96,7 @@ public class GetSystemDataSetsMVCResourceCommand
 						ObjectEntry objectEntry =
 							_objectEntryLocalService.fetchObjectEntry(
 								systemFDSEntry.getName(),
+								themeDisplay.getScopeGroupId(),
 								dataSetObjectDefinition.
 									getObjectDefinitionId());
 
