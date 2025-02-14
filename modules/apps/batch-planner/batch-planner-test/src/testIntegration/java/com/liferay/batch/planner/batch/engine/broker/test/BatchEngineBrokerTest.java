@@ -342,7 +342,7 @@ public class BatchEngineBrokerTest {
 		}
 
 		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
-			_OBJECT_ENTRY_ERC_1, TestPropsValues.getGroupId(),
+			_OBJECT_ENTRY_ERC_1, 0,
 			_objectDefinition1.getObjectDefinitionId());
 
 		Assert.assertNotNull(objectEntry);
@@ -381,7 +381,7 @@ public class BatchEngineBrokerTest {
 				_getURIString("json", fileInputStream));
 
 			ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
-				_OBJECT_ENTRY_ERC_1, TestPropsValues.getGroupId(),
+				_OBJECT_ENTRY_ERC_1, 0,
 				_objectDefinition1.getObjectDefinitionId());
 
 			_addObjectEntryInDifferentCompany("TestObject");
@@ -1502,7 +1502,7 @@ public class BatchEngineBrokerTest {
 
 		File file = _createJSONImportFile(
 			_addDLFileEntry(
-				TestPropsValues.getGroupId(), TestPropsValues.getUserId()),
+				groupId, TestPropsValues.getUserId()),
 			_objectDefinition1.getExternalReferenceCode(), objectEntryERC,
 			"object_entry_import_template.txt");
 

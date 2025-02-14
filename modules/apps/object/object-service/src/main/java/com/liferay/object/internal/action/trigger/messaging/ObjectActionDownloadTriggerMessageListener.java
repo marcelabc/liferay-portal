@@ -23,7 +23,10 @@ import com.liferay.portal.kernel.messaging.DestinationFactory;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageListener;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
@@ -91,6 +94,17 @@ public class ObjectActionDownloadTriggerMessageListener
 
 		String objectEntryExternalReferenceCode = message.getString(
 			"objectEntryExternalReferenceCode");
+
+		long groupId = 0;
+
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
+
+		if (themeDisplay != null) {
+			groupId = themeDisplay.getScopeGroupId();
+		}
 
 		ObjectEntry objectEntry = _objectEntryLocalService.fetchObjectEntry(
 			objectEntryExternalReferenceCode,
