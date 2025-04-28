@@ -65,6 +65,11 @@ portletDisplay.setURLBack(backURL);
 		</clay:sheet-section>
 
 		<%@ include file="/object_entries/object_entry/categorization.jspf" %>
+
+		<react:component
+			module="{Component} from object-web"
+		/>
+
 	</liferay-frontend:edit-form-body>
 
 	<c:if test="<%= !objectEntryDisplayContext.isReadOnly() %>">
