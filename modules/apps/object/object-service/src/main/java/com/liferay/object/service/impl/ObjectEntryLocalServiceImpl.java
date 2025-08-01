@@ -3978,13 +3978,19 @@ public class ObjectEntryLocalServiceImpl
 		ObjectField objectField = _objectFieldPersistence.fetchByPrimaryKey(
 			objectRelationship.getObjectFieldId2());
 
-		ObjectEntry objectEntry = fetchObjectEntry(primaryKey);
+		ObjectEntry objectEntry = null;
+
+		if (primaryKeys.length == 1) {
+			objectEntry = fetchObjectEntry(primaryKeys[0]);
+		}
 
 		DynamicObjectDefinitionTable rootDynamicObjectDefinitionTable =
 			_getRootDynamicObjectDefinitionTable(objectEntry);
 
 		Column<DynamicObjectDefinitionTable, Long> primaryKeyColumn =
 			dynamicObjectDefinitionTable.getPrimaryKeyColumn();
+
+		ObjectEntry finalObjectEntry = objectEntry;
 
 		return fromStep.from(
 			dynamicObjectDefinitionTable
@@ -4061,11 +4067,11 @@ public class ObjectEntryLocalServiceImpl
 
 					long rootObjectDefinitionId = 0L;
 
-					if ((objectEntry != null) &&
-						(objectEntry.getRootObjectEntryId() != 0)) {
+					if ((finalObjectEntry != null) &&
+						(finalObjectEntry.getRootObjectEntryId() != 0)) {
 
 						ObjectEntry rootObjectEntry = fetchObjectEntry(
-							objectEntry.getRootObjectEntryId());
+							finalObjectEntry.getRootObjectEntryId());
 
 						rootObjectDefinitionId =
 							rootObjectEntry.getObjectDefinitionId();
