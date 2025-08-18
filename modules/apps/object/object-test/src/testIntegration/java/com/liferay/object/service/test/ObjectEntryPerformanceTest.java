@@ -317,6 +317,9 @@ public class ObjectEntryPerformanceTest {
 		PermissionThreadLocal.setPermissionChecker(originalPermissionChecker);
 
 		PrincipalThreadLocal.setName(originalName);
+
+		// TESTE
+
 	}
 
 	@Test
