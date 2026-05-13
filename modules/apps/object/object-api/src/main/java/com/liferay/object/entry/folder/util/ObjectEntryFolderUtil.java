@@ -10,6 +10,8 @@ import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectEntryFolderLocalServiceUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
@@ -49,6 +51,41 @@ public class ObjectEntryFolderUtil {
 		}
 
 		return objectEntryFolder.getObjectEntryFolderId();
+	}
+
+	public static String getOrAddObjectEntryFolderExternalReferenceCode(
+			long companyId, long groupId, ServiceContext serviceContext,
+			String storageDLFolderPath)
+		throws PortalException {
+
+		ObjectEntryFolder objectEntryFolder =
+			ObjectEntryFolderLocalServiceUtil.
+				fetchObjectEntryFolderByExternalReferenceCode(
+					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES,
+					groupId, companyId);
+
+		for (String name :
+				StringUtil.split(storageDLFolderPath, CharPool.FORWARD_SLASH)) {
+
+			long parentObjectEntryFolderId =
+				objectEntryFolder.getObjectEntryFolderId();
+
+			ObjectEntryFolder childObjectEntryFolder =
+				ObjectEntryFolderLocalServiceUtil.fetchObjectEntryFolder(
+					groupId, companyId, parentObjectEntryFolderId, name);
+
+			if (childObjectEntryFolder == null) {
+				childObjectEntryFolder =
+					ObjectEntryFolderLocalServiceUtil.addObjectEntryFolder(
+						null, groupId, serviceContext.getUserId(),
+						parentObjectEntryFolderId, null, null, name,
+						serviceContext);
+			}
+
+			objectEntryFolder = childObjectEntryFolder;
+		}
+
+		return objectEntryFolder.getExternalReferenceCode();
 	}
 
 	public static long getRootObjectEntryFolderId(long objectEntryFolderId) {
