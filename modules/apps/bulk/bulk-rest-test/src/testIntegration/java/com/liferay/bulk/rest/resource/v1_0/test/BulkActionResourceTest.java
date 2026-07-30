@@ -104,7 +104,6 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -136,7 +135,6 @@ import org.osgi.framework.FrameworkUtil;
 /**
  * @author Alejandro Tardín
  */
-@FeatureFlag("LPD-58677")
 @RunWith(Arquillian.class)
 public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 
