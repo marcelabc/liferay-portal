@@ -7,9 +7,11 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {loginTest} from '../../../fixtures/loginTest';
+import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../../utils/getRandomString';
 import {cmsPagesTest} from '../../site-cms-site-initializer/main/fixtures/cmsPagesTest';
 import {cmpPagesTest} from './fixtures/cmpPagesTest';
+import {linkAssetToCMPTask} from './utils/linkAssetToCMPTask';
 
 const test = mergeTests(
 	cmpPagesTest,
@@ -27,9 +29,9 @@ test(
 	async ({apiHelpers, page, projectPage, projectsPage}) => {
 		const assetTitle = `Asset ${getRandomString()}`;
 		const projectTitle = `Project ${getRandomString()}`;
-		const taskTag = 'L_CMP_TASK_' + Math.floor(Math.random() * 100000000);
 
 		let project;
+		let task;
 
 		await test.step('Create a project and a task', async () => {
 			project = await apiHelpers.objectEntry.postObjectEntry(
@@ -39,9 +41,8 @@ test(
 				CMP_PROJECT
 			);
 
-			await apiHelpers.objectEntry.postObjectEntry(
+			task = await apiHelpers.objectEntry.postObjectEntry(
 				{
-					keywords: [taskTag],
 					r_cmpProjectToCMPTasks_c_cmpProjectId: project.id,
 					title: getRandomString(),
 				},
@@ -58,15 +59,23 @@ test(
 					type: 'Space',
 				});
 
-			await apiHelpers.objectEntry.postObjectEntry(
+			const asset = await apiHelpers.objectEntry.postObjectEntry(
 				{
-					keywords: [taskTag],
 					objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
 					title: assetTitle,
 				},
 				'cms/basic-web-contents',
 				space.name
 			);
+
+			await linkAssetToCMPTask({
+				apiHelpers,
+				asset,
+				assetObjectDefinitionExternalReferenceCode:
+					'L_CMS_BASIC_WEB_CONTENT',
+				scopeKey: project.scopeKey,
+				task,
+			});
 		});
 
 		await test.step('Open the project Assets tab', async () => {
@@ -74,7 +83,10 @@ test(
 
 			await projectsPage.getProject(projectTitle).click();
 
-			await projectPage.assetsTab.click();
+			await clickAndExpectToBeVisible({
+				target: page.getByRole('button', {name: assetTitle}),
+				trigger: projectPage.assetsTab,
+			});
 		});
 
 		await test.step('Click the Asset details option and assert it renders', async () => {

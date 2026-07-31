@@ -38,6 +38,14 @@ export class ObjectAdminApiHelper {
 		);
 	}
 
+	async getObjectDefinitionByExternalReferenceCode(
+		externalReferenceCode: string
+	): Promise<ObjectDefinition> {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/object-definitions/by-external-reference-code/${externalReferenceCode}`
+		);
+	}
+
 	async getObjectDefinitionByName(name: string): Promise<ObjectDefinition> {
 		const {items} = await this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/object-definitions?filter=name eq '${name}'`

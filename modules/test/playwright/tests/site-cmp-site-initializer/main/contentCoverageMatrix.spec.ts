@@ -7,11 +7,13 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {loginTest} from '../../../fixtures/loginTest';
+import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../../utils/getRandomString';
 import {getTaxonomyCategoryId} from '../../../utils/getTaxonomyCategoryId';
 import {cmsPagesTest} from '../../site-cms-site-initializer/main/fixtures/cmsPagesTest';
 import {DataSetPage} from '../../site-cms-site-initializer/main/pages/DataSetPage';
 import {cmpPagesTest} from './fixtures/cmpPagesTest';
+import {linkAssetToCMPTask} from './utils/linkAssetToCMPTask';
 
 const test = mergeTests(
 	cmpPagesTest,
@@ -37,9 +39,8 @@ test(
 
 		const decisionMakerAwarenessAsset = getRandomString();
 
-		const taskTag = 'L_CMP_TASK_' + Math.floor(Math.random() * 100000000);
-
 		let project;
+		let task;
 
 		try {
 			const {awarenessId, championId, considerationId, decisionMakerId} =
@@ -90,9 +91,8 @@ test(
 					CMP_PROJECT
 				);
 
-				await apiHelpers.objectEntry.postObjectEntry(
+				task = await apiHelpers.objectEntry.postObjectEntry(
 					{
-						keywords: [taskTag],
 						r_cmpProjectToCMPTasks_c_cmpProjectId: project.id,
 						title: getRandomString(),
 					},
@@ -109,37 +109,42 @@ test(
 						type: 'Space',
 					});
 
-				await apiHelpers.objectEntry.postObjectEntry(
-					{
-						keywords: [taskTag],
-						objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
-						taxonomyCategoryIds: [championId, awarenessId],
-						title: championAwarenessAsset,
-					},
-					'cms/basic-web-contents',
-					space.name
-				);
+				const addRelatedAsset = async (
+					taxonomyCategoryIds: number[],
+					title: string
+				) => {
+					const asset = await apiHelpers.objectEntry.postObjectEntry(
+						{
+							objectEntryFolderExternalReferenceCode:
+								'L_CONTENTS',
+							taxonomyCategoryIds,
+							title,
+						},
+						'cms/basic-web-contents',
+						space.name
+					);
 
-				await apiHelpers.objectEntry.postObjectEntry(
-					{
-						keywords: [taskTag],
-						objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
-						taxonomyCategoryIds: [championId, considerationId],
-						title: championConsiderationAsset,
-					},
-					'cms/basic-web-contents',
-					space.name
-				);
+					await linkAssetToCMPTask({
+						apiHelpers,
+						asset,
+						assetObjectDefinitionExternalReferenceCode:
+							'L_CMS_BASIC_WEB_CONTENT',
+						scopeKey: project.scopeKey,
+						task,
+					});
+				};
 
-				await apiHelpers.objectEntry.postObjectEntry(
-					{
-						keywords: [taskTag],
-						objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
-						taxonomyCategoryIds: [decisionMakerId, awarenessId],
-						title: decisionMakerAwarenessAsset,
-					},
-					'cms/basic-web-contents',
-					space.name
+				await addRelatedAsset(
+					[championId, awarenessId],
+					championAwarenessAsset
+				);
+				await addRelatedAsset(
+					[championId, considerationId],
+					championConsiderationAsset
+				);
+				await addRelatedAsset(
+					[decisionMakerId, awarenessId],
+					decisionMakerAwarenessAsset
 				);
 			});
 
@@ -148,11 +153,14 @@ test(
 
 				await projectsPage.getProject(projectTitle).click();
 
-				await projectPage.assetsTab.click();
-
-				await expect(
-					projectPage.getMatrixCell('Champion', 'Awareness', 1)
-				).toBeVisible();
+				await clickAndExpectToBeVisible({
+					target: projectPage.getMatrixCell(
+						'Champion',
+						'Awareness',
+						1
+					),
+					trigger: projectPage.assetsTab,
+				});
 			});
 
 			await test.step('All related assets are listed initially', async () => {

@@ -5,6 +5,7 @@
 
 import {Locator, Page} from '@playwright/test';
 
+import {clickAndExpectToBeVisible} from '../../../../utils/clickAndExpectToBeVisible';
 import {PORTLET_URLS} from '../../../../utils/portletUrls';
 import {DataSetPage} from '../../../site-cms-site-initializer/main/pages/DataSetPage';
 import {toDateString} from '../utils/toDateString';
@@ -20,7 +21,6 @@ interface ExecItemActionArgs {
 export class TasksPage {
 	readonly addTaskKanbanButton: Locator;
 	readonly allTasksTab: Locator;
-	readonly assetTagNameField: Locator;
 	readonly assignTaskToDialog: Locator;
 	readonly calendarView: {
 		datePickerMenu: Locator;
@@ -50,7 +50,6 @@ export class TasksPage {
 	readonly projectTasksTab: Locator;
 	readonly projectTitleButton: Locator;
 	readonly saveButton: Locator;
-	readonly tableViewButton: Locator;
 	readonly titleInput: Locator;
 	readonly viewSelectorButton: Locator;
 	readonly updateDueDateDialog: Locator;
@@ -65,11 +64,6 @@ export class TasksPage {
 			.getByRole('button', {name: 'Add Task'})
 			.first();
 		this.allTasksTab = page.getByRole('tab', {name: 'All Tasks'});
-		this.assetTagNameField = page
-			.locator('span')
-			.filter({hasText: 'L_CMP_TASK_'})
-			.first();
-
 		this.assignTaskToDialog = page.getByRole('dialog', {
 			name: 'Assign Tasks to',
 		});
@@ -139,9 +133,6 @@ export class TasksPage {
 			'#r_cmpProjectToCMPTasks_c_cmpProjectId'
 		);
 		this.saveButton = page.getByRole('button', {name: 'Save'});
-		this.tableViewButton = page.getByRole('combobox', {
-			name: 'Table View Selected',
-		});
 		this.titleInput = page.locator('#title');
 		this.updateDueDateDialog = page.getByRole('dialog', {
 			name: 'Update Due Date',
@@ -220,9 +211,15 @@ export class TasksPage {
 
 		await projectsPage.getProject(projectTitle).click();
 
-		await projectPage.tasksTab.click();
+		await clickAndExpectToBeVisible({
+			target: this.viewSelectorButton,
+			trigger: projectPage.tasksTab,
+		});
 
-		await this.tableViewButton.click();
+		await clickAndExpectToBeVisible({
+			target: this.calendarView.viewOption,
+			trigger: this.viewSelectorButton,
+		});
 
 		await this.calendarView.viewOption.click();
 
@@ -240,9 +237,15 @@ export class TasksPage {
 
 		await projectsPage.getProject(projectTitle).click();
 
-		await projectPage.tasksTab.click();
+		await clickAndExpectToBeVisible({
+			target: this.viewSelectorButton,
+			trigger: projectPage.tasksTab,
+		});
 
-		await this.tableViewButton.click();
+		await clickAndExpectToBeVisible({
+			target: this.calendarView.viewOption,
+			trigger: this.viewSelectorButton,
+		});
 
 		await this.calendarView.viewOption.click();
 
