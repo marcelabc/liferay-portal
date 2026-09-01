@@ -80,7 +80,7 @@ export async function addStaticMember({
 export async function createBatchSegment(page: Page) {
 	await clickAndExpectToBeVisible({
 		autoClick: true,
-		target: page.getByRole('menuitem', {name: 'Batch'}),
+		target: page.getByTestId('batch-segment-dropdown-item'),
 		trigger: page
 			.getByRole('button', {name: 'Menu'})
 			.filter({hasText: 'New Segment'}),

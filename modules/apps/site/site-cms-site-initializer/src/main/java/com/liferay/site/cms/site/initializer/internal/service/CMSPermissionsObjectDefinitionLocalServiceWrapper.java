@@ -53,54 +53,49 @@ public class CMSPermissionsObjectDefinitionLocalServiceWrapper
 			super.publishSystemObjectDefinition(userId, objectDefinitionId));
 	}
 
-	private void _addResourcePermission(
-			ObjectDefinition objectDefinition, String roleName)
+	private void _addCMSDefaultPermissionResourcePermission(
+			ObjectDefinition objectDefinition)
 		throws PortalException {
 
 		Role role = _roleLocalService.fetchRole(
-			objectDefinition.getCompanyId(), roleName);
+			objectDefinition.getCompanyId(), RoleConstants.USER);
 
 		if (role == null) {
 			return;
 		}
 
 		_resourcePermissionLocalService.addResourcePermission(
-			objectDefinition.getCompanyId(), objectDefinition.getResourceName(),
-			ResourceConstants.SCOPE_GROUP_TEMPLATE,
-			String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
-			role.getRoleId(), ObjectActionKeys.ADD_OBJECT_ENTRY);
+			objectDefinition.getCompanyId(), objectDefinition.getClassName(),
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(objectDefinition.getCompanyId()), role.getRoleId(),
+			ActionKeys.VIEW);
 	}
 
-	private void _setObjectDefinitionResourcePermissions(
-			ObjectDefinition objectDefinition, String roleName)
-		throws PortalException {
+	private void _addResourcePermission(
+		ObjectDefinition objectDefinition, String roleName) {
 
-		Role role = _roleLocalService.getRole(
-			objectDefinition.getCompanyId(), roleName);
+		try {
+			Role role = _roleLocalService.fetchRole(
+				objectDefinition.getCompanyId(), roleName);
 
-		_resourcePermissionLocalService.setResourcePermissions(
-			objectDefinition.getCompanyId(), ObjectDefinition.class.getName(),
-			ResourceConstants.SCOPE_INDIVIDUAL,
-			String.valueOf(objectDefinition.getObjectDefinitionId()),
-			role.getRoleId(), new String[] {ActionKeys.VIEW});
-	}
+			if (role == null) {
+				return;
+			}
 
-	private ObjectDefinition _setResourcePermissions(
-		ObjectDefinition objectDefinition) {
-
-		String objectFolderExternalReferenceCode =
-			objectDefinition.getObjectFolderExternalReferenceCode();
-
-		if (!Objects.equals(
-				objectFolderExternalReferenceCode,
-				ObjectFolderConstants.
-					EXTERNAL_REFERENCE_CODE_CONTENT_STRUCTURES) &&
-			!Objects.equals(
-				objectFolderExternalReferenceCode,
-				ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES)) {
-
-			return objectDefinition;
+			_resourcePermissionLocalService.addResourcePermission(
+				objectDefinition.getCompanyId(),
+				objectDefinition.getResourceName(),
+				ResourceConstants.SCOPE_GROUP_TEMPLATE,
+				String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
+				role.getRoleId(), ObjectActionKeys.ADD_OBJECT_ENTRY);
 		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+	}
+
+	private void _setCMSAdministratorResourcePermissions(
+		ObjectDefinition objectDefinition) {
 
 		try {
 			Role role = RoleUtil.getOrAddCMSAdministratorRole(
@@ -123,22 +118,70 @@ public class CMSPermissionsObjectDefinitionLocalServiceWrapper
 					ActionKeys.DELETE, ActionKeys.PERMISSIONS,
 					ActionKeys.UPDATE, ActionKeys.VIEW
 				});
-
-			_setObjectDefinitionResourcePermissions(
-				objectDefinition, RoleConstants.GUEST);
-			_setObjectDefinitionResourcePermissions(
-				objectDefinition, RoleConstants.USER);
-
-			_addResourcePermission(
-				objectDefinition,
-				DepotRolesConstants.ASSET_LIBRARY_ADMINISTRATOR);
-			_addResourcePermission(
-				objectDefinition,
-				DepotRolesConstants.ASSET_LIBRARY_CONTENT_REVIEWER);
 		}
 		catch (Exception exception) {
 			_log.error(exception);
 		}
+	}
+
+	private void _setObjectDefinitionResourcePermissions(
+		ObjectDefinition objectDefinition, String roleName) {
+
+		try {
+			Role role = _roleLocalService.fetchRole(
+				objectDefinition.getCompanyId(), roleName);
+
+			if (role == null) {
+				return;
+			}
+
+			_resourcePermissionLocalService.setResourcePermissions(
+				objectDefinition.getCompanyId(),
+				ObjectDefinition.class.getName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(objectDefinition.getObjectDefinitionId()),
+				role.getRoleId(), new String[] {ActionKeys.VIEW});
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+	}
+
+	private ObjectDefinition _setResourcePermissions(
+			ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		if (Objects.equals(
+				objectDefinition.getExternalReferenceCode(),
+				"L_CMS_DEFAULT_PERMISSION")) {
+
+			_addCMSDefaultPermissionResourcePermission(objectDefinition);
+		}
+
+		String objectFolderExternalReferenceCode =
+			objectDefinition.getObjectFolderExternalReferenceCode();
+
+		if (!Objects.equals(
+				objectFolderExternalReferenceCode,
+				ObjectFolderConstants.
+					EXTERNAL_REFERENCE_CODE_CONTENT_STRUCTURES) &&
+			!Objects.equals(
+				objectFolderExternalReferenceCode,
+				ObjectFolderConstants.EXTERNAL_REFERENCE_CODE_FILE_TYPES)) {
+
+			return objectDefinition;
+		}
+
+		_addResourcePermission(
+			objectDefinition, DepotRolesConstants.ASSET_LIBRARY_ADMINISTRATOR);
+		_addResourcePermission(
+			objectDefinition,
+			DepotRolesConstants.ASSET_LIBRARY_CONTENT_REVIEWER);
+		_setCMSAdministratorResourcePermissions(objectDefinition);
+		_setObjectDefinitionResourcePermissions(
+			objectDefinition, RoleConstants.GUEST);
+		_setObjectDefinitionResourcePermissions(
+			objectDefinition, RoleConstants.USER);
 
 		return objectDefinition;
 	}

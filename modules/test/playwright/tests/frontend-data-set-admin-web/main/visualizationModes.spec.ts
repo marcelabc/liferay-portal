@@ -423,6 +423,7 @@ test('Configure table visualization mode @LPD-11049', async ({
 	const sampleScalarFieldName = 'label';
 	const sampleObjectField = 'removedBy';
 	const sampleObjectChildField = 'id';
+	const sampleObjectType = 'string';
 
 	await test.step('Navigate to table visualization mode page', async () => {
 		await visualizationModesPage.goto({
@@ -448,12 +449,12 @@ test('Configure table visualization mode @LPD-11049', async ({
 		});
 
 		await visualizationModesPage.selectField({
-			dataId: `${sampleObjectField}.*`,
+			dataId: `${sampleObjectType},${sampleObjectField}.*`,
 			fieldName: sampleObjectField,
 		});
 
 		await visualizationModesPage.selectField({
-			dataId: `${sampleObjectField}.${sampleObjectChildField}`,
+			dataId: `${sampleObjectType},${sampleObjectField}.${sampleObjectChildField}`,
 			fieldName: sampleObjectChildField,
 		});
 
@@ -494,7 +495,7 @@ test('Configure table visualization mode @LPD-11049', async ({
 				.getRowByText(sampleScalarFieldName)
 				.locator('td')
 				.nth(visualizationModesPage.SORTABLE_COLUMN_INDEX)
-		).toHaveText('true');
+		).toHaveText('false');
 
 		await expect(
 			visualizationModesPage
@@ -541,7 +542,7 @@ test('Configure table visualization mode @LPD-11049', async ({
 		).toHaveText('false');
 	});
 
-	await test.step('Check if object field has disabled sortable option', async () => {
+	await test.step('Check if object field has an editable sortable option', async () => {
 		await clickActionInRow({
 			actionName: 'Edit',
 			page,
@@ -553,7 +554,9 @@ test('Configure table visualization mode @LPD-11049', async ({
 
 		await expect(sortableLabel).toBeInViewport();
 
-		await expect(sortableLabel).toBeDisabled();
+		await expect(sortableLabel).toBeEnabled();
+
+		await expect(sortableLabel).not.toBeChecked();
 
 		await visualizationModesPage.cancelAddFieldsModal();
 	});
@@ -567,6 +570,7 @@ test('Add a field and assert its added to the last position in the table and ass
 	const sampleScalarField = 'id';
 	const sampleObjectField = 'removedBy';
 	const sampleObjectChildField = 'id';
+	const sampleObjectType = 'string';
 
 	await test.step('Navigate to table visualization mode page', async () => {
 		await visualizationModesPage.goto({
@@ -588,12 +592,12 @@ test('Add a field and assert its added to the last position in the table and ass
 		});
 
 		await visualizationModesPage.selectField({
-			dataId: `${sampleObjectField}.*`,
+			dataId: `${sampleObjectType},${sampleObjectField}.*`,
 			fieldName: sampleObjectField,
 		});
 
 		await visualizationModesPage.selectField({
-			dataId: `${sampleObjectField}.${sampleObjectChildField}`,
+			dataId: `${sampleObjectType},${sampleObjectField}.${sampleObjectChildField}`,
 			fieldName: sampleObjectChildField,
 		});
 
@@ -757,6 +761,7 @@ test('Check cancel in table visualization mode', async ({
 }) => {
 	const sampleScalarField = 'id';
 	const sampleObjectField = 'removedBy';
+	const sampleObjectType = 'string';
 
 	await test.step('Navigate to table visualization mode page', async () => {
 		await visualizationModesPage.goto({
@@ -802,7 +807,7 @@ test('Check cancel in table visualization mode', async ({
 		});
 
 		await visualizationModesPage.selectField({
-			dataId: `${sampleObjectField}.*`,
+			dataId: `${sampleObjectType},${sampleObjectField}.*`,
 			fieldName: sampleObjectField,
 		});
 
@@ -1128,6 +1133,7 @@ test('Assert the CellRenderer is displayed', async ({
 	const sampleScalarField = 'id';
 	const sampleObjectField = 'removedBy';
 	const sampleObjectChildField = 'id';
+	const sampleObjectType = 'string';
 
 	await test.step('Navigate to table visualization mode page', async () => {
 		await visualizationModesPage.goto({
@@ -1149,12 +1155,12 @@ test('Assert the CellRenderer is displayed', async ({
 		});
 
 		await visualizationModesPage.selectField({
-			dataId: `${sampleObjectField}.*`,
+			dataId: `${sampleObjectType},${sampleObjectField}.*`,
 			fieldName: sampleObjectField,
 		});
 
 		await visualizationModesPage.selectField({
-			dataId: `${sampleObjectField}.${sampleObjectChildField}`,
+			dataId: `${sampleObjectType},${sampleObjectField}.${sampleObjectChildField}`,
 			fieldName: sampleObjectChildField,
 		});
 

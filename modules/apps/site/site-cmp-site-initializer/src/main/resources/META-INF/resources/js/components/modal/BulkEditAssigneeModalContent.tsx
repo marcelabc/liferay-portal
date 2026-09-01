@@ -13,7 +13,7 @@ import {
 } from '@liferay/site-cms-site-initializer';
 import React, {useState} from 'react';
 
-import {displayAssignSuccessToast} from '../../utils/toastUtil';
+import {displayBulkAssignSuccessToast} from '../../utils/toastUtil';
 import CustomAssignee from '../CustomAssignee';
 
 import './../AssigneeTrigger.scss';
@@ -23,6 +23,7 @@ import {openToast} from 'frontend-js-components-web';
 type Props = {
 	apiURL: string;
 	closeModal: () => void;
+	cmpProjectObjectEntryId?: number;
 	dataSetId: string;
 	selectedData: IBulkActionFDSData;
 	value: AssigneeValue | {} | null;
@@ -39,6 +40,7 @@ const displayErrorToast = (errorMessage?: string) => {
 export default function BulkEditAssigneeModalContent({
 	apiURL,
 	closeModal,
+	cmpProjectObjectEntryId,
 	dataSetId,
 	selectedData,
 	value: initialValue,
@@ -65,13 +67,14 @@ export default function BulkEditAssigneeModalContent({
 
 					return;
 				}
-				displayAssignSuccessToast(
-					'Task',
-					(value as AssigneeValue).name
+				displayBulkAssignSuccessToast(
+					(value as AssigneeValue).name,
+					selectedData.items?.length ?? 0
 				);
 				closeModal();
 			},
 			overrideDefaultErrorToast: true,
+			overrideDefaultSuccessToast: true,
 			selectedData,
 			type: 'AssignToObjectBulkSelectionAction',
 		} as IBulkActionTaskStarterDTO<'AssignToObjectBulkSelectionAction'>);
@@ -85,6 +88,7 @@ export default function BulkEditAssigneeModalContent({
 
 			<ClayModal.Body>
 				<CustomAssignee
+					cmpProjectObjectEntryId={cmpProjectObjectEntryId}
 					onChange={(value: AssigneeValue | {}) => {
 						setValue(value);
 					}}

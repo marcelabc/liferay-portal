@@ -186,12 +186,27 @@ public class CPDefinitionServiceUtil {
 			externalReferenceCode, companyId, excludeDraft);
 	}
 
+	public static CPDefinition fetchCPDefinitionByCProductExternalReferenceCode(
+			String externalReferenceCode, long companyId, int status)
+		throws PortalException {
+
+		return getService().fetchCPDefinitionByCProductExternalReferenceCode(
+			externalReferenceCode, companyId, status);
+	}
+
 	public static CPDefinition fetchCPDefinitionByCProductId(
 			long cProductId, boolean excludeDraft)
 		throws PortalException {
 
 		return getService().fetchCPDefinitionByCProductId(
 			cProductId, excludeDraft);
+	}
+
+	public static CPDefinition fetchCPDefinitionByCProductId(
+			long cProductId, int status)
+		throws PortalException {
+
+		return getService().fetchCPDefinitionByCProductId(cProductId, status);
 	}
 
 	public static CPDefinition getCPDefinition(long cpDefinitionId)
@@ -258,6 +273,12 @@ public class CPDefinitionServiceUtil {
 		throws PortalException {
 
 		return getService().getUrlTitleMapAsXML(cpDefinitionId);
+	}
+
+	public static boolean isVersionable(CPDefinition cpDefinition)
+		throws PortalException {
+
+		return getService().isVersionable(cpDefinition);
 	}
 
 	public static com.liferay.portal.kernel.search.BaseModelSearchResult
@@ -357,11 +378,11 @@ public class CPDefinitionServiceUtil {
 	}
 
 	public static CPDefinition updateExternalReferenceCode(
-			String externalReferenceCode, long cpDefinitionId)
+			long cpDefinitionId, String externalReferenceCode)
 		throws PortalException {
 
 		return getService().updateExternalReferenceCode(
-			externalReferenceCode, cpDefinitionId);
+			cpDefinitionId, externalReferenceCode);
 	}
 
 	public static CPDefinition updateShippingInfo(
@@ -425,4 +446,4 @@ public class CPDefinitionServiceUtil {
 			CPDefinitionServiceUtil.class, CPDefinitionService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1681428557
+// LIFERAY-SERVICE-BUILDER-HASH:-1997285736

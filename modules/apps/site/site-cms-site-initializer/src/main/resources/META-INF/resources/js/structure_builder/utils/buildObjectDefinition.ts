@@ -27,6 +27,8 @@ export default function buildObjectDefinition({
 	id,
 	label,
 	name,
+	settings,
+	slug,
 	spaces,
 	status = 'draft',
 	workflows,
@@ -36,6 +38,8 @@ export default function buildObjectDefinition({
 	id?: Structure['id'];
 	label: Structure['label'];
 	name: Structure['name'];
+	settings?: Structure['settings'];
+	slug?: Structure['slug'];
 	spaces: Structure['spaces'];
 	status?: Structure['status'];
 	workflows?: Structure['workflows'];
@@ -66,6 +70,10 @@ export default function buildObjectDefinition({
 		titleObjectFieldName: 'title',
 	};
 
+	if (slug) {
+		objectDefinition.friendlyURLSeparator = slug;
+	}
+
 	if (id) {
 		objectDefinition.id = id;
 	}
@@ -89,6 +97,16 @@ export default function buildObjectDefinition({
 			{
 				name: 'acceptedGroupExternalReferenceCodes',
 				value: spaces.join(','),
+			},
+		];
+	}
+
+	if (settings?.allowStandaloneObjectEntry !== undefined) {
+		objectDefinition.objectDefinitionSettings = [
+			...(objectDefinition.objectDefinitionSettings ?? []),
+			{
+				name: 'allowStandaloneObjectEntry',
+				value: settings.allowStandaloneObjectEntry,
 			},
 		];
 	}
@@ -184,6 +202,7 @@ function buildRelationships({
 	for (const referencedStructure of referencedStructures) {
 		relationships.push({
 			deletionType: 'cascade',
+			edge: true,
 			externalReferenceCode: referencedStructure.relationshipERC,
 			label: {
 				en_US: referencedStructure.name,
@@ -198,6 +217,7 @@ function buildRelationships({
 	for (const repeatableGroup of repeatableGroups) {
 		relationships.push({
 			deletionType: 'cascade',
+			edge: true,
 			externalReferenceCode: repeatableGroup.relationshipERC,
 			label: repeatableGroup.label,
 			name: repeatableGroup.relationshipName,

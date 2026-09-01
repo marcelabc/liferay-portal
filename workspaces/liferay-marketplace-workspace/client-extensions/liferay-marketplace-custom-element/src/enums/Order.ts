@@ -32,7 +32,8 @@ export enum OrderTypes {
 	AI_HUB_TOKEN = 'AI_HUB_TOKEN',
 	CLIENT_EXTENSION = 'CLIENT_EXTENSION',
 	CLOUD_APP = 'CLOUD_APP',
-	CMP = 'CMP_BETA',
+	CMP = 'CMP',
+	CMP_BETA = 'CMP_BETA',
 	COMPOSITE_APP = 'COMPOSITE_APP',
 	DSR = 'DSR',
 	DXP = 'DXP',
@@ -71,15 +72,23 @@ export const APP_ORDER_TYPES: readonly OrderTypes[] = [
 	OrderTypes.OTHER,
 ];
 
+export const CMP_ORDER_TYPES: readonly OrderTypes[] = [
+	OrderTypes.CMP,
+	OrderTypes.CMP_BETA,
+];
+
 export const LIFERAY_PRODUCT_ORDER_TYPES: readonly OrderTypes[] = [
 	OrderTypes.ADDONS,
 	OrderTypes.AI_HUB,
 	OrderTypes.CMP,
+	OrderTypes.CMP_BETA,
 	OrderTypes.DXP,
 ];
 
 export const orderTypeDocumentationURL: Partial<Record<OrderTypes, string>> = {
 	[OrderTypes.CMP]: 'https://learn.liferay.com/content-marketing-platform',
+	[OrderTypes.CMP_BETA]:
+		'https://learn.liferay.com/content-marketing-platform',
 	[OrderTypes.DSR]: 'https://learn.liferay.com/w/digital-sales-room/index',
 	[OrderTypes.DXP]:
 		'https://learn.liferay.com/w/dxp/self-hosted-installation-and-upgrades/setting-up-liferay/activating-liferay-dxp',
@@ -88,9 +97,11 @@ export const orderTypeDocumentationURL: Partial<Record<OrderTypes, string>> = {
 export const orderTypeLabel = {
 	[OrderTypes.ADDONS]: 'Add-Ons',
 	[OrderTypes.AI_HUB]: 'AI Hub',
+	[OrderTypes.AI_HUB_TOKEN]: 'AI Hub Token',
 	[OrderTypes.CLIENT_EXTENSION]: 'Client Extension',
 	[OrderTypes.CLOUD_APP]: 'Cloud',
 	[OrderTypes.CMP]: 'Content Marketing Platform',
+	[OrderTypes.CMP_BETA]: 'Content Marketing Platform',
 	[OrderTypes.COMPOSITE_APP]: 'Composite App',
 	[OrderTypes.DSR]: 'Digital Sales Room',
 	[OrderTypes.DXP_APP]: 'DXP',
@@ -132,6 +143,7 @@ export function getOrderStatusLabel(order: PlacedOrder) {
 		[
 			OrderTypes.ADDONS,
 			OrderTypes.CMP,
+			OrderTypes.CMP_BETA,
 			OrderTypes.DXP,
 			OrderTypes.DSR,
 		].includes(order.orderTypeExternalReferenceCode as OrderTypes)
@@ -150,8 +162,10 @@ export function getOrderStatusLabel(order: PlacedOrder) {
 
 	if (order.orderTypeExternalReferenceCode === OrderTypes.AI_HUB) {
 		if (order.orderStatusInfo.code !== OrderWorkflowStatusCode.COMPLETED) {
-			return 'Requested';
+			return 'Pending';
 		}
+
+		return 'Active';
 	}
 
 	return order.orderStatusInfo.label;

@@ -16,28 +16,32 @@ import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalFeed;
 import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.cache.CacheRegistryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DataGuard;
+import com.liferay.portal.kernel.test.util.DataCleanupTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.data.cleanup.JournalDataCleanupPreupgradeProcess;
 
 import java.util.Collections;
-import java.util.List;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -59,35 +63,32 @@ public class JournalDataCleanupPreupgradeProcessTest
 
 	@Before
 	public void setUp() throws Exception {
-		_classNames = _classNameLocalService.getClassNames(
-			QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+		_classNamesSavepointSafeCloseable =
+			DataCleanupTestUtil.getClassNamesSavepointSafeCloseable();
+		_group = GroupTestUtil.addGroup();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		List<ClassName> classNames = ListUtil.remove(
-			_classNameLocalService.getClassNames(
-				QueryUtil.ALL_POS, QueryUtil.ALL_POS),
-			_classNames);
-
-		for (ClassName className : classNames) {
-			_classNameLocalService.deleteClassName(className);
+		if (_group != null) {
+			_groupLocalService.deleteGroup(_group);
 		}
+
+		_classNamesSavepointSafeCloseable.close();
 	}
 
 	@Test
 	public void testUpgrade() throws Exception {
-		Group group = GroupTestUtil.addGroup();
-
 		JournalArticle journalArticle = JournalTestUtil.addArticle(
-			group.getGroupId(), JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			Collections.emptyMap());
 
-		Layout layout = LayoutTestUtil.addTypeContentLayout(group);
+		Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
 
 		JournalFeed journalFeed = JournalTestUtil.addFeed(
-			group.getGroupId(), layout.getPlid(), RandomTestUtil.randomString(),
-			journalArticle.getDDMStructureId(),
+			_group.getGroupId(), layout.getPlid(),
+			RandomTestUtil.randomString(), journalArticle.getDDMStructureId(),
 			journalArticle.getDDMTemplateKey(),
 			journalArticle.getDDMTemplateKey());
 
@@ -103,16 +104,7 @@ public class JournalDataCleanupPreupgradeProcessTest
 		_ddmTemplateLocalService.deleteTemplate(
 			journalArticle.getDDMTemplate());
 
-		DDMStructure ddmStructure = journalArticle.getDDMStructure();
-
-		DDMStructureVersion ddmStructureVersion =
-			ddmStructure.getStructureVersion();
-
-		_ddmFieldLocalService.deleteDDMFields(
-			ddmStructureVersion.getStructureId());
-
-		_ddmStructureLocalService.deleteStructure(
-			journalArticle.getDDMStructure());
+		_deleteDDMStructure(journalArticle);
 
 		String originalName = PrincipalThreadLocal.getName();
 
@@ -124,14 +116,68 @@ public class JournalDataCleanupPreupgradeProcessTest
 		finally {
 			PrincipalThreadLocal.setName(originalName);
 		}
-
-		_groupLocalService.deleteGroup(group);
 	}
 
-	@Inject
-	private ClassNameLocalService _classNameLocalService;
+	@Test
+	public void testUpgradeJournalArticleResourcePermissionScopeCheck()
+		throws Exception {
 
-	private List<ClassName> _classNames;
+		Role role = _roleLocalService.getRole(
+			TestPropsValues.getCompanyId(), "Owner");
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), JournalArticle.class.getName(),
+			ResourceConstants.SCOPE_GROUP, String.valueOf(_group.getGroupId()),
+			role.getRoleId(), new String[] {ActionKeys.VIEW});
+
+		JournalArticle journalArticle = JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			Collections.emptyMap());
+
+		runSQL(
+			"delete from JournalArticle where articleId = '" +
+				journalArticle.getArticleId() + "'");
+
+		upgrade();
+
+		CacheRegistryUtil.clear();
+
+		Assert.assertFalse(
+			_resourcePermissionLocalService.hasResourcePermission(
+				TestPropsValues.getCompanyId(), JournalArticle.class.getName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(journalArticle.getResourcePrimKey()),
+				role.getRoleId(), ActionKeys.VIEW));
+
+		Assert.assertTrue(
+			_resourcePermissionLocalService.hasResourcePermission(
+				TestPropsValues.getCompanyId(), JournalArticle.class.getName(),
+				ResourceConstants.SCOPE_GROUP,
+				String.valueOf(_group.getGroupId()), role.getRoleId(),
+				ActionKeys.VIEW));
+
+		_ddmTemplateLocalService.deleteTemplate(
+			journalArticle.getDDMTemplate());
+
+		_deleteDDMStructure(journalArticle);
+	}
+
+	private void _deleteDDMStructure(JournalArticle journalArticle)
+		throws Exception {
+
+		DDMStructure ddmStructure = journalArticle.getDDMStructure();
+
+		DDMStructureVersion ddmStructureVersion =
+			ddmStructure.getStructureVersion();
+
+		_ddmFieldLocalService.deleteDDMFields(
+			ddmStructureVersion.getStructureId());
+
+		_ddmStructureLocalService.deleteStructure(ddmStructure);
+	}
+
+	private SafeCloseable _classNamesSavepointSafeCloseable;
 
 	@Inject
 	private DDMFieldLocalService _ddmFieldLocalService;
@@ -142,10 +188,18 @@ public class JournalDataCleanupPreupgradeProcessTest
 	@Inject
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
+	private Group _group;
+
 	@Inject
 	private GroupLocalService _groupLocalService;
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;
+
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
 
 }

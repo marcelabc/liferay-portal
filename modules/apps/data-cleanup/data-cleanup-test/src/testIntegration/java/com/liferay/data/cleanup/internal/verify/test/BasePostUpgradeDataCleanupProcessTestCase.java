@@ -5,12 +5,18 @@
 
 package com.liferay.data.cleanup.internal.verify.test;
 
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
+import com.liferay.object.test.util.ObjectDefinitionTestUtil;
+import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.module.util.BundleUtil;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.lpkg.deployer.LPKGDeployer;
 import com.liferay.portal.test.log.LogCapture;
@@ -25,6 +31,7 @@ import java.sql.Connection;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -92,20 +99,77 @@ public abstract class BasePostUpgradeDataCleanupProcessTestCase {
 			String logCaptureClass, String logLevel)
 		throws Exception {
 
-		initializeDataUnsafeRunnable.run();
+		try (LogCapture directoryWatcherLogCapture =
+				LoggerTestUtil.configureLog4JLogger(
+					"com.liferay.portal.file.install.internal.DirectoryWatcher",
+					LoggerTestUtil.OFF)) {
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				logCaptureClass, logLevel)) {
+			initializeDataUnsafeRunnable.run();
 
-			_runPostUpgradeDataCleanUpVerifyProcess();
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					logCaptureClass, logLevel)) {
 
-			if (assertUnsafeConsumer != null) {
-				assertUnsafeConsumer.accept(logCapture);
+				_runPostUpgradeDataCleanUpVerifyProcess();
+
+				if (assertUnsafeConsumer != null) {
+					assertUnsafeConsumer.accept(logCapture);
+				}
+			}
+			finally {
+				cleanUpDataUnsafeRunnable.run();
 			}
 		}
-		finally {
-			cleanUpDataUnsafeRunnable.run();
-		}
+	}
+
+	protected void testObjectDefinition(
+			UnsafeBiConsumer<LogCapture, ObjectDefinition, Exception>
+				assertUnsafeBiConsumer)
+		throws Exception {
+
+		testObjectDefinition(assertUnsafeBiConsumer, null);
+	}
+
+	protected void testObjectDefinition(
+			UnsafeBiConsumer<LogCapture, ObjectDefinition, Exception>
+				assertUnsafeBiConsumer,
+			UnsafeConsumer<ObjectDefinition, Exception>
+				initializeDataUnsafeConsumer)
+		throws Exception {
+
+		AtomicReference<ObjectDefinition> objectDefinitionAtomicReference =
+			new AtomicReference<>();
+
+		test(
+			logCapture -> assertUnsafeBiConsumer.accept(
+				logCapture, objectDefinitionAtomicReference.get()),
+			() -> {
+				ObjectDefinition objectDefinition =
+					objectDefinitionAtomicReference.get();
+
+				if (objectDefinition == null) {
+					return;
+				}
+
+				ObjectDefinitionLocalServiceUtil.deleteObjectDefinition(
+					objectDefinition);
+
+				ClassName className = ClassNameLocalServiceUtil.fetchClassName(
+					objectDefinition.getClassName());
+
+				if (className != null) {
+					ClassNameLocalServiceUtil.deleteClassName(className);
+				}
+			},
+			() -> {
+				ObjectDefinition objectDefinition =
+					ObjectDefinitionTestUtil.publishObjectDefinition();
+
+				objectDefinitionAtomicReference.set(objectDefinition);
+
+				if (initializeDataUnsafeConsumer != null) {
+					initializeDataUnsafeConsumer.accept(objectDefinition);
+				}
+			});
 	}
 
 	protected Bundle uninstallBundle(

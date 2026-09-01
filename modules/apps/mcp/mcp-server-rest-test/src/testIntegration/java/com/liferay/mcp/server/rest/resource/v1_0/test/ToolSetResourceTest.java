@@ -31,7 +31,7 @@ public class ToolSetResourceTest extends BaseToolSetResourceTestCase {
 
 	@Override
 	@Test
-	public void testGetToolSets() throws Exception {
+	public void testGetToolSetsPage() throws Exception {
 		_assertToolSet(
 			toolSet ->
 				Objects.equals(toolSet.getName(), "mcp-server-v1.0") &&
@@ -45,10 +45,17 @@ public class ToolSetResourceTest extends BaseToolSetResourceTestCase {
 		_assertToolSet(
 			toolSet -> Objects.equals(
 				"c-" + restContextPath.substring(3), toolSet.getName()));
+
+		_assertToolSet(
+			toolSet -> Objects.equals(
+				toolSet.getName(), "headless-commerce-admin-pricing-v1.0"));
+		_assertToolSet(
+			toolSet -> Objects.equals(
+				toolSet.getName(), "headless-commerce-admin-pricing-v2.0"));
 	}
 
 	private void _assertToolSet(Predicate<ToolSet> predicate) throws Exception {
-		Page<ToolSet> toolSetsPage = toolSetResource.getToolSets();
+		Page<ToolSet> toolSetsPage = toolSetResource.getToolSetsPage();
 
 		Assert.assertTrue(
 			ListUtil.exists(

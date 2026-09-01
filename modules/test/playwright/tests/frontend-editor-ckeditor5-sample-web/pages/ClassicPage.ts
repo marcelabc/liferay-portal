@@ -9,10 +9,16 @@ export class ClassicPage {
 	readonly editable: Locator;
 	readonly itemSelectorFrame: FrameLocator;
 	readonly sourceEditable: Locator;
+	readonly sourceEditingEnhancedDialog: {
+		cancelButton: Locator;
+		editable: Locator;
+		saveButton: Locator;
+	};
 	readonly toolbar: {
 		buttonLabels: Locator;
 		container: Locator;
 	};
+	readonly wordCountContainer: Locator;
 
 	constructor(page: Page) {
 		this.editable = page.locator('.ck-editor__editable');
@@ -25,6 +31,22 @@ export class ClassicPage {
 			'.ck-source-editing-area > textarea'
 		);
 
+		const sourceEditingEnhancedDialog = page.getByRole('dialog', {
+			name: 'Edit source',
+		});
+
+		this.sourceEditingEnhancedDialog = {
+			cancelButton: sourceEditingEnhancedDialog.getByRole('button', {
+				exact: true,
+				name: 'Cancel',
+			}),
+			editable: sourceEditingEnhancedDialog.locator('.cm-content'),
+			saveButton: sourceEditingEnhancedDialog.getByRole('button', {
+				exact: true,
+				name: 'Save',
+			}),
+		};
+
 		const toolbarContainer = page.getByLabel('Editor toolbar');
 
 		this.toolbar = {
@@ -33,5 +55,9 @@ export class ClassicPage {
 				.locator('.ck-button__label'),
 			container: toolbarContainer,
 		};
+
+		this.wordCountContainer = page.locator(
+			'[data-testid="word-count-container"]'
+		);
 	}
 }

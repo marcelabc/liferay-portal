@@ -5,9 +5,11 @@
 
 package com.liferay.commerce.payment.method.authorize.net.internal;
 
+import com.liferay.account.model.AccountEntry;
 import com.liferay.commerce.constants.CommerceOrderPaymentConstants;
 import com.liferay.commerce.constants.CommercePaymentMethodConstants;
 import com.liferay.commerce.currency.model.CommerceCurrency;
+import com.liferay.commerce.model.CommerceAddress;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.payment.method.CommercePaymentMethod;
 import com.liferay.commerce.payment.method.authorize.net.internal.configuration.AuthorizeNetGroupServiceConfiguration;
@@ -24,11 +26,19 @@ import com.liferay.portal.configuration.module.configuration.ConfigurationProvid
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.model.Country;
+import com.liferay.portal.kernel.model.EmailAddress;
+import com.liferay.portal.kernel.model.Region;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.FullNameGenerator;
+import com.liferay.portal.kernel.security.auth.FullNameGeneratorFactory;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLCodec;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,10 +52,14 @@ import java.util.ResourceBundle;
 
 import net.authorize.Environment;
 import net.authorize.api.contract.v1.ArrayOfSetting;
+import net.authorize.api.contract.v1.CustomerAddressType;
+import net.authorize.api.contract.v1.CustomerDataType;
 import net.authorize.api.contract.v1.GetHostedPaymentPageRequest;
 import net.authorize.api.contract.v1.GetHostedPaymentPageResponse;
 import net.authorize.api.contract.v1.MerchantAuthenticationType;
 import net.authorize.api.contract.v1.MessagesType;
+import net.authorize.api.contract.v1.NameAndAddressType;
+import net.authorize.api.contract.v1.OrderType;
 import net.authorize.api.contract.v1.SettingType;
 import net.authorize.api.contract.v1.TransactionRequestType;
 import net.authorize.api.contract.v1.TransactionTypeEnum;
@@ -226,15 +240,15 @@ public class AuthorizeNetCommercePaymentMethod
 			Collections.emptyList(), false);
 	}
 
-	private void _addSetting(
-		List<SettingType> settings, String name, String value) {
+	private void _addSettingType(
+		List<SettingType> settingTypes, String name, String value) {
 
-		SettingType billingAddress = new SettingType();
+		SettingType settingType = new SettingType();
 
-		billingAddress.setSettingName(name);
-		billingAddress.setSettingValue(value);
+		settingType.setSettingName(name);
+		settingType.setSettingValue(value);
 
-		settings.add(billingAddress);
+		settingTypes.add(settingType);
 	}
 
 	private String _fixURL(String url) {
@@ -254,11 +268,7 @@ public class AuthorizeNetCommercePaymentMethod
 
 		ArrayOfSetting arrayOfSetting = new ArrayOfSetting();
 
-		List<SettingType> settings = arrayOfSetting.getSetting();
-
-		AuthorizeNetGroupServiceConfiguration
-			authorizeNetGroupServiceConfiguration =
-				_getAuthorizeNetGroupServiceConfiguration(groupId);
+		List<SettingType> settingTypes = arrayOfSetting.getSetting();
 
 		JSONObject hostedPaymentReturnOptionsJSONObject =
 			_jsonFactory.createJSONObject();
@@ -275,12 +285,16 @@ public class AuthorizeNetCommercePaymentMethod
 			"urlText", "Continue"
 		);
 
-		_addSetting(
-			settings, "hostedPaymentReturnOptions",
+		_addSettingType(
+			settingTypes, "hostedPaymentReturnOptions",
 			hostedPaymentReturnOptionsJSONObject.toString());
 
 		JSONObject hostedPaymentPaymentOptionsJSONObject =
 			_jsonFactory.createJSONObject();
+
+		AuthorizeNetGroupServiceConfiguration
+			authorizeNetGroupServiceConfiguration =
+				_getAuthorizeNetGroupServiceConfiguration(groupId);
 
 		hostedPaymentPaymentOptionsJSONObject.put(
 			"cardCodeRequired",
@@ -293,8 +307,8 @@ public class AuthorizeNetCommercePaymentMethod
 			authorizeNetGroupServiceConfiguration.showCreditCard()
 		);
 
-		_addSetting(
-			settings, "hostedPaymentPaymentOptions",
+		_addSettingType(
+			settingTypes, "hostedPaymentPaymentOptions",
 			hostedPaymentPaymentOptionsJSONObject.toString());
 
 		JSONObject hostedPaymentSecurityOptionsJSONObject =
@@ -303,8 +317,8 @@ public class AuthorizeNetCommercePaymentMethod
 		hostedPaymentSecurityOptionsJSONObject.put(
 			"captcha", authorizeNetGroupServiceConfiguration.requireCaptcha());
 
-		_addSetting(
-			settings, "hostedPaymentSecurityOptions",
+		_addSettingType(
+			settingTypes, "hostedPaymentSecurityOptions",
 			hostedPaymentSecurityOptionsJSONObject.toString());
 
 		JSONObject hostedPaymentShippingAddressOptionsJSONObject =
@@ -316,8 +330,8 @@ public class AuthorizeNetCommercePaymentMethod
 			"show", false
 		);
 
-		_addSetting(
-			settings, "hostedPaymentShippingAddressOptions",
+		_addSettingType(
+			settingTypes, "hostedPaymentShippingAddressOptions",
 			hostedPaymentShippingAddressOptionsJSONObject.toString());
 
 		JSONObject hostedPaymentBillingAddressOptionsJSONObject =
@@ -329,8 +343,8 @@ public class AuthorizeNetCommercePaymentMethod
 			"show", false
 		);
 
-		_addSetting(
-			settings, "hostedPaymentBillingAddressOptions",
+		_addSettingType(
+			settingTypes, "hostedPaymentBillingAddressOptions",
 			hostedPaymentBillingAddressOptionsJSONObject.toString());
 
 		JSONObject hostedPaymentCustomerOptionsJSJSONObject =
@@ -344,8 +358,8 @@ public class AuthorizeNetCommercePaymentMethod
 			"showEmail", false
 		);
 
-		_addSetting(
-			settings, "hostedPaymentCustomerOptions",
+		_addSettingType(
+			settingTypes, "hostedPaymentCustomerOptions",
 			hostedPaymentCustomerOptionsJSJSONObject.toString());
 
 		JSONObject hostedPaymentOrderOptionsJSONObject =
@@ -360,8 +374,8 @@ public class AuthorizeNetCommercePaymentMethod
 			"show", authorizeNetGroupServiceConfiguration.showStoreName()
 		);
 
-		_addSetting(
-			settings, "hostedPaymentOrderOptions",
+		_addSettingType(
+			settingTypes, "hostedPaymentOrderOptions",
 			hostedPaymentOrderOptionsJSONObject.toString());
 
 		return arrayOfSetting;
@@ -376,6 +390,36 @@ public class AuthorizeNetCommercePaymentMethod
 			new GroupServiceSettingsLocator(
 				groupId,
 				AuthorizeNetCommercePaymentMethodConstants.SERVICE_NAME));
+	}
+
+	private String _getEmailAddress(CommerceOrder commerceOrder)
+		throws Exception {
+
+		AccountEntry accountEntry = commerceOrder.getAccountEntry();
+
+		List<EmailAddress> emailAddresses = accountEntry.getEmailAddresses();
+
+		for (EmailAddress emailAddress : emailAddresses) {
+			if (emailAddress.isPrimary()) {
+				return emailAddress.getAddress();
+			}
+		}
+
+		if (!emailAddresses.isEmpty()) {
+			EmailAddress emailAddress = emailAddresses.get(0);
+
+			return emailAddress.getAddress();
+		}
+
+		String emailAddress = accountEntry.getEmailAddress();
+
+		if (Validator.isNull(emailAddress)) {
+			User user = _userLocalService.getUser(commerceOrder.getUserId());
+
+			emailAddress = user.getEmailAddress();
+		}
+
+		return emailAddress;
 	}
 
 	private ResourceBundle _getResourceBundle(Locale locale) {
@@ -401,9 +445,6 @@ public class AuthorizeNetCommercePaymentMethod
 		TransactionRequestType transactionRequestType =
 			new TransactionRequestType();
 
-		transactionRequestType.setTransactionType(
-			TransactionTypeEnum.AUTH_CAPTURE_TRANSACTION.value());
-
 		BigDecimal amount = commerceOrder.getTotal();
 
 		CommerceCurrency commerceCurrency = commerceOrder.getCommerceCurrency();
@@ -413,7 +454,95 @@ public class AuthorizeNetCommercePaymentMethod
 				commerceCurrency.getMaxFractionDigits(),
 				RoundingMode.valueOf(commerceCurrency.getRoundingMode())));
 
+		CustomerDataType customerDataType = new CustomerDataType();
+
+		String emailAddress = _getEmailAddress(commerceOrder);
+
+		customerDataType.setEmail(emailAddress);
+
+		transactionRequestType.setCustomer(customerDataType);
+
+		OrderType orderType = new OrderType();
+
+		orderType.setInvoiceNumber(
+			String.valueOf(commerceOrder.getCommerceOrderId()));
+
+		transactionRequestType.setOrder(orderType);
+
+		transactionRequestType.setTransactionType(
+			TransactionTypeEnum.AUTH_CAPTURE_TRANSACTION.value());
+
+		CommerceAddress billingCommerceAddress =
+			commerceOrder.getBillingAddress();
+
+		if (billingCommerceAddress != null) {
+			CustomerAddressType customerAddressType = new CustomerAddressType();
+
+			_setNameAndAddressType(billingCommerceAddress, customerAddressType);
+
+			customerAddressType.setEmail(emailAddress);
+
+			String phoneNumber = billingCommerceAddress.getPhoneNumber();
+
+			if (Validator.isNotNull(phoneNumber)) {
+				customerAddressType.setPhoneNumber(phoneNumber);
+			}
+
+			transactionRequestType.setBillTo(customerAddressType);
+		}
+
+		CommerceAddress shippingCommerceAddress =
+			commerceOrder.getShippingAddress();
+
+		if (shippingCommerceAddress != null) {
+			NameAndAddressType nameAndAddressType = new NameAndAddressType();
+
+			_setNameAndAddressType(shippingCommerceAddress, nameAndAddressType);
+
+			transactionRequestType.setShipTo(nameAndAddressType);
+		}
+
 		return transactionRequestType;
+	}
+
+	private void _setNameAndAddressType(
+			CommerceAddress commerceAddress,
+			NameAndAddressType nameAndAddressType)
+		throws Exception {
+
+		nameAndAddressType.setAddress(commerceAddress.getStreet1());
+		nameAndAddressType.setCity(commerceAddress.getCity());
+
+		Country country = commerceAddress.fetchCountry();
+
+		if (country != null) {
+			nameAndAddressType.setCountry(country.getA2());
+		}
+
+		String name = commerceAddress.getName();
+
+		if (Validator.isNotNull(name)) {
+			FullNameGenerator fullNameGenerator =
+				FullNameGeneratorFactory.getInstance();
+
+			String[] names = fullNameGenerator.splitFullName(name);
+
+			nameAndAddressType.setFirstName(names[0]);
+
+			String[] nameParts = StringUtil.split(name, StringPool.SPACE);
+
+			if (nameParts.length > 1) {
+				nameAndAddressType.setLastName(names[2]);
+			}
+		}
+
+		Region region = commerceAddress.getRegion();
+
+		if (region != null) {
+			nameAndAddressType.setState(region.getRegionCode());
+		}
+
+		nameAndAddressType.setZip(commerceAddress.getZip());
 	}
 
 	@Reference
@@ -433,5 +562,8 @@ public class AuthorizeNetCommercePaymentMethod
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

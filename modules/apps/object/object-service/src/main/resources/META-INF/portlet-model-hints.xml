@@ -103,7 +103,7 @@
 		<field name="mvccVersion" type="long" />
 		<field name="uuid" type="String" />
 		<field name="externalReferenceCode" type="String">
-			<hint name="max-length">1000</hint>
+			<hint name="max-length">500</hint>
 		</field>
 		<field name="objectEntryId" type="long" />
 		<field name="groupId" type="long" />
@@ -429,6 +429,7 @@
 	<model name="com.liferay.object.model.ObjectView">
 		<field name="mvccVersion" type="long" />
 		<field name="uuid" type="String" />
+		<field name="externalReferenceCode" type="String" />
 		<field name="objectViewId" type="long" />
 		<field name="companyId" type="long" />
 		<field name="userId" type="long" />

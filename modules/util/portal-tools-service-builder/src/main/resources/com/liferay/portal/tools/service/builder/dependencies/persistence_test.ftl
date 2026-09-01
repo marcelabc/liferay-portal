@@ -69,7 +69,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -208,10 +207,38 @@ public class ${entity.name}PersistenceTest {
 
 	@Test
 	public void testUpdateExisting() throws Exception {
-		<#if entity.hasCompoundPK()>
-			${entity.PKClassName} pk = new ${entity.PKClassName}(
+		<#if serviceBuilder.isVersionGTE_7_4_0() && !entity.versionEntity?? && !entity.versionedEntity??>
+			${entity.name} new${entity.name} = add${entity.name}();
+		<#else>
+			<#if entity.hasCompoundPK()>
+				${entity.PKClassName} pk = new ${entity.PKClassName}(
 
-			<#list entity.PKEntityColumns as entityColumn>
+				<#list entity.PKEntityColumns as entityColumn>
+					<#if stringUtil.equals(entityColumn.type, "int")>
+						RandomTestUtil.nextInt()
+					<#elseif stringUtil.equals(entityColumn.type, "long")>
+						RandomTestUtil.nextLong()
+					<#elseif stringUtil.equals(entityColumn.type, "String")>
+						<#assign maxLength = serviceBuilder.getMaxLength(entity.getName(), entityColumn) />
+
+						<#if maxLength < 8>
+							RandomTestUtil.randomString(${maxLength})
+						<#else>
+							RandomTestUtil.randomString()
+						</#if>
+					</#if>
+
+					<#if entityColumn_has_next>
+						,
+					</#if>
+				</#list>
+
+				);
+			<#else>
+				<#assign entityColumn = entity.PKEntityColumns[0] />
+
+				${entityColumn.type} pk =
+
 				<#if stringUtil.equals(entityColumn.type, "int")>
 					RandomTestUtil.nextInt()
 				<#elseif stringUtil.equals(entityColumn.type, "long")>
@@ -226,40 +253,16 @@ public class ${entity.name}PersistenceTest {
 					</#if>
 				</#if>
 
-				<#if entityColumn_has_next>
-					,
-				</#if>
-			</#list>
-
-			);
-		<#else>
-			<#assign entityColumn = entity.PKEntityColumns[0] />
-
-			${entityColumn.type} pk =
-
-			<#if stringUtil.equals(entityColumn.type, "int")>
-				RandomTestUtil.nextInt()
-			<#elseif stringUtil.equals(entityColumn.type, "long")>
-				RandomTestUtil.nextLong()
-			<#elseif stringUtil.equals(entityColumn.type, "String")>
-				<#assign maxLength = serviceBuilder.getMaxLength(entity.getName(), entityColumn) />
-
-				<#if maxLength < 8>
-					RandomTestUtil.randomString(${maxLength})
-				<#else>
-					RandomTestUtil.randomString()
-				</#if>
+				;
 			</#if>
 
-			;
+			${entity.name} new${entity.name} = _persistence.create(pk);
 		</#if>
-
-		${entity.name} new${entity.name} = _persistence.create(pk);
 
 		<#assign hasEagerBlob = false />
 
 		<#list entity.regularEntityColumns as entityColumn>
-			<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name))>
+			<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name)) && !(serviceBuilder.isVersionGTE_7_4_0() && stringUtil.equals(entityColumn.name, "mvccVersion"))>
 				<#if stringUtil.equals(entityColumn.type, "Blob")>
 					String new${entityColumn.methodName}String = RandomTestUtil.randomString();
 
@@ -304,7 +307,13 @@ public class ${entity.name}PersistenceTest {
 			</#if>
 		</#list>
 
-		_${entity.pluralVariableName}.add(_persistence.update(new${entity.name}));
+		<#if serviceBuilder.isVersionGTE_7_4_0()>
+			new${entity.name} = _persistence.update(new${entity.name});
+
+			_${entity.pluralVariableName}.add(new${entity.name});
+		<#else>
+			_${entity.pluralVariableName}.add(_persistence.update(new${entity.name}));
+		</#if>
 
 		<#if hasEagerBlob>
 			Session session = _persistence.openSession();
@@ -320,7 +329,7 @@ public class ${entity.name}PersistenceTest {
 			<#if stringUtil.equals(entityColumn.type, "Blob")>
 				Blob existing${entityColumn.methodName} = existing${entity.name}.get${entityColumn.methodName}();
 
-				Assert.assertTrue(Arrays.equals(existing${entityColumn.methodName}.getBytes(1, (int)existing${entityColumn.methodName}.length()), new${entityColumn.methodName}Bytes));
+				Assert.assertArrayEquals(new${entityColumn.methodName}Bytes, existing${entityColumn.methodName}.getBytes(1, (int)existing${entityColumn.methodName}.length()));
 			<#elseif stringUtil.equals(entityColumn.type, "boolean")>
 				Assert.assertEquals(existing${entity.name}.is${entityColumn.methodName}(), new${entity.name}.is${entityColumn.methodName}());
 			<#elseif stringUtil.equals(entityColumn.type, "Date")>
@@ -361,19 +370,41 @@ public class ${entity.name}PersistenceTest {
 
 				${entity.name} draft${entity.name} = _persistence.create(pk);
 
+				<#assign hasBlobEntityColumn = false />
+
 				<#list entity.regularEntityColumns as entityColumn>
-					<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name))>
-						draft${entity.name}.set${entityColumn.methodName}(
+					<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name)) && !(serviceBuilder.isVersionGTE_7_4_0() && stringUtil.equals(entityColumn.name, "mvccVersion"))>
+						<#if stringUtil.equals(entityColumn.type, "Blob")>
+							<#assign hasBlobEntityColumn = true />
 
-						<#if stringUtil.equals(entityColumn.name, "headId")>
-							-
+							String draft${entityColumn.methodName}String = RandomTestUtil.randomString();
+
+							byte[] draft${entityColumn.methodName}Bytes = draft${entityColumn.methodName}String.getBytes("UTF-8");
+
+							draft${entity.name}.set${entityColumn.methodName}(new OutputBlob(new ByteArrayInputStream(draft${entityColumn.methodName}Bytes), draft${entityColumn.methodName}Bytes.length));
+						<#else>
+							draft${entity.name}.set${entityColumn.methodName}(
+
+							<#if stringUtil.equals(entityColumn.name, "headId")>
+								-
+							</#if>
+
+							${entity.variableName}.get${entityColumn.methodName}());
 						</#if>
-
-						${entity.variableName}.get${entityColumn.methodName}());
 					</#if>
 				</#list>
 
 				_${entity.pluralVariableName}.add(_persistence.update(draft${entity.name}));
+
+				<#if hasBlobEntityColumn>
+					Session session = _persistence.openSession();
+
+					session.flush();
+
+					session.clear();
+
+					${entity.name} persistedDraft${entity.name} = _persistence.findByPrimaryKey(pk);
+				</#if>
 
 				<#list entity.regularEntityColumns as entityColumn>
 					<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name))>
@@ -382,10 +413,9 @@ public class ${entity.name}PersistenceTest {
 						<#elseif stringUtil.equals(entityColumn.name, "status")>
 							Assert.assertEquals(2, draft${entity.name}.get${entityColumn.methodName}());
 						<#elseif stringUtil.equals(entityColumn.type, "Blob")>
-							Blob ${entityColumn.methodName} = ${entity.variableName}.get${entityColumn.methodName}();
-							Blob draft${entityColumn.methodName} = draft${entity.name}.get${entityColumn.methodName}();
+							Blob persistedDraft${entityColumn.methodName} = persistedDraft${entity.name}.get${entityColumn.methodName}();
 
-							Assert.assertTrue(Arrays.equals(${entityColumn.variableName}.getBytes(1, (int)${entityColumn.variableName}.length()), Arrays.equals(draft${entityColumn.name}.getBytes(1, (int)draft${entityColumn.name}.length()));
+							Assert.assertArrayEquals(draft${entityColumn.methodName}Bytes, persistedDraft${entityColumn.methodName}.getBytes(1, (int)persistedDraft${entityColumn.methodName}.length()));
 						<#elseif stringUtil.equals(entityColumn.type, "boolean")>
 							Assert.assertEquals(${entity.variableName}.is${entityColumn.methodName}(), draft${entity.name}.is${entityColumn.methodName}());
 						<#elseif stringUtil.equals(entityColumn.type, "Date")>
@@ -429,7 +459,7 @@ public class ${entity.name}PersistenceTest {
 				${entity.name} ${entity.variableName}2 = _persistence.create(pk);
 
 				<#list entity.regularEntityColumns as entityColumn>
-					<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name))>
+					<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name)) && !(serviceBuilder.isVersionGTE_7_4_0() && stringUtil.equals(entityColumn.name, "mvccVersion"))>
 						<#if stringUtil.equals(entityColumn.type, "Blob")>
 							String ${entityColumn.name}String = RandomTestUtil.randomString();
 
@@ -486,6 +516,16 @@ public class ${entity.name}PersistenceTest {
 
 			new${entity.name}.set${entity.externalReferenceCode?cap_first}Id(${entity.variableName}.get${entity.externalReferenceCode?cap_first}Id());
 
+			<#list entity.regularEntityColumns as entityColumn>
+				<#if stringUtil.equals(entityColumn.type, "Blob")>
+					String ${entityColumn.name}String = RandomTestUtil.randomString();
+
+					byte[] ${entityColumn.name}Bytes = ${entityColumn.name}String.getBytes("UTF-8");
+
+					new${entity.name}.set${entityColumn.methodName}(new OutputBlob(new ByteArrayInputStream(${entityColumn.name}Bytes), ${entityColumn.name}Bytes.length));
+				</#if>
+			</#list>
+
 			new${entity.name} = _persistence.update(new${entity.name});
 
 			Session session = _persistence.getCurrentSession();
@@ -493,6 +533,12 @@ public class ${entity.name}PersistenceTest {
 			session.evict(new${entity.name});
 
 			new${entity.name}.setExternalReferenceCode(${entity.variableName}.getExternalReferenceCode());
+
+			<#list entity.regularEntityColumns as entityColumn>
+				<#if stringUtil.equals(entityColumn.type, "Blob")>
+					new${entity.name}.set${entityColumn.methodName}(new OutputBlob(new ByteArrayInputStream(${entityColumn.name}Bytes), ${entityColumn.name}Bytes.length));
+				</#if>
+			</#list>
 
 			_persistence.update(new${entity.name});
 		}
@@ -1338,7 +1384,7 @@ public class ${entity.name}PersistenceTest {
 		${entity.name} ${entity.variableName} = _persistence.create(pk);
 
 		<#list entity.regularEntityColumns as entityColumn>
-			<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name))>
+			<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name)) && !(serviceBuilder.isVersionGTE_7_4_0() && stringUtil.equals(entityColumn.name, "mvccVersion"))>
 				<#if stringUtil.equals(entityColumn.type, "Blob")>
 					String ${entityColumn.name}String = RandomTestUtil.randomString();
 
@@ -1604,7 +1650,7 @@ public class ${entity.name}PersistenceTest {
 			${entity.name} ${entity.variableName} = _persistence.create(pk);
 
 			<#list entity.regularEntityColumns as entityColumn>
-				<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name))>
+				<#if !entityColumn.primary && (validator.isNull(parentPKColumn) || (parentPKColumn.name != entityColumn.name)) && !(serviceBuilder.isVersionGTE_7_4_0() && stringUtil.equals(entityColumn.name, "mvccVersion"))>
 					<#if entityColumn.name ="${scopeEntityColumn.name}">
 						${entity.variableName}.set${entityColumn.methodName}(${scopeEntityColumn.name});
 					<#else>

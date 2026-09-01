@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.JAXRSWhiteboardTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -48,6 +49,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.test.rule.Inject;
@@ -115,6 +117,8 @@ public abstract class BaseOrderNoteResourceTestCase {
 	public static void setUpClass() throws Exception {
 		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		JAXRSWhiteboardTestUtil.ensureReady();
 	}
 
 	@Before
@@ -210,6 +214,7 @@ public abstract class BaseOrderNoteResourceTestCase {
 		OrderNote orderNote = randomOrderNote();
 
 		orderNote.setAuthor(regex);
+		orderNote.setAuthorPortraitURL(regex);
 		orderNote.setContent(regex);
 		orderNote.setExternalReferenceCode(regex);
 		orderNote.setOrderExternalReferenceCode(regex);
@@ -221,6 +226,7 @@ public abstract class BaseOrderNoteResourceTestCase {
 		orderNote = OrderNoteSerDes.toDTO(json);
 
 		Assert.assertEquals(regex, orderNote.getAuthor());
+		Assert.assertEquals(regex, orderNote.getAuthorPortraitURL());
 		Assert.assertEquals(regex, orderNote.getContent());
 		Assert.assertEquals(regex, orderNote.getExternalReferenceCode());
 		Assert.assertEquals(regex, orderNote.getOrderExternalReferenceCode());
@@ -563,7 +569,7 @@ public abstract class BaseOrderNoteResourceTestCase {
 				externalReferenceCode, randomOrderNote());
 
 		page = orderNoteResource.getOrderByExternalReferenceCodeOrderNotesPage(
-			externalReferenceCode, Pagination.of(1, 10));
+			externalReferenceCode, Pagination.of(1, (int)totalCount + 2));
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -737,7 +743,7 @@ public abstract class BaseOrderNoteResourceTestCase {
 			id, randomOrderNote());
 
 		page = orderNoteResource.getOrderIdOrderNotesPage(
-			id, Pagination.of(1, 10));
+			id, Pagination.of(1, (int)totalCount + 2));
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -1514,6 +1520,24 @@ public abstract class BaseOrderNoteResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("authorId", additionalAssertFieldName)) {
+				if (orderNote.getAuthorId() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"authorPortraitURL", additionalAssertFieldName)) {
+
+				if (orderNote.getAuthorPortraitURL() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("content", additionalAssertFieldName)) {
 				if (orderNote.getContent() == null) {
 					valid = false;
@@ -1526,6 +1550,14 @@ public abstract class BaseOrderNoteResourceTestCase {
 					"externalReferenceCode", additionalAssertFieldName)) {
 
 				if (orderNote.getExternalReferenceCode() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("modifiedDate", additionalAssertFieldName)) {
+				if (orderNote.getModifiedDate() == null) {
 					valid = false;
 				}
 
@@ -1689,6 +1721,29 @@ public abstract class BaseOrderNoteResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("authorId", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						orderNote1.getAuthorId(), orderNote2.getAuthorId())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"authorPortraitURL", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						orderNote1.getAuthorPortraitURL(),
+						orderNote2.getAuthorPortraitURL())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("content", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						orderNote1.getContent(), orderNote2.getContent())) {
@@ -1715,6 +1770,17 @@ public abstract class BaseOrderNoteResourceTestCase {
 			if (Objects.equals("id", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						orderNote1.getId(), orderNote2.getId())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("modifiedDate", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						orderNote1.getModifiedDate(),
+						orderNote2.getModifiedDate())) {
 
 					return false;
 				}
@@ -1909,6 +1975,57 @@ public abstract class BaseOrderNoteResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("authorId")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("authorPortraitURL")) {
+			Object object = orderNote.getAuthorPortraitURL();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("content")) {
 			Object object = orderNote.getContent();
 
@@ -2004,6 +2121,35 @@ public abstract class BaseOrderNoteResourceTestCase {
 		if (entityFieldName.equals("id")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("modifiedDate")) {
+			if (operator.equals("between")) {
+				Date date = orderNote.getModifiedDate();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(orderNote.getModifiedDate()));
+			}
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("orderExternalReferenceCode")) {
@@ -2110,10 +2256,14 @@ public abstract class BaseOrderNoteResourceTestCase {
 		return new OrderNote() {
 			{
 				author = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				authorId = RandomTestUtil.randomLong();
+				authorPortraitURL = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				content = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				externalReferenceCode = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
+				modifiedDate = RandomTestUtil.nextDate();
 				orderExternalReferenceCode = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				orderId = RandomTestUtil.randomLong();
@@ -2388,4 +2538,4 @@ public abstract class BaseOrderNoteResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1118175632
+// LIFERAY-REST-BUILDER-HASH:234228893

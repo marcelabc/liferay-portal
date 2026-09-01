@@ -26,7 +26,7 @@ function _derive_db_name {
 		return
 	fi
 
-	suffix="$(echo "${suffix}" | tr "[:upper:]" "[:lower:]" | sed --regexp-extended "s/[^a-z0-9]+/_/g; s/^_+|_+\$//g")"
+	suffix="$(echo "${suffix}" | tr "[:upper:]" "[:lower:]" | _sed --regexp-extended "s/[^a-z0-9]+/_/g; s/^_+|_+\$//g")"
 	suffix="${suffix:0:56}"
 
 	echo "lportal_${suffix}"
@@ -36,37 +36,6 @@ function _die {
 	echo "${*}" >&2
 
 	exit 1
-}
-
-function _drop_database {
-	local worktree_path="${1}"
-	local bundles_dir="${2:-}"
-
-	command -v mysql >/dev/null 2>&1 || return 0
-
-	local db_name
-
-	db_name="$(_derive_db_name "$(basename "${worktree_path}")")"
-
-	[[ ${db_name} != lportal ]] || return 0
-
-	local user=root
-	local password=""
-
-	if [[ -n ${bundles_dir} ]]
-	then
-		user="$(_get_property_from_files "jdbc\.default\.username" root "${bundles_dir}/portal-ext.properties" "${bundles_dir}/portal-setup-wizard.properties")"
-		password="$(_get_property_from_files "jdbc\.default\.password" "" "${bundles_dir}/portal-ext.properties" "${bundles_dir}/portal-setup-wizard.properties")"
-	fi
-
-	local mysql_args=(--user "${user}")
-
-	if [[ -n ${password} ]]
-	then
-		mysql_args+=(--password="${password}")
-	fi
-
-	mysql "${mysql_args[@]}" --execute "DROP DATABASE IF EXISTS ${db_name};" >&2 || true
 }
 
 function _find_app_server_parent_dir {
@@ -79,12 +48,12 @@ function _find_app_server_parent_dir {
 
 	if [[ -f ${user_props} ]]
 	then
-		raw="$(grep --extended-regexp "^[[:space:]]*app\.server\.parent\.dir=" "${user_props}" | tail --lines=1 | sed "s/^[[:space:]]*app\.server\.parent\.dir=//")"
+		raw="$(grep --extended-regexp "^[[:space:]]*app\.server\.parent\.dir=" "${user_props}" | tail --lines=1 | _sed "s/^[[:space:]]*app\.server\.parent\.dir=//")"
 	fi
 
 	if [[ -z ${raw} && -f ${default_props} ]]
 	then
-		raw="$(grep --extended-regexp "^[[:space:]]*app\.server\.parent\.dir=" "${default_props}" | tail --lines=1 | sed "s/^[[:space:]]*app\.server\.parent\.dir=//")"
+		raw="$(grep --extended-regexp "^[[:space:]]*app\.server\.parent\.dir=" "${default_props}" | tail --lines=1 | _sed "s/^[[:space:]]*app\.server\.parent\.dir=//")"
 	fi
 
 	[[ -n ${raw} ]] || return 1
@@ -123,7 +92,7 @@ function _get_property {
 
 	if [[ -f ${file} ]] && grep --extended-regexp --quiet "^[[:space:]]*${key}=" "${file}"
 	then
-		value="$(grep --extended-regexp "^[[:space:]]*${key}=" "${file}" | tail --lines=1 | sed --regexp-extended "s/^[[:space:]]*${key}=[[:space:]]*//; s/[[:space:]]+\$//")"
+		value="$(grep --extended-regexp "^[[:space:]]*${key}=" "${file}" | tail --lines=1 | _sed --regexp-extended "s/^[[:space:]]*${key}=[[:space:]]*//; s/[[:space:]]+\$//")"
 	fi
 
 	echo "${value}"
@@ -141,7 +110,7 @@ function _get_property_from_files {
 	do
 		if [[ -f ${file} ]] && grep --extended-regexp --quiet "^[[:space:]]*${key}=" "${file}"
 		then
-			grep --extended-regexp "^[[:space:]]*${key}=" "${file}" | tail --lines=1 | sed --regexp-extended "s/^[[:space:]]*${key}=[[:space:]]*//; s/[[:space:]]+\$//"
+			grep --extended-regexp "^[[:space:]]*${key}=" "${file}" | tail --lines=1 | _sed --regexp-extended "s/^[[:space:]]*${key}=[[:space:]]*//; s/[[:space:]]+\$//"
 
 			return
 		fi
@@ -149,3 +118,81 @@ function _get_property_from_files {
 
 	echo "${default}"
 }
+
+function _sed {
+	local arg in_place=0
+
+	for arg in "${@}"
+	do
+		[[ ${arg} == --in-place ]] && in_place=1
+	done
+
+	if [[ ${in_place} -eq 1 ]]
+	then
+		local file="${*: -1}"
+
+		if [[ -L ${file} ]]
+		then
+			local dereferenced="${file}.dereferenced"
+
+			cp "${file}" "${dereferenced}" 2>/dev/null || : > "${dereferenced}"
+
+			rm -f "${file}"
+
+			mv "${dereferenced}" "${file}"
+		fi
+	fi
+
+	if [[ $(uname) == Darwin ]]
+	then
+		local args=()
+
+		for arg in "${@}"
+		do
+			if [[ ${arg} == --expression ]]
+			then
+				args+=(-e)
+			elif [[ ${arg} == --in-place ]]
+			then
+				args+=(-i "")
+			elif [[ ${arg} == --regexp-extended ]]
+			then
+				args+=(-E)
+			else
+				args+=("${arg}")
+			fi
+		done
+
+		sed "${args[@]}"
+	else
+		sed "${@}"
+	fi
+}
+
+function _source_database_brand {
+	local brand
+
+	brand="$(echo "${LIFERAY_PROVISION_DATABASE_BRAND:-mysql}" | tr "[:upper:]" "[:lower:]")"
+
+	if [[ ${brand} == *psql* || ${brand} == *postgres* ]]
+	then
+		brand=psql
+	elif [[ ${brand} == *mysql* ]]
+	then
+		brand=mysql
+	else
+		_die "The \"LIFERAY_PROVISION_DATABASE_BRAND\" value must contain one of \"mysql\", \"psql\", or \"postgres\" (got \"${brand}\")."
+	fi
+
+	source "_database_brand_${brand}.sh"
+
+	local function_name
+
+	for function_name in _drop_database _set_database
+	do
+		[[ $(type -t "${function_name}") == function ]] ||
+			_die "\"_database_brand_${brand}.sh\" must implement the \"${function_name}\" function."
+	done
+}
+
+_source_database_brand

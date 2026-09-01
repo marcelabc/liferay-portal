@@ -8,10 +8,10 @@ package com.liferay.exportimport.web.internal.application.list;
 import com.liferay.application.list.BasePanelApp;
 import com.liferay.application.list.PanelApp;
 import com.liferay.application.list.constants.PanelCategoryKeys;
-import com.liferay.exportimport.constants.ExportImportPortletKeys;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.staging.StagingGroupHelper;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,8 +24,8 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = {
-		"panel.app.order:Integer=1400",
-		"panel.category.key=" + PanelCategoryKeys.APPLICATIONS_MENU_APPLICATIONS_BATCH_PLANNER
+		"panel.app.order:Integer=400",
+		"panel.category.key=" + PanelCategoryKeys.APPLICATIONS_MENU_APPLICATIONS_DEVELOPER_INTEGRATION
 	},
 	service = PanelApp.class
 )
@@ -43,7 +43,7 @@ public class CompanyImportPanelApp extends BasePanelApp {
 
 	@Override
 	public String getPortletId() {
-		return ExportImportPortletKeys.COMPANY_IMPORT;
+		return PortletKeys.COMPANY_IMPORT;
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class CompanyImportPanelApp extends BasePanelApp {
 	private Portal _portal;
 
 	@Reference(
-		target = "(jakarta.portlet.name=" + ExportImportPortletKeys.COMPANY_IMPORT + ")"
+		target = "(jakarta.portlet.name=" + PortletKeys.COMPANY_IMPORT + ")"
 	)
 	private Portlet _portlet;
 

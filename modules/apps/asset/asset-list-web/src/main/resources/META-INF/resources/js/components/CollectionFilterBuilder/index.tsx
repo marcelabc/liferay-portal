@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {addParams, fetch} from 'frontend-js-web';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {v4 as uuidv4} from 'uuid';
 
+import useTypeProperties from '../../hooks/useTypeProperties';
 import {ConditionBuilder} from './ConditionBuilder';
 import {Config, initializeConfig} from './config';
 import {RELATIVE_DATE_VALUES} from './operators';
@@ -17,6 +17,22 @@ import type {
 	FilterProperty,
 	FilterPropertyGroup,
 } from './types';
+
+function createEmptyConditions(): FilterCondition[] {
+	return [{id: uuidv4()}];
+}
+
+/**
+ * A condition on a field of a specific item type only exists for that item
+ * type. Conditions on the asset fields and on the common fields apply to every
+ * item type, so they are worth keeping when the source changes.
+ */
+function isTypeSpecificCondition(condition: FilterCondition): boolean {
+	return (
+		condition.classNameId !== undefined &&
+		condition.classTypeId !== undefined
+	);
+}
 
 function normalizeDateTime(value: string) {
 	if (!value) {
@@ -57,7 +73,7 @@ function serializeValue(
 interface CollectionFilterBuilderProps extends Config {
 	initialConditions?: Array<Omit<FilterCondition, 'id'>>;
 	onChange?: (state: FilterCondition[]) => void;
-	properties: FilterProperty[];
+	properties: FilterPropertyGroup[];
 }
 
 /**
@@ -71,7 +87,6 @@ export default function CollectionFilterBuilder({
 	namespace,
 	onChange,
 	properties: initialProperties,
-	propertiesURL,
 	tagSelectorURL,
 	vocabularyIds,
 }: CollectionFilterBuilderProps) {
@@ -79,7 +94,6 @@ export default function CollectionFilterBuilder({
 		categorySelectorURL,
 		groupIds,
 		namespace,
-		propertiesURL,
 		tagSelectorURL,
 		vocabularyIds,
 	});
@@ -90,12 +104,10 @@ export default function CollectionFilterBuilder({
 					...condition,
 					id: uuidv4(),
 				}))
-			: [{id: uuidv4()}]
+			: createEmptyConditions()
 	);
 
-	const [properties, setProperties] = useState<FilterProperty[]>(
-		initialProperties || []
-	);
+	const properties = useTypeProperties(initialProperties);
 
 	const propertiesWithAssetFields = useMemo<FilterPropertyGroup[]>(
 		() => [
@@ -119,14 +131,7 @@ export default function CollectionFilterBuilder({
 				],
 				label: '',
 			},
-			...(properties.length
-				? [
-						{
-							items: properties,
-							label: Liferay.Language.get('common-fields'),
-						},
-					]
-				: []),
+			...properties,
 		],
 		[properties]
 	);
@@ -173,114 +178,54 @@ export default function CollectionFilterBuilder({
 				return true;
 			});
 
+	const handleChange = useCallback(
+		(newConditions: FilterCondition[]) => {
+			setConditions(newConditions);
+
+			onChange?.(newConditions);
+		},
+		[onChange]
+	);
+
 	useEffect(() => {
-		if (!propertiesURL) {
-			return undefined;
-		}
 
-		// Refetches the filterable properties whenever the user changes the
-		// collection's asset source (type / subtype selectors), fired in
-		// event sourceChange. The available fields depend on the selected
-		// class names + class types.
+		// An item type that uses the asset filter builder instead displays none
+		// of this, and the type settings are merged rather than replaced on save,
+		// so drop everything and let the empty value clear what was stored.
+		// Otherwise keep the conditions the new item type can still offer rather
+		// than making the user build them again.
 
-		const assetTypeListenerHandler = () => {
-
-			// The `anyAssetType` select holds 'true' (any type), 'false'
-			// (multi-selection), or a single classNameId value.
-
-			const assetTypeSelector = document.getElementById(
-				`${namespace}anyAssetType`
-			) as HTMLSelectElement | null;
-
-			const assetTypeValue = assetTypeSelector?.value || '';
-
-			let classNameIds: string[] = [];
-
-			if (assetTypeValue === 'false') {
-
-				// Multi-selection: collect every option out of the hidden
-				// <select> the JSP populates with the user's picks.
-
-				const multiSelector = document.getElementById(
-					`${namespace}currentClassNameIds`
-				) as HTMLSelectElement | null;
-
-				classNameIds = Array.from(multiSelector?.options || []).map(
-					(option) => option.value
-				);
-			}
-			else if (assetTypeValue && assetTypeValue !== 'true') {
-				classNameIds = [assetTypeValue];
-			}
-
-			let classTypeIds: string[] = [];
-
-			// Subtypes only make sense when exactly one asset type is
-			// selected — the subtype UI is hidden otherwise.
-
-			if (classNameIds.length === 1) {
-				const subtypeContainer = document.querySelector(
-					'.asset-subtype:not(.hide)'
-				);
-
-				const subtypeSelector = subtypeContainer?.querySelector(
-					`[id^="${namespace}anyClassType"]`
-				) as HTMLSelectElement | null;
-
-				const subtypeValue = subtypeSelector?.value;
-
-				if (subtypeValue === 'false' && subtypeContainer) {
-
-					// Multi-subtype selection: same pattern as
-					// classNameIds above, but the element id is
-					// namespaced with the class name.
-
-					const className =
-						subtypeContainer.getAttribute('data-class-name');
-
-					const multiSubtypeSelect = document.getElementById(
-						`${namespace}${className}currentClassTypeIds`
-					) as HTMLSelectElement | null;
-
-					classTypeIds = Array.from(
-						multiSubtypeSelect?.options || []
-					).map((option) => option.value);
+		const handleFilterVisibilityChange = ({
+			showCollection,
+		}: {
+			showCollection: boolean;
+		}) =>
+			setConditions((conditions) => {
+				if (!showCollection) {
+					return createEmptyConditions();
 				}
-				else if (subtypeValue && subtypeValue !== 'true') {
-					classTypeIds = [subtypeValue];
-				}
-			}
 
-			fetch(
-				addParams(
-					{
-						[`${namespace}classNameIds`]: classNameIds.join(','),
-						[`${namespace}classTypeIds`]: classTypeIds.join(','),
-					},
-					propertiesURL
-				)
-			)
-				.then((response) => response.json())
-				.then((data) => setProperties(data || []))
-				.catch((error) =>
-					console.error('Failed to fetch type properties: ', error)
+				const keptConditions = conditions.filter(
+					(condition) => !isTypeSpecificCondition(condition)
 				);
-		};
 
-		const eventName = `${namespace}sourceChange`;
+				return keptConditions.length
+					? keptConditions
+					: createEmptyConditions();
+			});
 
-		Liferay.on(eventName, assetTypeListenerHandler);
+		Liferay.on(
+			`${namespace}filterVisibilityChange`,
+			handleFilterVisibilityChange
+		);
 
 		return () => {
-			Liferay.detach(eventName, assetTypeListenerHandler);
+			Liferay.detach(
+				`${namespace}filterVisibilityChange`,
+				handleFilterVisibilityChange
+			);
 		};
-	}, [namespace, propertiesURL]);
-
-	const handleChange = (newConditions: FilterCondition[]) => {
-		setConditions(newConditions);
-
-		onChange?.(newConditions);
-	};
+	}, [namespace]);
 
 	return (
 		<>
@@ -305,7 +250,7 @@ export default function CollectionFilterBuilder({
 
 					<pre
 						style={{
-							background: '#f5f5f5',
+							background: 'var(--gray-100)',
 							borderRadius: 4,
 							fontSize: 11,
 							marginTop: 8,

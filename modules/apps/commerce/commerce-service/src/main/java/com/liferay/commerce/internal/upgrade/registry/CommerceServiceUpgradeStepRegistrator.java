@@ -22,6 +22,7 @@ import com.liferay.commerce.internal.upgrade.v13_0_8.CPDefinitionInventoryUpgrad
 import com.liferay.commerce.internal.upgrade.v14_0_0.ObjectDefinitionUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v15_0_3.OrderAdministratorRoleUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v15_1_0.util.CommerceOrderAttachmentTable;
+import com.liferay.commerce.internal.upgrade.v15_1_4.CommerceAvailabilityEstimateExternalReferenceCodeUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v1_2_0.CommerceSubscriptionUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v2_0_0.CommercePaymentMethodUpgradeProcess;
 import com.liferay.commerce.internal.upgrade.v2_1_0.CPDAvailabilityEstimateUpgradeProcess;
@@ -758,8 +759,10 @@ public class CommerceServiceUpgradeStepRegistrator
 					_companyLocalService, _resourcePermissionLocalService,
 					_roleLocalService));
 
+		registry.register("11.4.2", "11.4.3", new DummyUpgradeProcess());
+
 		registry.register(
-			"11.4.2", "11.5.0",
+			"11.4.3", "11.5.0",
 			UpgradeProcessFactory.addColumns(
 				CommerceOrderModelImpl.TABLE_NAME, "name VARCHAR(75) null"));
 
@@ -899,6 +902,23 @@ public class CommerceServiceUpgradeStepRegistrator
 				CommercePermissionUpgradeProcess(
 					_resourceActionLocalService,
 					_resourcePermissionLocalService));
+
+		registry.register(
+			"15.1.1", "15.1.2",
+			UpgradeProcessFactory.alterColumnName(
+				"CommerceSubscriptionEntry", "CPInstanceUUID",
+				"CPInstanceUuid VARCHAR(75)"));
+
+		registry.register(
+			"15.1.2", "15.1.3",
+			new com.liferay.commerce.internal.upgrade.v15_1_3.
+				CommerceShipmentRoleUpgradeProcess(
+					_companyLocalService, _resourcePermissionLocalService,
+					_roleLocalService));
+
+		registry.register(
+			"15.1.3", "15.1.4",
+			new CommerceAvailabilityEstimateExternalReferenceCodeUpgradeProcess());
 
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce upgrade step registrator finished");

@@ -13,21 +13,33 @@ import com.liferay.change.tracking.rest.client.dto.v1_0.Status;
 import com.liferay.change.tracking.rest.client.http.HttpInvoker;
 import com.liferay.change.tracking.rest.client.pagination.Page;
 import com.liferay.change.tracking.rest.client.pagination.Pagination;
+import com.liferay.change.tracking.rest.client.resource.v1_0.CTCollectionResource;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
+import com.liferay.change.tracking.service.persistence.CTCollectionPersistence;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.TransactionConfig;
+import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -40,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -59,6 +72,26 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 		new AggregateTestRule(
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
+
+	@Before
+	@Override
+	public void setUp() throws Exception {
+		super.setUp();
+
+		String password = RandomTestUtil.randomString();
+
+		User user = UserTestUtil.addUser(testCompany, password);
+
+		_userCTCollectionResource = CTCollectionResource.builder(
+		).authentication(
+			user.getEmailAddress(), password
+		).endpoint(
+			testCompany.getVirtualHostname(),
+			PortalUtil.getPortalServerPort(false), "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+	}
 
 	@Ignore
 	@Override
@@ -86,6 +119,26 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 			ctCollection, WorkflowConstants.STATUS_EXPIRED);
 		_assertCTCollectionActions(
 			ctCollection, WorkflowConstants.STATUS_INCOMPLETE);
+
+		assertHttpResponseStatusCode(
+			Response.Status.NOT_FOUND.getStatusCode(),
+			_userCTCollectionResource.getCTCollectionHttpResponse(
+				ctCollection.getId()));
+	}
+
+	@Override
+	@Test
+	public void testGetCTCollectionByExternalReferenceCode() throws Exception {
+		super.testGetCTCollectionByExternalReferenceCode();
+
+		CTCollection ctCollection = ctCollectionResource.postCTCollection(
+			randomCTCollection());
+
+		assertHttpResponseStatusCode(
+			Response.Status.NOT_FOUND.getStatusCode(),
+			_userCTCollectionResource.
+				getCTCollectionByExternalReferenceCodeHttpResponse(
+					ctCollection.getExternalReferenceCode()));
 	}
 
 	@Override
@@ -116,6 +169,12 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 			ctCollectionResource.
 				getCTCollectionByExternalReferenceCodeShareLink(
 					ctCollection.getExternalReferenceCode()));
+
+		assertHttpResponseStatusCode(
+			Response.Status.NOT_FOUND.getStatusCode(),
+			_userCTCollectionResource.
+				getCTCollectionByExternalReferenceCodeShareLinkHttpResponse(
+					ctCollection.getExternalReferenceCode()));
 	}
 
 	@Override
@@ -142,6 +201,11 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 			StringPool.BLANK,
 			ctCollectionResource.getCTCollectionShareLink(
 				ctCollection.getId()));
+
+		assertHttpResponseStatusCode(
+			Response.Status.NOT_FOUND.getStatusCode(),
+			_userCTCollectionResource.getCTCollectionShareLinkHttpResponse(
+				ctCollection.getId()));
 	}
 
 	@Override
@@ -160,6 +224,8 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 		assertEquals(
 			(List<CTCollection>)descPage.getItems(),
 			(List<CTCollection>)page.getItems());
+
+		_testGetCTCollectionsPageWithStaleIndexDocument();
 	}
 
 	@Override
@@ -512,11 +578,56 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 			serviceBuilderCTCollection.getCtCollectionId());
 	}
 
+	private void _testGetCTCollectionsPageWithStaleIndexDocument()
+		throws Exception {
+
+		CTCollection ctCollection1 = _postCTCollection(randomCTCollection());
+		CTCollection ctCollection2 = _postCTCollection(randomCTCollection());
+
+		com.liferay.change.tracking.model.CTCollection
+			serviceBuilderCTCollection1 =
+				_ctCollectionLocalService.getCTCollection(
+					ctCollection1.getId());
+
+		TransactionConfig transactionConfig = TransactionConfig.Factory.create(
+			Propagation.REQUIRED, new Class<?>[] {Exception.class});
+
+		try {
+			TransactionInvokerUtil.invoke(
+				transactionConfig,
+				() -> _ctCollectionPersistence.remove(
+					serviceBuilderCTCollection1));
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
+
+		_resourceLocalService.deleteResource(
+			serviceBuilderCTCollection1.getCompanyId(),
+			com.liferay.change.tracking.model.CTCollection.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			serviceBuilderCTCollection1.getCtCollectionId());
+
+		Page<CTCollection> page = ctCollectionResource.getCTCollectionsPage(
+			null, null, null, Pagination.of(1, 10), null);
+
+		List<CTCollection> ctCollections = (List<CTCollection>)page.getItems();
+
+		assertContains(ctCollection2, ctCollections);
+
+		for (CTCollection ctCollection : ctCollections) {
+			Assert.assertNotEquals(ctCollection1.getId(), ctCollection.getId());
+		}
+	}
+
 	@Inject
 	private ClassNameLocalService _classNameLocalService;
 
 	@Inject
 	private CTCollectionLocalService _ctCollectionLocalService;
+
+	@Inject
+	private CTCollectionPersistence _ctCollectionPersistence;
 
 	@Inject
 	private CTPreferencesLocalService _ctPreferencesLocalService;
@@ -526,5 +637,10 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;
+
+	@Inject
+	private ResourceLocalService _resourceLocalService;
+
+	private CTCollectionResource _userCTCollectionResource;
 
 }

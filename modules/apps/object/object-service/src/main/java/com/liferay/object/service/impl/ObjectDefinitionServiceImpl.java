@@ -86,6 +86,21 @@ public class ObjectDefinitionServiceImpl
 	}
 
 	@Override
+	public void addOrUpdateWorkflowDefinitionLinks(
+			long objectDefinitionId,
+			List<WorkflowDefinitionLink> workflowDefinitionLinks)
+		throws PortalException {
+
+		_objectDefinitionModelResourcePermission.check(
+			getPermissionChecker(), objectDefinitionId, ActionKeys.UPDATE);
+
+		objectDefinitionLocalService.addOrUpdateWorkflowDefinitionLinks(
+			objectDefinitionLocalService.getObjectDefinition(
+				objectDefinitionId),
+			workflowDefinitionLinks);
+	}
+
+	@Override
 	public ObjectDefinition addSystemObjectDefinition(
 			String externalReferenceCode, long userId, long objectFolderId,
 			String className, boolean enableCategorization,
@@ -220,15 +235,14 @@ public class ObjectDefinitionServiceImpl
 
 	@Override
 	public int getObjectDefinitionsCount() throws PortalException {
-		return objectDefinitionLocalService.getObjectDefinitionsCount();
+		return objectDefinitionPersistence.countAll();
 	}
 
 	@Override
 	public int getObjectDefinitionsCount(long companyId)
 		throws PortalException {
 
-		return objectDefinitionLocalService.getObjectDefinitionsCount(
-			companyId);
+		return objectDefinitionPersistence.countByCompanyId(companyId);
 	}
 
 	@Override

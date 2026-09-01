@@ -11,34 +11,23 @@ import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.info.constants.InfoDisplayWebKeys;
-import com.liferay.object.model.ObjectEntry;
-import com.liferay.object.rest.test.util.ObjectEntryTestUtil;
-import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-import com.liferay.site.cmp.site.initializer.test.util.CMPTestUtil;
 
-import java.io.Serializable;
-
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,9 +38,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 /**
  * @author Carolina Barbosa
  */
-@FeatureFlags(
-	featureFlags = {@FeatureFlag("LPD-17564"), @FeatureFlag("LPD-58677")}
-)
+@FeatureFlags(featureFlags = @FeatureFlag("LPD-58677"))
 @RunWith(Arquillian.class)
 public class ViewSpaceMembersSummarySectionDisplayContextTest
 	extends BaseDisplayContextTestCase {
@@ -63,62 +50,17 @@ public class ViewSpaceMembersSummarySectionDisplayContextTest
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
 
-	@Before
-	@Override
-	public void setUp() throws Exception {
-		super.setUp();
-
-		CMPTestUtil.getOrAddGroup(
-			ViewSpaceMembersSummarySectionDisplayContextTest.class);
-	}
-
 	@Test
 	public void testGetHeaderProps() throws Exception {
-		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
+		_depotEntry = _depotEntryLocalService.addDepotEntry(
 			RandomTestUtil.randomLocaleStringMap(),
 			RandomTestUtil.randomLocaleStringMap(), DepotConstants.TYPE_SPACE,
 			ServiceContextTestUtil.getServiceContext());
 
 		mockHttpServletRequest.setAttribute(
-			InfoDisplayWebKeys.INFO_ITEM,
-			ObjectEntryTestUtil.addObjectEntry(
-				depotEntry.getGroupId(),
-				_objectDefinitionLocalService.
-					fetchObjectDefinitionByExternalReferenceCode(
-						"L_CMS_BASIC_WEB_CONTENT",
-						TestPropsValues.getCompanyId()),
-				HashMapBuilder.<String, Serializable>put(
-					"title_i18n",
-					HashMapBuilder.put(
-						"en_US", RandomTestUtil.randomString()
-					).build()
-				).build()));
+			InfoDisplayWebKeys.INFO_ITEM, _depotEntry);
 
-		_assertHeaderProps(null, depotEntry.getGroup());
-
-		ObjectEntry objectEntry = CMPTestUtil.addProjectObjectEntry();
-
-		mockHttpServletRequest.setAttribute(
-			InfoDisplayWebKeys.INFO_ITEM, objectEntry);
-
-		_assertHeaderProps(
-			HashMapBuilder.<String, Object>put(
-				"filter",
-				() -> {
-					List<Long> depotEntryGroupIds =
-						_depotEntryLocalService.getDepotEntryGroupIds(
-							group.getCompanyId(), DepotConstants.TYPE_SPACE);
-
-					return "groupIds in (" +
-						StringUtil.merge(depotEntryGroupIds) + ")";
-				}
-			).build(),
-			_groupLocalService.fetchGroup(objectEntry.getGroupId()));
-	}
-
-	private void _assertHeaderProps(
-			Map<String, Object> additionalSpaceModalProps, Group group)
-		throws Exception {
+		Group group = _depotEntry.getGroup();
 
 		AssertUtils.assertEquals(
 			HashMapBuilder.<String, Object>put(
@@ -144,8 +86,6 @@ public class ViewSpaceMembersSummarySectionDisplayContextTest
 					"assetLibraryCreatorUserId", TestPropsValues.getUserId()
 				).put(
 					"externalReferenceCode", group.getExternalReferenceCode()
-				).putAll(
-					additionalSpaceModalProps
 				).build()
 			).put(
 				"title", "Members (1)"
@@ -159,12 +99,16 @@ public class ViewSpaceMembersSummarySectionDisplayContextTest
 
 	private Object _getSectionDisplayContext() throws Exception {
 		_fragmentRenderer.render(
-			null, mockHttpServletRequest, new MockHttpServletResponse());
+			fragmentRendererContext, mockHttpServletRequest,
+			new MockHttpServletResponse());
 
 		return mockHttpServletRequest.getAttribute(
 			"com.liferay.site.cms.site.initializer.internal.display.context." +
 				"ViewSpaceMembersSummarySectionDisplayContext");
 	}
+
+	@DeleteAfterTestRun
+	private DepotEntry _depotEntry;
 
 	@Inject
 	private DepotEntryLocalService _depotEntryLocalService;
@@ -173,11 +117,5 @@ public class ViewSpaceMembersSummarySectionDisplayContextTest
 		filter = "component.name=com.liferay.site.cms.site.initializer.internal.fragment.renderer.ViewSpaceMembersSummaryJSPSectionFragmentRenderer"
 	)
 	private FragmentRenderer _fragmentRenderer;
-
-	@Inject
-	private GroupLocalService _groupLocalService;
-
-	@Inject
-	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 }

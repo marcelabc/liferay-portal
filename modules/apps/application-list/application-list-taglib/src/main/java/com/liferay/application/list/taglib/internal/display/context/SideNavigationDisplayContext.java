@@ -15,6 +15,7 @@ import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.criteria.URLItemSelectorReturnType;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -79,6 +80,10 @@ public class SideNavigationDisplayContext {
 				"%s/product_icons/%s_sm.svg",
 				_themeDisplay.getPathThemeImages(), _panelCategory.getKey())
 		).put(
+			"colorScheme", _getColorScheme()
+		).put(
+			"colorSchemeSessionKey", _COLOR_SCHEME_SESSION_KEY
+		).put(
 			"expandedKeys", _getExpandedKeys()
 		).put(
 			"expandedKeysSessionKey", _getExpandedKeysSessionKey()
@@ -86,6 +91,29 @@ public class SideNavigationDisplayContext {
 			"items", _getPropsItems()
 		).put(
 			"label", _panelCategory.getLabel(_themeDisplay.getLocale())
+		).put(
+			"navigationItemsURL",
+			() -> {
+				LiferayPortletURL navigationItemsURL =
+					(LiferayPortletURL)
+						RequestBackedPortletURLFactoryUtil.create(
+							_httpServletRequest
+						).createResourceURL(
+							ProductNavigationProductMenuPortletKeys.
+								PRODUCT_NAVIGATION_PRODUCT_MENU
+						);
+
+				navigationItemsURL.setCopyCurrentRenderParameters(false);
+				navigationItemsURL.setParameter(
+					"p_v_l_s_g_id",
+					String.valueOf(_themeDisplay.getScopeGroupId()));
+				navigationItemsURL.setParameter(
+					"selectedPortletId", _portletId);
+				navigationItemsURL.setResourceID(
+					"/product_navigation_product_menu/get_navigation_items");
+
+				return navigationItemsURL.toString();
+			}
 		).put(
 			"portletId", StringPool.BLANK
 		).put(
@@ -121,6 +149,11 @@ public class SideNavigationDisplayContext {
 			_httpServletRequest, _VISIBLE_SESSION_KEY, "visible");
 
 		return state.equals("visible");
+	}
+
+	private String _getColorScheme() {
+		return SessionClicks.get(
+			_httpServletRequest, _COLOR_SCHEME_SESSION_KEY, "light");
 	}
 
 	private List<String> _getExpandedKeys() {
@@ -215,6 +248,9 @@ public class SideNavigationDisplayContext {
 
 		return propsItems;
 	}
+
+	private static final String _COLOR_SCHEME_SESSION_KEY =
+		"com_liferay_application_list_taglib_SideNavigationColorScheme";
 
 	private static final String _VISIBLE_SESSION_KEY =
 		"com_liferay_application_list_taglib_SideNavigationState";

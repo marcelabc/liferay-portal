@@ -61,10 +61,10 @@ import com.liferay.commerce.service.CommerceOrderItemLocalService;
 import com.liferay.commerce.service.CommerceOrderNoteLocalService;
 import com.liferay.commerce.service.CommerceOrderPaymentLocalService;
 import com.liferay.commerce.service.CommerceOrderTypeLocalService;
-import com.liferay.commerce.service.CommerceShippingMethodLocalService;
 import com.liferay.commerce.service.CommerceShippingOptionAccountEntryRelService;
 import com.liferay.commerce.service.base.CommerceOrderLocalServiceBaseImpl;
 import com.liferay.commerce.service.persistence.CommerceOrderItemPersistence;
+import com.liferay.commerce.service.persistence.CommerceShippingMethodPersistence;
 import com.liferay.commerce.shipping.engine.fixed.model.CommerceShippingFixedOption;
 import com.liferay.commerce.shipping.engine.fixed.service.CommerceShippingFixedOptionLocalService;
 import com.liferay.commerce.term.model.CommerceTermEntry;
@@ -126,7 +126,7 @@ import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
-import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.transaction.TransactionCallbackUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -195,7 +195,7 @@ public class CommerceOrderLocalServiceImpl
 
 		try {
 			CommerceOrder commerceOrder =
-				commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+				commerceOrderPersistence.findByPrimaryKey(commerceOrderId);
 
 			DLAppHelperThreadLocal.setEnabled(false);
 
@@ -511,8 +511,8 @@ public class CommerceOrderLocalServiceImpl
 			CommerceContext commerceContext)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		boolean hasDiscounts = false;
 
@@ -558,8 +558,8 @@ public class CommerceOrderLocalServiceImpl
 			long attachmentFileEntryId, long commerceOrderId)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		LocalRepository localRepository = commerceOrder.getLocalRepository();
 
@@ -1011,6 +1011,8 @@ public class CommerceOrderLocalServiceImpl
 			_commerceOrderPriceCalculation.getCommerceOrderPrice(
 				commerceOrder, false, commerceContext);
 
+		commerceOrder = getCommerceOrder(commerceOrderId);
+
 		CommerceMoney subtotalCommerceMoney = commerceOrderPrice.getSubtotal();
 		CommerceMoney shippingValueCommerceMoney =
 			commerceOrderPrice.getShippingValue();
@@ -1061,44 +1063,7 @@ public class CommerceOrderLocalServiceImpl
 			commerceOrder,
 			commerceOrderPrice.getTotalDiscountValueWithTaxAmount(), true);
 
-		return commerceOrderLocalService.updateCommerceOrderPrices(
-			commerceOrder.getCommerceOrderId(),
-			commerceOrder.getShippingAmount(),
-			commerceOrder.getShippingDiscountAmount(),
-			commerceOrder.getShippingDiscountPercentageLevel1(),
-			commerceOrder.getShippingDiscountPercentageLevel2(),
-			commerceOrder.getShippingDiscountPercentageLevel3(),
-			commerceOrder.getShippingDiscountPercentageLevel4(),
-			commerceOrder.getShippingDiscountPercentageLevel1WithTaxAmount(),
-			commerceOrder.getShippingDiscountPercentageLevel2WithTaxAmount(),
-			commerceOrder.getShippingDiscountPercentageLevel3WithTaxAmount(),
-			commerceOrder.getShippingDiscountPercentageLevel4WithTaxAmount(),
-			commerceOrder.getShippingDiscountWithTaxAmount(),
-			commerceOrder.getShippingWithTaxAmount(),
-			commerceOrder.getSubtotal(),
-			commerceOrder.getSubtotalDiscountAmount(),
-			commerceOrder.getSubtotalDiscountPercentageLevel1(),
-			commerceOrder.getSubtotalDiscountPercentageLevel2(),
-			commerceOrder.getSubtotalDiscountPercentageLevel3(),
-			commerceOrder.getSubtotalDiscountPercentageLevel4(),
-			commerceOrder.getSubtotalDiscountPercentageLevel1WithTaxAmount(),
-			commerceOrder.getSubtotalDiscountPercentageLevel2WithTaxAmount(),
-			commerceOrder.getSubtotalDiscountPercentageLevel3WithTaxAmount(),
-			commerceOrder.getSubtotalDiscountPercentageLevel4WithTaxAmount(),
-			commerceOrder.getSubtotalDiscountWithTaxAmount(),
-			commerceOrder.getSubtotalWithTaxAmount(),
-			commerceOrder.getTaxAmount(), commerceOrder.getTotal(),
-			commerceOrder.getTotalDiscountAmount(),
-			commerceOrder.getTotalDiscountPercentageLevel1(),
-			commerceOrder.getTotalDiscountPercentageLevel2(),
-			commerceOrder.getTotalDiscountPercentageLevel3(),
-			commerceOrder.getTotalDiscountPercentageLevel4(),
-			commerceOrder.getTotalDiscountPercentageLevel1WithTaxAmount(),
-			commerceOrder.getTotalDiscountPercentageLevel2WithTaxAmount(),
-			commerceOrder.getTotalDiscountPercentageLevel3WithTaxAmount(),
-			commerceOrder.getTotalDiscountPercentageLevel4WithTaxAmount(),
-			commerceOrder.getTotalDiscountWithTaxAmount(),
-			commerceOrder.getTotalWithTaxAmount());
+		return commerceOrderLocalService.updateCommerceOrder(commerceOrder);
 	}
 
 	@Override
@@ -1177,7 +1142,7 @@ public class CommerceOrderLocalServiceImpl
 		// Commerce order items
 
 		List<CommerceOrderItem> commerceOrderItems =
-			_commerceOrderItemLocalService.getCommerceOrderItems(
+			_commerceOrderItemPersistence.findByCommerceOrderId(
 				commerceOrder.getCommerceOrderId(), QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS);
 
@@ -1235,8 +1200,8 @@ public class CommerceOrderLocalServiceImpl
 	public CommerceOrder resetCommerceOrderShipping(long commerceOrderId)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		commerceOrder.setCommerceShippingMethodId(0);
 		commerceOrder.setShippingAmount(BigDecimal.ZERO);
@@ -1250,8 +1215,7 @@ public class CommerceOrderLocalServiceImpl
 		throws PortalException {
 
 		List<CommerceOrder> commerceOrders =
-			commerceOrderLocalService.getCommerceOrdersByShippingAddress(
-				addressId);
+			commerceOrderPersistence.findByShippingAddressId(addressId);
 
 		for (CommerceOrder commerceOrder : commerceOrders) {
 			if (!commerceOrder.isDraft() && !commerceOrder.isOpen()) {
@@ -1856,14 +1820,12 @@ public class CommerceOrderLocalServiceImpl
 		throws PortalException {
 
 		List<CommerceOrder> commerceOrders =
-			commerceOrderLocalService.getCommerceOrdersByBillingAddress(
-				addressId);
+			commerceOrderPersistence.findByBillingAddressId(addressId);
 
 		_updateCommerceOrderAddresses(commerceOrders, addressId);
 
-		commerceOrders =
-			commerceOrderLocalService.getCommerceOrdersByShippingAddress(
-				addressId);
+		commerceOrders = commerceOrderPersistence.findByShippingAddressId(
+			addressId);
 
 		_updateCommerceOrderAddresses(commerceOrders, addressId);
 	}
@@ -2052,8 +2014,8 @@ public class CommerceOrderLocalServiceImpl
 			long commerceOrderId, String commercePaymentMethodKey)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		commerceOrder.setCommercePaymentMethodKey(commercePaymentMethodKey);
 
@@ -2091,7 +2053,7 @@ public class CommerceOrderLocalServiceImpl
 
 		if (commerceShippingMethodId > 0) {
 			CommerceShippingMethod commerceShippingMethod =
-				_commerceShippingMethodLocalService.getCommerceShippingMethod(
+				_commerceShippingMethodPersistence.findByPrimaryKey(
 					commerceShippingMethodId);
 
 			commerceOrder.setCommerceShippingMethodId(
@@ -2744,7 +2706,7 @@ public class CommerceOrderLocalServiceImpl
 		CommerceOrder commerceOrder, CommerceOrder originalCommerceOrder,
 		int previousPaymentStatus) {
 
-		TransactionCommitCallbackUtil.registerCallback(
+		TransactionCallbackUtil.registerCommitCallback(
 			() -> {
 				Message message = new Message();
 
@@ -3112,7 +3074,7 @@ public class CommerceOrderLocalServiceImpl
 		}
 
 		List<CommerceShippingMethod> commerceShippingMethods =
-			_commerceShippingMethodLocalService.getCommerceShippingMethods(
+			_commerceShippingMethodPersistence.findByG_A(
 				commerceOrder.getGroupId(), true, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS,
 				CommerceShippingMethodPriorityComparator.getInstance(false));
@@ -3629,8 +3591,8 @@ public class CommerceOrderLocalServiceImpl
 		_commerceShippingFixedOptionLocalService;
 
 	@Reference
-	private CommerceShippingMethodLocalService
-		_commerceShippingMethodLocalService;
+	private CommerceShippingMethodPersistence
+		_commerceShippingMethodPersistence;
 
 	@Reference
 	private CommerceShippingOptionAccountEntryRelService

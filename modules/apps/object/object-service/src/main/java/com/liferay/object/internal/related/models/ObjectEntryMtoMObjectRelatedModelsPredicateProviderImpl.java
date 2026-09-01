@@ -6,9 +6,12 @@
 package com.liferay.object.internal.related.models;
 
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.internal.entry.util.ObjectEntrySearchUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntryTable;
 import com.liferay.object.model.ObjectRelationship;
+import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionLocalizationTable;
+import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionLocalizationTableFactory;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTable;
 import com.liferay.object.petra.sql.dsl.DynamicObjectRelationshipMappingTable;
 import com.liferay.object.petra.sql.dsl.DynamicObjectRelationshipMappingTableFactory;
@@ -38,8 +41,8 @@ public class ObjectEntryMtoMObjectRelatedModelsPredicateProviderImpl
 
 	@Override
 	public Predicate getPredicate(
-			ObjectRelationship objectRelationship, Predicate predicate,
-			ObjectDefinition relatedObjectDefinition)
+			Long[] groupIds, ObjectRelationship objectRelationship,
+			Predicate predicate, ObjectDefinition relatedObjectDefinition)
 		throws PortalException {
 
 		Column<?, ?> dynamicObjectDefinitionTableColumn =
@@ -57,6 +60,10 @@ public class ObjectEntryMtoMObjectRelatedModelsPredicateProviderImpl
 			dynamicObjectRelationshipMappingTableColumn =
 				dynamicObjectRelationshipMappingTable.getPrimaryKeyColumn2();
 
+		DynamicObjectDefinitionLocalizationTable
+			relatedDynamicObjectDefinitionLocalizationTable =
+				DynamicObjectDefinitionLocalizationTableFactory.create(
+					relatedObjectDefinition, objectFieldLocalService);
 		DynamicObjectDefinitionTable relatedDynamicObjectDefinitionTable =
 			getDynamicObjectDefinitionTable(relatedObjectDefinition);
 		DynamicObjectDefinitionTable relatedObjectDefinitionExtensionTable =
@@ -88,8 +95,15 @@ public class ObjectEntryMtoMObjectRelatedModelsPredicateProviderImpl
 							relatedObjectDefinitionExtensionTable.
 								getPrimaryKeyColumn()
 						)
+					).leftJoinOn(
+						relatedDynamicObjectDefinitionLocalizationTable,
+						ObjectEntrySearchUtil.
+							getLeftJoinLocalizationTablePredicate(
+								relatedDynamicObjectDefinitionLocalizationTable,
+								relatedDynamicObjectDefinitionTable, null)
 					).where(
-						predicate
+						ObjectEntrySearchUtil.getObjectEntryIndexPredicate(
+							groupIds, relatedObjectDefinition, predicate)
 					))
 			));
 	}

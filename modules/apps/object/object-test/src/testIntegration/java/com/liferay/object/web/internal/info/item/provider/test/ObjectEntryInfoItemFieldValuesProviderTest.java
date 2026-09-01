@@ -6,8 +6,12 @@
 package com.liferay.object.web.internal.info.item.provider.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.asset.kernel.model.AssetCategory;
+import com.liferay.asset.kernel.model.AssetVocabulary;
+import com.liferay.asset.test.util.AssetTestUtil;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.test.util.DLTestUtil;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
@@ -35,6 +39,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
+import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
@@ -70,7 +75,6 @@ import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -85,6 +89,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -205,13 +210,12 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 			ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
 	}
 
-	@FeatureFlag("LPD-17564")
 	@Test
 	public void testObjectEntryInfoItemFieldValuesProvider() throws Exception {
 		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
 			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "test.png",
-			ContentTypes.IMAGE_PNG, RandomTestUtil.randomBytes(), null, null,
+			ContentTypes.IMAGE_PNG, DLTestUtil.getImageBytes("png"), null, null,
 			null,
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
@@ -289,7 +293,6 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 			_getThemeDisplay(RandomTestUtil.randomString(), "UTC"));
 	}
 
-	@FeatureFlag("LPD-17564")
 	@Test
 	public void testObjectEntryInfoItemFieldValuesProviderWithAttachmentObjectField()
 		throws Exception {
@@ -318,7 +321,7 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
 			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "test.png",
-			ContentTypes.IMAGE_PNG, RandomTestUtil.randomBytes(), null, null,
+			ContentTypes.IMAGE_PNG, DLTestUtil.getImageBytes("png"), null, null,
 			null,
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 
@@ -367,7 +370,95 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 		}
 	}
 
-	@FeatureFlag("LPD-17564")
+	@Test
+	public void testObjectEntryInfoItemFieldValuesProviderWithCategorization()
+		throws Exception {
+
+		String objectFieldName = "a" + RandomTestUtil.randomString();
+
+		_objectDefinition = _addObjectDefinition(
+			new TextObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				objectFieldName
+			).build());
+
+		_objectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				_objectDefinition.getObjectDefinitionId());
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		AssetVocabulary assetVocabulary = AssetTestUtil.addVocabulary(
+			_group.getGroupId());
+
+		AssetCategory assetCategory = AssetTestUtil.addCategory(
+			_group.getGroupId(), assetVocabulary.getVocabularyId());
+
+		serviceContext.setAssetCategoryIds(
+			new long[] {assetCategory.getCategoryId()});
+
+		String assetTagName = RandomTestUtil.randomString();
+
+		serviceContext.setAssetTagNames(new String[] {assetTagName});
+
+		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
+			_group.getGroupId(), TestPropsValues.getUserId(),
+			_objectDefinition.getObjectDefinitionId(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null,
+			HashMapBuilder.<String, Serializable>put(
+				objectFieldName, RandomTestUtil.randomString()
+			).build(),
+			serviceContext);
+
+		_pushServiceContext(_getThemeDisplay(StringPool.BLANK, "UTC"));
+
+		try {
+			InfoItemFieldValuesProvider<ObjectEntry>
+				infoItemFieldValuesProvider =
+					_infoItemServiceRegistry.getFirstInfoItemService(
+						InfoItemFieldValuesProvider.class,
+						_objectDefinition.getClassName());
+
+			InfoItemFieldValues infoItemFieldValues =
+				infoItemFieldValuesProvider.getInfoItemFieldValues(objectEntry);
+
+			InfoFieldValue<Object> categoriesInfoFieldValue =
+				infoItemFieldValues.getInfoFieldValue("categories");
+
+			List<KeyLocalizedLabelPair> keyLocalizedLabelPairs =
+				(List<KeyLocalizedLabelPair>)
+					categoriesInfoFieldValue.getValue();
+
+			Assert.assertEquals(
+				keyLocalizedLabelPairs.toString(), 1,
+				keyLocalizedLabelPairs.size());
+
+			KeyLocalizedLabelPair keyLocalizedLabelPair =
+				keyLocalizedLabelPairs.get(0);
+
+			Assert.assertEquals(
+				assetCategory.getName(), keyLocalizedLabelPair.getKey());
+
+			InfoFieldValue<Object> tagNamesInfoFieldValue =
+				infoItemFieldValues.getInfoFieldValue("tagNames");
+
+			List<String> tagNames =
+				(List<String>)tagNamesInfoFieldValue.getValue();
+
+			Assert.assertEquals(tagNames.toString(), 1, tagNames.size());
+
+			Assert.assertEquals(assetTagName, tagNames.get(0));
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+	}
+
 	@Test
 	public void testObjectEntryInfoItemFieldValuesProviderWithObjectEntryVersioning()
 		throws Exception {
@@ -431,6 +522,107 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
 		}
+	}
+
+	@Test
+	public void testObjectEntryInfoItemFieldValuesProviderWithObjectRelationship()
+		throws Exception {
+
+		ObjectDefinition parentObjectDefinition = _addObjectDefinition(
+			new TextObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				"parentTitle"
+			).build());
+
+		parentObjectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				parentObjectDefinition.getObjectDefinitionId());
+
+		ObjectDefinition childObjectDefinition = _addObjectDefinition(
+			new TextObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				"childTitle"
+			).build());
+
+		childObjectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				childObjectDefinition.getObjectDefinitionId());
+
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.addObjectRelationship(
+				null, TestPropsValues.getUserId(),
+				parentObjectDefinition.getObjectDefinitionId(),
+				childObjectDefinition.getObjectDefinitionId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_CASCADE, true,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				"oneToManyRelationshipName", false,
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
+
+		ObjectEntry parentObjectEntry = _objectEntryLocalService.addObjectEntry(
+			_group.getGroupId(), TestPropsValues.getUserId(),
+			parentObjectDefinition.getObjectDefinitionId(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null,
+			HashMapBuilder.<String, Serializable>put(
+				"parentTitle", RandomTestUtil.randomString()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		String childTitleValue = RandomTestUtil.randomString();
+
+		ObjectEntry childObjectEntry = _objectEntryLocalService.addObjectEntry(
+			_group.getGroupId(), TestPropsValues.getUserId(),
+			childObjectDefinition.getObjectDefinitionId(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null,
+			HashMapBuilder.<String, Serializable>put(
+				"childTitle", childTitleValue
+			).put(
+				"r_oneToManyRelationshipName_" +
+					parentObjectDefinition.getPKObjectFieldName(),
+				parentObjectEntry.getObjectEntryId()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		_pushServiceContext(_getThemeDisplay(StringPool.BLANK, "UTC"));
+
+		InfoItemFieldValuesProvider<ObjectEntry> infoItemFieldValuesProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFieldValuesProvider.class,
+				childObjectDefinition.getClassName());
+
+		InfoItemFieldValues infoItemFieldValues =
+			infoItemFieldValuesProvider.getInfoItemFieldValues(
+				childObjectEntry);
+
+		InfoFieldValue<Object> infoFieldValue =
+			infoItemFieldValues.getInfoFieldValue("childTitle");
+
+		Assert.assertEquals(childTitleValue, infoFieldValue.getValue());
+
+		ServiceContextThreadLocal.popServiceContext();
+
+		objectRelationship =
+			_objectRelationshipLocalService.updateObjectRelationship(
+				objectRelationship.getExternalReferenceCode(),
+				objectRelationship.getObjectRelationshipId(),
+				objectRelationship.getParameterObjectFieldId(),
+				objectRelationship.getDeletionType(), false,
+				objectRelationship.getLabelMap(), null);
+
+		_objectRelationshipLocalService.deleteObjectRelationship(
+			objectRelationship);
+
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			childObjectDefinition);
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			parentObjectDefinition);
 	}
 
 	private ObjectDefinition _addObjectDefinition(
@@ -589,21 +781,32 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 				infoItemFieldValues.getInfoFieldValue(
 					objectField.getObjectFieldId() + "#downloadURL");
 
+			String downloadURL = String.valueOf(
+				downloadURLInfoFieldValue.getValue());
+
 			Assert.assertEquals(
-				HttpComponentsUtil.removeParameter(
-					_dlURLHelper.getDownloadURL(
-						fileEntry, fileEntry.getFileVersion(), themeDisplay,
-						StringPool.BLANK),
-					"t"),
-				HttpComponentsUtil.removeParameter(
-					String.valueOf(downloadURLInfoFieldValue.getValue()), "t"));
+				"true",
+				HttpComponentsUtil.getParameter(
+					downloadURL, "download", false));
+			Assert.assertEquals(
+				_childObjectDefinition.getExternalReferenceCode(),
+				HttpComponentsUtil.getParameter(
+					downloadURL, "objectDefinitionExternalReferenceCode",
+					false));
+			Assert.assertEquals(
+				objectEntry.getExternalReferenceCode(),
+				HttpComponentsUtil.getParameter(
+					downloadURL, "objectEntryExternalReferenceCode", false));
+			Assert.assertEquals(
+				objectField.getExternalReferenceCode(),
+				HttpComponentsUtil.getParameter(
+					downloadURL, "objectFieldExternalReferenceCode", false));
 
 			if (themeDisplay != null) {
 				Assert.assertEquals(
 					themeDisplay.getDoAsUserId(),
 					HttpComponentsUtil.getParameter(
-						String.valueOf(downloadURLInfoFieldValue.getValue()),
-						"doAsUserId", false));
+						downloadURL, "doAsUserId", false));
 			}
 
 			_assertWebImage(

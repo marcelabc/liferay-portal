@@ -5,8 +5,8 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.exception.AvailableLocaleException;
@@ -16,15 +16,13 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.VirtualHost;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.persistence.CompanyPersistence;
 import com.liferay.portal.kernel.service.persistence.GroupPersistence;
 import com.liferay.portal.kernel.service.persistence.LayoutSetPersistence;
-import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.transaction.TransactionCallbackUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -210,14 +208,7 @@ public class VirtualHostLocalServiceImpl
 			}
 
 			if (virtualHost == null) {
-				long virtualHostId = 0;
-
-				try (SafeCloseable safeCloseable =
-						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-							CompanyConstants.SYSTEM)) {
-
-					virtualHostId = counterLocalService.increment();
-				}
+				long virtualHostId = DBPartitionUtil.incrementCounter();
 
 				virtualHost = virtualHostPersistence.create(virtualHostId);
 
@@ -266,7 +257,7 @@ public class VirtualHostLocalServiceImpl
 		Company company = _companyPersistence.fetchByPrimaryKey(companyId);
 
 		if (company != null) {
-			TransactionCommitCallbackUtil.registerCallback(
+			TransactionCallbackUtil.registerCommitCallback(
 				() -> {
 					EntityCacheUtil.removeResult(
 						company.getClass(), company.getPrimaryKeyObj());
@@ -292,7 +283,7 @@ public class VirtualHostLocalServiceImpl
 		if (layoutSet != null) {
 			_layoutSetPersistence.clearCache(layoutSet);
 
-			TransactionCommitCallbackUtil.registerCallback(
+			TransactionCallbackUtil.registerCommitCallback(
 				() -> {
 					EntityCacheUtil.removeResult(
 						LayoutSetImpl.class, layoutSetId);

@@ -10,14 +10,18 @@ import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.data.set.test.util.FrontendDataSetTestUtil;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
+import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
 import com.liferay.object.model.ObjectEntryFolder;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.test.AssertUtils;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -39,7 +43,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 /**
  * @author Jürgen Kappler
  */
-@FeatureFlag("LPD-17564")
 @RunWith(Arquillian.class)
 @Sync
 public class ViewHomeRecentAssetsFilesSectionDisplayContextTest
@@ -57,9 +60,20 @@ public class ViewHomeRecentAssetsFilesSectionDisplayContextTest
 		Map<String, Object> baseAdditionalProps =
 			super.getBaseAdditionalProps();
 
+		baseAdditionalProps.put("breadcrumbProps", _getBreadcrumbProps());
 		baseAdditionalProps.remove("additionalAPIURLParameters");
 
 		return baseAdditionalProps;
+	}
+
+	@Override
+	@Test
+	public void testGetBreadcrumbProps() throws Exception {
+		AssertUtils.assertEquals(
+			_getBreadcrumbProps(),
+			ReflectionTestUtil.invoke(
+				getSectionDisplayContext(getMockHttpServletRequest()),
+				"getBreadcrumbProps", new Class<?>[0]));
 	}
 
 	@Override
@@ -73,7 +87,7 @@ public class ViewHomeRecentAssetsFilesSectionDisplayContextTest
 			getFDSActionDropdownItems();
 
 		Assert.assertEquals(
-			fdsActionDropdownItems.toString(), 17,
+			fdsActionDropdownItems.toString(), 19,
 			fdsActionDropdownItems.size());
 
 		FrontendDataSetTestUtil.assertFDSActionDropdownItem(
@@ -182,6 +196,12 @@ public class ViewHomeRecentAssetsFilesSectionDisplayContextTest
 
 		FrontendDataSetTestUtil.assertFDSActionDropdownItem(
 			"trash", "delete", "Delete", null, fdsActionDropdownItems.get(16));
+		FrontendDataSetTestUtil.assertFDSActionDropdownItem(
+			"date-time", "update-expiration-date", "Update Expiration Date",
+			null, fdsActionDropdownItems.get(17));
+		FrontendDataSetTestUtil.assertFDSActionDropdownItem(
+			"date-time", "update-review-date", "Update Review Date", null,
+			fdsActionDropdownItems.get(18));
 	}
 
 	@Override
@@ -200,8 +220,12 @@ public class ViewHomeRecentAssetsFilesSectionDisplayContextTest
 
 	@Override
 	protected String getFilterString() {
-		return "cmsKind eq 'object' and (cmsSection eq 'contents' or " +
-			"cmsSection eq 'files')";
+		return StringBundler.concat(
+			"(cmsSection eq 'contents' or cmsSection eq 'files') and ",
+			"objectDefinitionExternalReferenceCode ne '",
+			ObjectEntryFolderConstants.
+				EXTERNAL_REFERENCE_CODE_OBJECT_ENTRY_FOLDER,
+			"'");
 	}
 
 	@Override
@@ -228,7 +252,8 @@ public class ViewHomeRecentAssetsFilesSectionDisplayContextTest
 		throws Exception {
 
 		_fragmentRenderer.render(
-			null, httpServletRequest, new MockHttpServletResponse());
+			fragmentRendererContext, httpServletRequest,
+			new MockHttpServletResponse());
 
 		Object viewHomeRecentAssetsSectionDisplayContext =
 			httpServletRequest.getAttribute(
@@ -238,6 +263,22 @@ public class ViewHomeRecentAssetsFilesSectionDisplayContextTest
 		Assert.assertNotNull(viewHomeRecentAssetsSectionDisplayContext);
 
 		return viewHomeRecentAssetsSectionDisplayContext;
+	}
+
+	private Map<String, Object> _getBreadcrumbProps() {
+		return HashMapBuilder.<String, Object>put(
+			"breadcrumbItems",
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"active", false
+				).put(
+					"href", (String)null
+				).put(
+					"label", "All"
+				))
+		).put(
+			"hideSpace", true
+		).build();
 	}
 
 	@Inject(

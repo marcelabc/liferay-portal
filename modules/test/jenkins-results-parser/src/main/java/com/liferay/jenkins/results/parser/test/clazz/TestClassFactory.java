@@ -39,9 +39,18 @@ import org.json.JSONObject;
  */
 public class TestClassFactory {
 
+	public static void clear() {
+		_jUnitTestClasses.clear();
+		_modulesJUnitTestClasses.clear();
+		_npmTestClasses.clear();
+		_playwrightJUnitTestClasses.clear();
+	}
+
 	public static List<JUnitTestClass> getJUnitTestClasses() {
 		List<JUnitTestClass> jUnitTestClasses = new ArrayList<>(
 			_jUnitTestClasses.values());
+
+		jUnitTestClasses.addAll(_modulesJUnitTestClasses.values());
 
 		Collections.sort(jUnitTestClasses);
 
@@ -221,39 +230,51 @@ public class TestClassFactory {
 				return new JSUnitModulesTestClass(
 					batchTestClassGroup, testClassFile);
 			}
+			else if (batchTestClassGroup instanceof
+						ModulesJUnitBatchTestClassGroup) {
+
+				File canonicalFile = _getCanonicalFile(
+					testClassFile, jsonObject);
+
+				ModulesJUnitTestClass modulesJUnitTestClass =
+					_modulesJUnitTestClasses.get(canonicalFile);
+
+				if (modulesJUnitTestClass != null) {
+					return modulesJUnitTestClass;
+				}
+
+				if (jsonObject != null) {
+					modulesJUnitTestClass = new ModulesJUnitTestClass(
+						batchTestClassGroup, jsonObject);
+				}
+				else {
+					modulesJUnitTestClass = new ModulesJUnitTestClass(
+						batchTestClassGroup, testClassFile);
+				}
+
+				_modulesJUnitTestClasses.put(
+					canonicalFile, modulesJUnitTestClass);
+
+				return _modulesJUnitTestClasses.get(canonicalFile);
+			}
 			else if (batchTestClassGroup instanceof JUnitBatchTestClassGroup) {
 				File canonicalFile = _getCanonicalFile(
 					testClassFile, jsonObject);
 
-				if (_jUnitTestClasses.containsKey(canonicalFile)) {
-					return _jUnitTestClasses.get(canonicalFile);
-				}
+				JUnitTestClass jUnitTestClass = _jUnitTestClasses.get(
+					canonicalFile);
 
-				JUnitTestClass jUnitTestClass = null;
+				if (jUnitTestClass != null) {
+					return jUnitTestClass;
+				}
 
 				if (jsonObject != null) {
-					if (batchTestClassGroup instanceof
-							ModulesJUnitBatchTestClassGroup) {
-
-						jUnitTestClass = new ModulesJUnitTestClass(
-							batchTestClassGroup, jsonObject);
-					}
-					else {
-						jUnitTestClass = new JUnitTestClass(
-							batchTestClassGroup, jsonObject);
-					}
+					jUnitTestClass = new JUnitTestClass(
+						batchTestClassGroup, jsonObject);
 				}
 				else {
-					if (batchTestClassGroup instanceof
-							ModulesJUnitBatchTestClassGroup) {
-
-						jUnitTestClass = new ModulesJUnitTestClass(
-							batchTestClassGroup, testClassFile);
-					}
-					else {
-						jUnitTestClass = new JUnitTestClass(
-							batchTestClassGroup, testClassFile);
-					}
+					jUnitTestClass = new JUnitTestClass(
+						batchTestClassGroup, testClassFile);
 				}
 
 				_jUnitTestClasses.put(canonicalFile, jUnitTestClass);
@@ -266,11 +287,11 @@ public class TestClassFactory {
 				File canonicalFile = _getCanonicalFile(
 					testClassFile, jsonObject);
 
-				if (_npmTestClasses.containsKey(canonicalFile)) {
-					return _npmTestClasses.get(canonicalFile);
-				}
+				NPMTestClass npmTestClass = _npmTestClasses.get(canonicalFile);
 
-				NPMTestClass npmTestClass = null;
+				if (npmTestClass != null) {
+					return npmTestClass;
+				}
 
 				if (jsonObject != null) {
 					npmTestClass = new NPMTestClass(
@@ -291,11 +312,12 @@ public class TestClassFactory {
 				File canonicalFile = _getCanonicalFile(
 					testClassFile, jsonObject);
 
-				if (_playwrightJUnitTestClasses.containsKey(canonicalFile)) {
-					return _playwrightJUnitTestClasses.get(canonicalFile);
-				}
+				PlaywrightJUnitTestClass playwrightJUnitTestClass =
+					_playwrightJUnitTestClasses.get(canonicalFile);
 
-				PlaywrightJUnitTestClass playwrightJUnitTestClass = null;
+				if (playwrightJUnitTestClass != null) {
+					return playwrightJUnitTestClass;
+				}
 
 				if (jsonObject != null) {
 					playwrightJUnitTestClass = new PlaywrightJUnitTestClass(
@@ -468,6 +490,8 @@ public class TestClassFactory {
 
 	private static final Map<File, JUnitTestClass> _jUnitTestClasses =
 		new ConcurrentHashMap<>();
+	private static final Map<File, ModulesJUnitTestClass>
+		_modulesJUnitTestClasses = new ConcurrentHashMap<>();
 	private static final Map<File, NPMTestClass> _npmTestClasses =
 		new ConcurrentHashMap<>();
 	private static final Map<File, PlaywrightJUnitTestClass>

@@ -15,10 +15,12 @@ if (liveGroup == null) {
 	liveGroupId = groupId;
 }
 
-ExportImportPreviewDisplayContext exportImportPreviewDisplayContext = new ExportImportPreviewDisplayContext("/export_import/view_export_layouts", request, liferayPortletResponse, group, groupId, liveGroupId, privateLayout, stagingGroupHelper);
+ExportImportProcessDisplayContext exportImportProcessDisplayContext = (ExportImportProcessDisplayContext)request.getAttribute(ExportImportWebKeys.EXPORT_IMPORT_PROCESS_DISPLAY_CONTEXT);
 
 portletDisplay.setShowBackIcon(true);
-portletDisplay.setURLBack(exportImportPreviewDisplayContext.getBackURL());
+portletDisplay.setURLBack(exportImportProcessDisplayContext.getBackURL());
+
+renderResponse.setTitle(exportImportProcessDisplayContext.getExportTitle());
 %>
 
 <clay:container-fluid
@@ -32,19 +34,25 @@ portletDisplay.setURLBack(exportImportPreviewDisplayContext.getBackURL());
 		module="{NewExport} from exportimport-web"
 		props='<%=
 			HashMapBuilder.<String, Object>put(
-				"backURL", exportImportPreviewDisplayContext.getBackURL()
+				"backURL", exportImportProcessDisplayContext.getBackURL()
 			).put(
-				"exportPreviewAPIURL", exportImportPreviewDisplayContext.getExportPreviewAPIURL()
+				"commentsAndRatingsEnabled", exportImportProcessDisplayContext.isCommentsAndRatingsEnabled()
 			).put(
-				"exportProcessAPIURL", exportImportPreviewDisplayContext.getExportProcessAPIURL()
+				"exportPreview", exportImportProcessDisplayContext.getExportPreviewJSONObject()
+			).put(
+				"exportPreviewAPIURL", exportImportProcessDisplayContext.getExportPreviewAPIURL()
+			).put(
+				"exportProcessAPIURL", exportImportProcessDisplayContext.getExportProcessAPIURL()
+			).put(
+				"lookAndFeelEnabled", exportImportProcessDisplayContext.isLookAndFeelEnabled()
 			).put(
 				"pageTreeModalConfiguration",
 				HashMapBuilder.<String, Object>put(
-					"liveGroupId", liveGroupId
+					"groupId", liveGroupId
 				).put(
 					"pageSize", PropsValues.LAYOUT_MANAGE_PAGES_INITIAL_CHILDREN
 				).put(
-					"privateLayoutsEnabled", liveGroup.isPrivateLayoutsEnabled()
+					"privateLayoutsAvailable", liveGroup.isPrivateLayoutsEnabled() && liveGroup.hasPrivateLayouts()
 				).build()
 			).build()
 		%>'

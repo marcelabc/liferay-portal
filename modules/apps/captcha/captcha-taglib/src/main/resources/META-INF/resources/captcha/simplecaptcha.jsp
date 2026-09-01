@@ -9,10 +9,11 @@
 
 <%
 String captchaId = PortalUtil.generateRandomKey(request, "captchaId");
-String refreshCaptchaId = PortalUtil.generateRandomKey(request, "refreshCaptchaId");
 
 String errorMessage = (String)request.getAttribute("liferay-captcha:captcha:errorMessage");
 String url = (String)request.getAttribute("liferay-captcha:captcha:url");
+
+String namespace = portletDisplay.getNamespace();
 %>
 
 <c:if test="<%= captchaEnabled %>">
@@ -28,13 +29,12 @@ String url = (String)request.getAttribute("liferay-captcha:captcha:url");
 	url = HttpComponentsUtil.addParameter(url, "t", String.valueOf(System.currentTimeMillis()));
 	%>
 
-	<div class="<%= cssClass %>">
-		<img alt="<liferay-ui:message escapeAttribute="<%= true %>" key="text-to-identify" />" class="captcha d-inline-block mb-2" id="<portlet:namespace /><%= captchaId %>" src="<%= HtmlUtil.escapeAttribute(url) %>" />
+	<div class="<%= cssClass %>" data-captcha-id="<%= HtmlUtil.escapeAttribute(captchaId) %>">
+		<img alt="<liferay-ui:message escapeAttribute="<%= true %>" key="text-to-identify" />" class="captcha d-inline-block mb-2" src="<%= HtmlUtil.escapeAttribute(url) %>" />
 
 		<liferay-ui:icon
 			cssClass="align-top d-inline-block refresh"
 			icon="reload"
-			id="<%= refreshCaptchaId %>"
 			label="<%= false %>"
 			localizeMessage="<%= true %>"
 			markupView="lexicon"
@@ -43,10 +43,10 @@ String url = (String)request.getAttribute("liferay-captcha:captcha:url");
 		/>
 
 		<aui:input name="captchaId" type="hidden" value="<%= captchaId %>" />
-		<aui:input aria-labelledby="<portlet:namespace />captchaLabel <portlet:namespace />captchaError" class="form-control" ignoreRequestValue="<%= true %>" label="text-verification" name="captchaText" required="<%= true %>" size="10" type="text" value="" />
+		<aui:input aria-describedby='<%= namespace + "captchaError" %>' class="form-control" ignoreRequestValue="<%= true %>" label="text-verification" name="captchaText" required="<%= true %>" size="10" type="text" value="" />
 
 		<c:if test="<%= Validator.isNotNull(errorMessage) %>">
-			<p class="font-weight-semi-bold mt-1 text-danger" id="<portlet:namespace />captchaError">
+			<p class="font-weight-semi-bold mt-1 text-danger" id="<%= namespace %>captchaError">
 				<clay:icon
 					symbol="info-circle"
 				/>
@@ -58,9 +58,15 @@ String url = (String)request.getAttribute("liferay-captcha:captcha:url");
 
 	<aui:script>
 		function <%= captchaId %>attachEvent() {
-			var refreshCaptcha = document.getElementById(
-				'<portlet:namespace /><%= refreshCaptchaId %>'
+			var container = document.querySelector(
+				'[data-captcha-id="<%= HtmlUtil.escapeJS(captchaId) %>"]'
 			);
+
+			if (!container) {
+				return;
+			}
+
+			var refreshCaptcha = container.querySelector('.refresh');
 
 			if (refreshCaptcha && !refreshCaptcha.hasEventAttached) {
 				refreshCaptcha.hasEventAttached = true;
@@ -70,9 +76,7 @@ String url = (String)request.getAttribute("liferay-captcha:captcha:url");
 						'<%= HtmlUtil.escapeJS(url) %>'
 					);
 
-					var captcha = document.getElementById(
-						'<portlet:namespace /><%= captchaId %>'
-					);
+					var captcha = container.querySelector('.captcha');
 
 					if (captcha) {
 						captcha.setAttribute('src', url);

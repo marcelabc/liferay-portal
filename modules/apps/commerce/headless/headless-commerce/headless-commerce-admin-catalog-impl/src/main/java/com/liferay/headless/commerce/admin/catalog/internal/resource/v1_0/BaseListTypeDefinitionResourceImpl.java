@@ -73,15 +73,17 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/specifications/{specificationId}/list-type-definitions/{listTypeDefinitionId}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Detaches a list type definition from a specification option. Calls CPSpecificationOptionService.getCPSpecificationOption + CPSpecificationOptionListTypeDefinitionRelService.deleteCPSpecificationOptionListTypeDefinitionRel. Validation -- NoSuchCPSpecificationOptionException -> 404 when specificationId not found. Side effects -- Detaches the list type definition from the specification option."
+		description = "Detaches a list type definition from a specification option. Returns 404 when `specificationId` is not found. Side effects -- Detaches the list type definition from the specification option."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Identifier of a catalog Specification. Addresses a single specification definition that can be bound to products through ProductSpecification entries.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "specificationId"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Identifier of the ListTypeDefinition used as a specification's picklist. Addresses a single list type definition; resolved against the company scope.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "listTypeDefinitionId"
 			)
@@ -116,11 +118,12 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/specifications/{id}/list-type-definitions'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Lists the list type definitions associated with the specification option identified by id. Calls CPSpecificationOptionService.getCPSpecificationOption + CPSpecificationOption.getListTypeDefinitions. Validation -- NoSuchCPSpecificationOptionException -> 404 when id not found."
+		description = "Lists the list type definitions associated with the specification option identified by ID. Returns 404 when the ID is not found."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -151,11 +154,12 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/specifications/{id}/list-type-definitions' -d $'{"externalReferenceCode": ___, "name": ___, "name_i18n": ___, "system": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates a list type definition and attaches it to the specification option identified by id. Calls ListTypeDefinitionService.addListTypeDefinition + CPSpecificationOptionListTypeDefinitionRelService.addCPSpecificationOptionListTypeDefinitionRel. Validation -- NoSuchCPSpecificationOptionException -> 404 when specification id not found. Side effects -- Creates a new list type definition and attaches it to the specification option."
+		description = "Creates a list type definition and attaches it to the specification option identified by ID. Returns 404 when the specification ID is not found. Side effects -- Creates a new list type definition and attaches it to the specification option."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -234,15 +238,17 @@ public abstract class BaseListTypeDefinitionResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/specifications/{specificationId}/list-type-definitions/{listTypeDefinitionId}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Attaches an existing list type definition to the specification option. Calls CPSpecificationOptionService.getCPSpecificationOption + CPSpecificationOptionListTypeDefinitionRelService.addCPSpecificationOptionListTypeDefinitionRel. Validation -- NoSuchCPSpecificationOptionException -> 404 when specificationId not found. Side effects -- Creates the relation row between the specification option and the list type definition."
+		description = "Attaches an existing list type definition to the specification option. Returns 404 when `specificationId` is not found. Side effects -- Creates the relation row between the specification option and the list type definition."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Identifier of a catalog Specification. Addresses a single specification definition that can be bound to products through ProductSpecification entries.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "specificationId"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Identifier of the ListTypeDefinition used as a specification's picklist. Addresses a single list type definition; resolved against the company scope.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "listTypeDefinitionId"
 			)
@@ -932,4 +938,4 @@ public abstract class BaseListTypeDefinitionResourceImpl
 		LogFactoryUtil.getLog(BaseListTypeDefinitionResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-863734809
+// LIFERAY-REST-BUILDER-HASH:1397871352

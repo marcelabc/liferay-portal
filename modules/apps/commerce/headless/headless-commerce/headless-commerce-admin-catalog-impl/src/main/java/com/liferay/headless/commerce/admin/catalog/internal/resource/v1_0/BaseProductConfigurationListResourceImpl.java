@@ -77,11 +77,12 @@ public abstract class BaseProductConfigurationListResourceImpl
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/{id}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Deletes the product configuration list identified by id. Calls CPConfigurationListService.deleteCPConfigurationList. Validation -- Service-level NoSuchCPConfigurationListException -> 404 when id not found. Side effects -- Cascades deletion of CPConfigurationListRel rows and CPConfigurationEntry rows attached to the list."
+		description = "Deletes the product configuration list identified by ID. Returns 404 when the ID is not found. Side effects -- Cascades deletion of configuration list assignment rows and configuration entry rows attached to the list."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -160,11 +161,12 @@ public abstract class BaseProductConfigurationListResourceImpl
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/by-externalReferenceCode/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Deletes the product configuration list identified by external reference code. Calls CPConfigurationListService.getCPConfigurationListByExternalReferenceCode + deleteProductConfigurationList. Validation -- NoSuchCPConfigurationListException -> 404 when ERC not found. Side effects -- Cascades deletion of rels and entries."
+		description = "Deletes the product configuration list identified by external reference code. Returns 404 when the external reference code is not found. Side effects -- Cascades deletion of rels and entries."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -197,11 +199,12 @@ public abstract class BaseProductConfigurationListResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/{id}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Fetches the product configuration list identified by id. Calls CPConfigurationListService.getCPConfigurationList. Validation -- NoSuchCPConfigurationListException -> 404 when id not found."
+		description = "Fetches the product configuration list identified by ID. Returns 404 when the ID is not found."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -234,11 +237,12 @@ public abstract class BaseProductConfigurationListResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/by-externalReferenceCode/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Fetches the product configuration list identified by external reference code. Calls CPConfigurationListService.getCPConfigurationListByExternalReferenceCode. Validation -- NoSuchCPConfigurationListException -> 404 when ERC not found."
+		description = "Fetches the product configuration list identified by external reference code. Returns 404 when the external reference code is not found."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -274,31 +278,37 @@ public abstract class BaseProductConfigurationListResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Returns a page of product configuration lists, optionally filtered to a single catalog. Calls SearchUtil.search over CPConfigurationList (optionally narrowed by catalog group). Validation -- NoSuchCatalogException -> 404 when an unknown catalogId is supplied. List query support — filterable fields -- accountGroupId, accountId, catalogId, channelId, orderTypeId, createDate, name; sortable fields -- accountGroupId, accountId, catalogId, channelId, orderTypeId, createDate, name."
+		description = "Returns a page of product configuration lists, optionally filtered to a single catalog. Returns 404 when an unknown catalogId is supplied. List query support — filterable fields -- accountGroupId, accountId, catalogId, channelId, orderTypeId, createDate, name; sortable fields -- accountGroupId, accountId, catalogId, channelId, orderTypeId, createDate, name."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Catalog ID used to scope the result set to a single catalog.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "catalogId"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "OData v4 filter expression that narrows the result set. Supported fields depend on the endpoint and are sourced from the matching entity model (typically createDate, externalReferenceCode, modifiedDate, productExternalReferenceCode, productId, and similar). Example -- filter=productId eq 12345.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "filter"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "One-based page index. Combined with pageSize to paginate the result set; defaults to 1 when omitted.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "page"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Number of items per page. Defaults to the portal's configured page size when omitted; capped by the portal configuration to prevent unbounded reads.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "pageSize"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Full-text search expression matched against the resource's indexed fields. Returns the items whose searchable content matches the expression.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "search"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Sort expression of the form `field:asc` or `field:desc`, comma-separated for multi-field sorting. Supported sort fields depend on the endpoint and are sourced from the matching entity model (typically createDate, modifiedDate, and the resource's name or code field).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "sort"
 			)
@@ -335,14 +345,15 @@ public abstract class BaseProductConfigurationListResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/{id}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "customFields": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/{id}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "customFields": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListExternalReferenceCode": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Partially updates the product configuration list identified by id, applying any nested product configurations. Calls CPConfigurationListService.getCPConfigurationList + updateCPConfigurationList + nested patchProductConfiguration. Validation -- NoSuchCPConfigurationListException -> 404 when id not found. Side effects -- Reindexes; updates display/expiration date and ExpandoBridge; cascades into nested product configurations."
+		description = "Partially updates the product configuration list identified by ID, applying any nested product configurations. Returns 404 when the ID is not found. Side effects -- Reindexes; updates display/expiration date and custom field storage; cascades into nested product configurations."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -374,14 +385,15 @@ public abstract class BaseProductConfigurationListResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/by-externalReferenceCode/{externalReferenceCode}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "customFields": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists/by-externalReferenceCode/{externalReferenceCode}' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "customFields": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListExternalReferenceCode": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Partially updates the product configuration list identified by external reference code. Calls CPConfigurationListService.getCPConfigurationListByExternalReferenceCode + patchProductConfigurationList. Validation -- NoSuchCPConfigurationListException -> 404 when ERC not found. Side effects -- Reindexes; updates display/expiration date and ExpandoBridge; cascades into nested product configurations."
+		description = "Partially updates the product configuration list identified by external reference code. Returns 404 when the external reference code is not found. Side effects -- Reindexes; updates display/expiration date and custom field storage; cascades into nested product configurations."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -416,10 +428,10 @@ public abstract class BaseProductConfigurationListResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "customFields": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-configuration-lists' -d $'{"catalogExternalReferenceCode": ___, "catalogId": ___, "createDate": ___, "customFields": ___, "displayDate": ___, "expirationDate": ___, "externalReferenceCode": ___, "master": ___, "name": ___, "neverExpire": ___, "parentProductConfigurationListExternalReferenceCode": ___, "parentProductConfigurationListId": ___, "priority": ___, "productConfigurations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates or updates a product configuration list under the supplied catalog, optionally with nested product configurations. Calls CommerceCatalogLocalService.fetchCommerceCatalogByExternalReferenceCode/getCommerceCatalog + CPConfigurationListService.addOrUpdateCPConfigurationList + nested postProductConfigurationListIdProductConfiguration. POST is upsert by external reference code -- creates a new entity when the ERC is unknown, otherwise updates the existing one. Validation -- NoSuchCatalogException -> 404 when no catalog can be resolved. Side effects -- Reindexes; creates nested product configurations when supplied."
+		description = "Creates or updates a product configuration list under the supplied catalog, optionally with nested product configurations. POST is upsert by external reference code -- creates a new entity when the ERC is unknown, otherwise updates the existing one. Returns 404 when no catalog can be resolved. Side effects -- Reindexes; creates nested product configurations when supplied."
 	)
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {
@@ -497,18 +509,22 @@ public abstract class BaseProductConfigurationListResourceImpl
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Catalog ID used to scope the result set to a single catalog.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "catalogId"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "OData v4 filter expression that narrows the result set. Supported fields depend on the endpoint and are sourced from the matching entity model (typically createDate, externalReferenceCode, modifiedDate, productExternalReferenceCode, productId, and similar). Example -- filter=productId eq 12345.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "filter"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Full-text search expression matched against the resource's indexed fields. Returns the items whose searchable content matches the expression.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "search"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Sort expression of the form `field:asc` or `field:desc`, comma-separated for multi-field sorting. Supported sort fields depend on the endpoint and are sourced from the matching entity model (typically createDate, modifiedDate, and the resource's name or code field).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "sort"
 			),
@@ -1381,4 +1397,4 @@ public abstract class BaseProductConfigurationListResourceImpl
 		LogFactoryUtil.getLog(BaseProductConfigurationListResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:270427838
+// LIFERAY-REST-BUILDER-HASH:353970709

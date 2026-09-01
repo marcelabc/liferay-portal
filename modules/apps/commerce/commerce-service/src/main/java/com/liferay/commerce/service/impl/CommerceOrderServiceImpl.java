@@ -12,6 +12,7 @@ import com.liferay.commerce.constants.CommerceOrderActionKeys;
 import com.liferay.commerce.constants.CommerceOrderConstants;
 import com.liferay.commerce.context.CommerceContext;
 import com.liferay.commerce.helper.CommerceAccountHelper;
+import com.liferay.commerce.internal.order.comparator.CommerceOrderModifiedDateComparator;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.service.base.CommerceOrderServiceBaseImpl;
 import com.liferay.petra.string.StringPool;
@@ -72,13 +73,7 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			long commerceOrderTypeId)
 		throws PortalException {
 
-		AccountEntry accountEntry = _getAccountEntry(commerceAccountId);
-
-		if (accountEntry.isBusinessAccount()) {
-			_portletResourcePermission.check(
-				getPermissionChecker(), accountEntry.getAccountEntryGroupId(),
-				CommerceOrderActionKeys.ADD_COMMERCE_ORDER);
-		}
+		_checkPermissions(_getAccountEntry(commerceAccountId), groupId);
 
 		return commerceOrderLocalService.addCommerceOrder(
 			getUserId(), groupId, commerceAccountId, commerceCurrencyCode,
@@ -102,19 +97,11 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.fetchCommerceOrderByExternalReferenceCode(
-				externalReferenceCode, serviceContext.getCompanyId());
+		CommerceOrder commerceOrder = commerceOrderPersistence.fetchByERC_C(
+			externalReferenceCode, serviceContext.getCompanyId());
 
 		if (commerceOrder == null) {
-			AccountEntry accountEntry = _getAccountEntry(commerceAccountId);
-
-			if (accountEntry.isBusinessAccount()) {
-				_portletResourcePermission.check(
-					getPermissionChecker(),
-					accountEntry.getAccountEntryGroupId(),
-					CommerceOrderActionKeys.ADD_COMMERCE_ORDER);
-			}
+			_checkPermissions(_getAccountEntry(commerceAccountId), groupId);
 		}
 		else {
 			_commerceOrderModelResourcePermission.check(
@@ -212,7 +199,7 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 		throws PortalException {
 
 		CommerceOrder commerceOrder =
-			commerceOrderLocalService.fetchCommerceOrder(commerceOrderId);
+			commerceOrderPersistence.fetchByPrimaryKey(commerceOrderId);
 
 		if (commerceOrder != null) {
 			_commerceOrderModelResourcePermission.check(
@@ -232,8 +219,9 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 		throws PortalException {
 
 		CommerceOrder commerceOrder =
-			commerceOrderLocalService.fetchCommerceOrder(
-				commerceAccountId, groupId, orderStatus);
+			commerceOrderPersistence.fetchByG_C_O_First(
+				groupId, commerceAccountId, orderStatus,
+				CommerceOrderModifiedDateComparator.getInstance(false));
 
 		if (commerceOrder != null) {
 			_commerceOrderModelResourcePermission.check(
@@ -264,9 +252,8 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 	public CommerceOrder fetchCommerceOrder(String uuid, long groupId)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.fetchCommerceOrderByUuidAndGroupId(
-				uuid, groupId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.fetchByUUID_G(
+			uuid, groupId);
 
 		if (commerceOrder != null) {
 			_commerceOrderModelResourcePermission.check(
@@ -281,9 +268,8 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			String externalReferenceCode, long companyId)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.fetchCommerceOrderByExternalReferenceCode(
-				externalReferenceCode, companyId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.fetchByERC_C(
+			externalReferenceCode, companyId);
 
 		if (commerceOrder != null) {
 			_commerceOrderModelResourcePermission.check(
@@ -297,8 +283,8 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 	public CommerceOrder getCommerceOrder(long commerceOrderId)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		_commerceOrderModelResourcePermission.check(
 			getPermissionChecker(), commerceOrder, ActionKeys.VIEW);
@@ -311,9 +297,8 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			String uuid, long groupId)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrderByUuidAndGroupId(
-				uuid, groupId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByUUID_G(
+			uuid, groupId);
 
 		_commerceOrderModelResourcePermission.check(
 			getPermissionChecker(), commerceOrder, ActionKeys.VIEW);
@@ -371,7 +356,7 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			groupId, commerceAccountId,
 			CommerceOrderActionKeys.MANAGE_COMMERCE_ORDERS);
 
-		return commerceOrderLocalService.getCommerceOrders(
+		return commerceOrderPersistence.findByG_C(
 			groupId, commerceAccountId, start, end, orderByComparator);
 	}
 
@@ -381,7 +366,7 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			getPermissionChecker(), groupId,
 			CommerceOrderActionKeys.MANAGE_COMMERCE_ORDERS);
 
-		return commerceOrderLocalService.getCommerceOrdersCount(groupId);
+		return commerceOrderPersistence.countByGroupId(groupId);
 	}
 
 	@Override
@@ -392,8 +377,7 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			groupId, commerceAccountId,
 			CommerceOrderActionKeys.MANAGE_COMMERCE_ORDERS);
 
-		return commerceOrderLocalService.getCommerceOrdersCount(
-			groupId, commerceAccountId);
+		return commerceOrderPersistence.countByG_C(groupId, commerceAccountId);
 	}
 
 	@Override
@@ -793,8 +777,8 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 		_commerceOrderModelResourcePermission.check(
 			getPermissionChecker(), commerceOrderId, ActionKeys.UPDATE);
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		_portletResourcePermission.check(
 			getPermissionChecker(), commerceOrder.getGroupId(),
@@ -853,8 +837,8 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 		_commerceOrderModelResourcePermission.check(
 			getPermissionChecker(), commerceOrderId, ActionKeys.UPDATE);
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		_portletResourcePermission.check(
 			getPermissionChecker(), commerceOrder.getGroupId(),
@@ -1033,8 +1017,8 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 			long paymentCommerceTermEntryId, String languageId)
 		throws PortalException {
 
-		CommerceOrder commerceOrder =
-			commerceOrderLocalService.getCommerceOrder(commerceOrderId);
+		CommerceOrder commerceOrder = commerceOrderPersistence.findByPrimaryKey(
+			commerceOrderId);
 
 		if (deliveryCommerceTermEntryId > 0) {
 			_portletResourcePermission.check(
@@ -1071,6 +1055,30 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 		}
 	}
 
+	private void _checkPermissions(AccountEntry accountEntry, long groupId)
+		throws PortalException {
+
+		if (accountEntry.isBusinessAccount()) {
+			_portletResourcePermission.check(
+				getPermissionChecker(), accountEntry.getAccountEntryGroupId(),
+				CommerceOrderActionKeys.ADD_COMMERCE_ORDER);
+
+			return;
+		}
+
+		if (accountEntry.isGuestAccount() ||
+			_portletResourcePermission.contains(
+				getPermissionChecker(), groupId,
+				CommerceOrderActionKeys.MANAGE_ALL_ACCOUNTS)) {
+
+			return;
+		}
+
+		_accountEntryModelResourcePermission.check(
+			getPermissionChecker(), accountEntry.getAccountEntryId(),
+			ActionKeys.UPDATE);
+	}
+
 	private AccountEntry _getAccountEntry(long accountEntryId)
 		throws PortalException {
 
@@ -1102,6 +1110,12 @@ public class CommerceOrderServiceImpl extends CommerceOrderServiceBaseImpl {
 
 	@Reference
 	private AccountEntryLocalService _accountEntryLocalService;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.account.model.AccountEntry)"
+	)
+	private ModelResourcePermission<AccountEntry>
+		_accountEntryModelResourcePermission;
 
 	@Reference
 	private CommerceAccountHelper _commerceAccountHelper;

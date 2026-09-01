@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -93,7 +94,8 @@ public class PlaywrightBatchBuildTestrayCaseResult
 				errors = "Unable to run test on CI";
 			}
 
-			String failureMessage = buildReport.getFailureMessage();
+			String failureMessage = formatErrorMessage(
+				buildReport.getFailureMessage());
 
 			if (JenkinsResultsParserUtil.isNullOrEmpty(failureMessage)) {
 				return errors;
@@ -135,11 +137,7 @@ public class PlaywrightBatchBuildTestrayCaseResult
 			return stackTrace.substring(index, 500);
 		}
 
-		if (errors.contains("\n")) {
-			errors = errors.substring(0, errors.indexOf("\n"));
-		}
-
-		errors = errors.trim();
+		errors = formatErrorMessage(errors);
 
 		if (JenkinsResultsParserUtil.isNullOrEmpty(errors)) {
 			return "Failed for unknown reason";
@@ -177,11 +175,10 @@ public class PlaywrightBatchBuildTestrayCaseResult
 
 	@Override
 	public List<TestrayAttachment> getTestrayAttachments() {
-		List<TestrayAttachment> testrayAttachments =
-			super.getTestrayAttachments();
+		List<TestrayAttachment> testrayAttachments = new ArrayList<>();
 
 		testrayAttachments.addAll(getLiferayLogTestrayAttachments());
-
+		testrayAttachments.add(getParentTestrayCaseResultTestrayAttachment());
 		testrayAttachments.add(getPlaywrightReportTestrayAttachment());
 		testrayAttachments.add(getPlaywrightTraceViewerTestrayAttachment());
 
@@ -191,7 +188,7 @@ public class PlaywrightBatchBuildTestrayCaseResult
 	}
 
 	@Override
-	public TestReport getTestReport() {
+	protected TestReport findTestReport() {
 		PlaywrightTestClassMethod playwrightTestClassMethod =
 			getTestClassMethod();
 

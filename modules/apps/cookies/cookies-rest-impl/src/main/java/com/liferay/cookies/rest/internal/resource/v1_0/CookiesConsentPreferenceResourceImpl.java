@@ -30,6 +30,12 @@ public class CookiesConsentPreferenceResourceImpl
 	extends BaseCookiesConsentPreferenceResourceImpl {
 
 	@Override
+	public void deleteCookiesConsentPreference() throws Exception {
+		_cookiesConsentPreferenceLocalService.deleteCookiesConsentPreferences(
+			contextUser.getUserId(), _getDomain());
+	}
+
+	@Override
 	public void deleteCookiesConsentPreferenceByName(String name)
 		throws Exception {
 
@@ -38,20 +44,13 @@ public class CookiesConsentPreferenceResourceImpl
 	}
 
 	@Override
-	public void deleteCookiesConsentPreferences() throws Exception {
-		_cookiesConsentPreferenceLocalService.deleteCookiesConsentPreferences(
-			contextUser.getUserId(), _getDomain());
-	}
-
-	@Override
 	public CookiesConsentPreference getCookiesConsentPreferenceByName(
 		String name) {
 
 		com.liferay.cookies.model.CookiesConsentPreference
 			serviceBuilderCookiesConsentPreference =
-				_cookiesConsentPreferenceLocalService.
-					getCookiesConsentPreference(
-						contextUser.getUserId(), _getDomain(), name);
+				_cookiesConsentPreferencePersistence.fetchByU_D_N(
+					contextUser.getUserId(), _getDomain(), name);
 
 		if (serviceBuilderCookiesConsentPreference == null) {
 			return null;

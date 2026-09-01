@@ -123,6 +123,28 @@ export class DataSetPage {
 		});
 	}
 
+	async expectItemActionHidden({
+		action,
+		filter,
+	}: {
+		action: string;
+		filter: string;
+	}) {
+		await this.getRow(filter)
+			.getByRole('button', {name: `${filter} Actions`})
+			.click();
+
+		const menu = this.page.getByRole('menu');
+
+		await expect(menu).toBeVisible();
+
+		await expect(
+			menu.getByRole('menuitem', {exact: true, name: action})
+		).toBeHidden();
+
+		await this.page.keyboard.press('Escape');
+	}
+
 	async changeVisualizationMode(
 		visualizationMode: 'Cards' | 'Table' | 'Gallery'
 	) {
@@ -131,10 +153,17 @@ export class DataSetPage {
 		});
 		await this.activeViewSelector.click();
 
-		await this.page
+		const option = this.page
 			.getByRole('listbox')
-			.getByRole('option', {name: visualizationMode})
-			.click();
+			.getByRole('option', {name: visualizationMode});
+
+		if ((await option.getAttribute('aria-selected')) === 'true') {
+			await this.page.keyboard.press('Escape');
+
+			return;
+		}
+
+		await option.click();
 	}
 
 	async search(value: string) {

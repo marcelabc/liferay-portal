@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.JAXRSWhiteboardTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -121,6 +122,8 @@ public abstract class BaseProductResourceTestCase {
 	public static void setUpClass() throws Exception {
 		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		JAXRSWhiteboardTestUtil.ensureReady();
 	}
 
 	@Before
@@ -1461,7 +1464,7 @@ public abstract class BaseProductResourceTestCase {
 		Product product2 = testGetProductsPage_addProduct(randomProduct());
 
 		page = productResource.getProductsPage(
-			null, null, Pagination.of(1, 10), null);
+			null, null, Pagination.of(1, (int)totalCount + 2), null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -1763,17 +1766,8 @@ public abstract class BaseProductResourceTestCase {
 
 	@Test
 	public void testGraphQLGetProductsPage() throws Exception {
-		GraphQLField graphQLField = new GraphQLField(
-			"products",
-			new HashMap<String, Object>() {
-				{
-					put("search", null);
-					put("page", 1);
-					put("pageSize", 10);
-				}
-			},
-			new GraphQLField("items", getGraphQLFields()),
-			new GraphQLField("page"), new GraphQLField("totalCount"));
+		GraphQLField graphQLField =
+			testGraphQLGetProductsPageProduct_getGraphQLField();
 
 		// No namespace
 
@@ -1825,14 +1819,75 @@ public abstract class BaseProductResourceTestCase {
 				ProductSerDes.toDTOs(productsJSONObject.getString("items"))));
 	}
 
+	protected GraphQLField testGraphQLGetProductsPageProduct_getGraphQLField()
+		throws Exception {
+
+		return new GraphQLField(
+			"products",
+			new HashMap<String, Object>() {
+				{
+					put("search", null);
+					put("page", 1);
+					put("pageSize", 10);
+				}
+			},
+			new GraphQLField("items", getGraphQLFields()),
+			new GraphQLField("page"), new GraphQLField("totalCount"));
+	}
+
 	@Test
 	public void testPatchProduct() throws Exception {
-		Assert.assertTrue(false);
+		Product postProduct = testPatchProduct_addProduct();
+
+		Product randomPatchProduct = randomPatchProduct();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Product patchProduct = productResource.patchProduct(
+			postProduct.getId(), randomPatchProduct);
+
+		Product expectedPatchProduct = postProduct.clone();
+
+		BeanTestUtil.copyProperties(randomPatchProduct, expectedPatchProduct);
+
+		Product getProduct = productResource.getProduct(patchProduct.getId());
+
+		assertEquals(expectedPatchProduct, getProduct);
+		assertValid(getProduct);
+	}
+
+	protected Product testPatchProduct_addProduct() throws Exception {
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
 	public void testPatchProductByExternalReferenceCode() throws Exception {
-		Assert.assertTrue(false);
+		Product postProduct =
+			testPatchProductByExternalReferenceCode_addProduct();
+
+		Product randomPatchProduct = randomPatchProduct();
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Product patchProduct =
+			productResource.patchProductByExternalReferenceCode(
+				postProduct.getExternalReferenceCode(), randomPatchProduct);
+
+		Product expectedPatchProduct = postProduct.clone();
+
+		BeanTestUtil.copyProperties(randomPatchProduct, expectedPatchProduct);
+
+		Product getProduct = productResource.getProductByExternalReferenceCode(
+			patchProduct.getExternalReferenceCode());
+
+		assertEquals(expectedPatchProduct, getProduct);
+		assertValid(getProduct);
+	}
+
+	protected Product testPatchProductByExternalReferenceCode_addProduct()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
@@ -4431,4 +4486,4 @@ public abstract class BaseProductResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:460039582
+// LIFERAY-REST-BUILDER-HASH:1916098994

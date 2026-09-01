@@ -1,6 +1,6 @@
 /**
  * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
- * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2024-09
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.webserver.test;
@@ -17,20 +17,24 @@ import com.liferay.portal.image.ImageToolUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Image;
+import com.liferay.portal.kernel.model.ImageConstants;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.ImageLocalServiceUtil;
 import com.liferay.portal.kernel.service.RepositoryLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -101,6 +105,50 @@ public class WebServerServletTest {
 	}
 
 	@Test
+	public void testGetImage() throws Exception {
+		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString() + ".html", ContentTypes.TEXT_HTML,
+			TestDataConstants.TEST_BYTE_ARRAY, null, null, null,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setAttribute(WebKeys.USER, _user);
+		mockHttpServletRequest.setParameter(
+			"groupId", String.valueOf(_group.getGroupId()));
+		mockHttpServletRequest.setParameter("uuid", fileEntry.getUuid());
+
+		Assert.assertNotNull(
+			ReflectionTestUtil.invoke(
+				_webServerServlet, "getImage",
+				new Class<?>[] {HttpServletRequest.class, boolean.class},
+				mockHttpServletRequest, false));
+
+		fileEntry = _dlAppLocalService.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString() + ".png", ContentTypes.IMAGE_PNG,
+			TestDataConstants.TEST_BYTE_ARRAY, null, null, null,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		mockHttpServletRequest = new MockHttpServletRequest();
+
+		mockHttpServletRequest.setAttribute(WebKeys.USER, _user);
+		mockHttpServletRequest.setParameter(
+			"groupId", String.valueOf(_group.getGroupId()));
+		mockHttpServletRequest.setParameter("uuid", fileEntry.getUuid());
+
+		Assert.assertNotNull(
+			ReflectionTestUtil.invoke(
+				_webServerServlet, "getImage",
+				new Class<?>[] {HttpServletRequest.class, boolean.class},
+				mockHttpServletRequest, false));
+	}
+
+	@Test
 	public void testGetStatus() throws Exception {
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
 				new ConfigurationTemporarySwapper(
@@ -110,7 +158,12 @@ public class WebServerServletTest {
 						"promptEnabled", false
 					).build())) {
 
-			_testGetStatus(HttpServletResponse.SC_NOT_FOUND);
+			MockHttpServletResponse mockHttpServletResponse =
+				_serviceRestrictedDocumentRequest();
+
+			Assert.assertEquals(
+				HttpServletResponse.SC_NOT_FOUND,
+				mockHttpServletResponse.getStatus());
 		}
 
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
@@ -121,7 +174,15 @@ public class WebServerServletTest {
 						"promptEnabled", true
 					).build())) {
 
-			_testGetStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
+			MockHttpServletResponse mockHttpServletResponse =
+				_serviceRestrictedDocumentRequest();
+
+			Assert.assertEquals(
+				HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE,
+				mockHttpServletResponse.getHeader(HttpHeaders.CACHE_CONTROL));
+			Assert.assertEquals(
+				HttpServletResponse.SC_MOVED_TEMPORARILY,
+				mockHttpServletResponse.getStatus());
 		}
 	}
 
@@ -195,6 +256,91 @@ public class WebServerServletTest {
 		Assert.assertNotEquals(
 			HttpServletResponse.SC_SERVICE_UNAVAILABLE,
 			mockHttpServletResponse.getStatus());
+	}
+
+	@Test
+	public void testService() throws Exception {
+		_testServiceGroupIdUUID();
+		_testServicePortletFileEntry();
+	}
+
+	@Test
+	public void testWriteImage() throws Exception {
+		Image image1 = ImageLocalServiceUtil.createImage(0);
+
+		image1.setType(ImageConstants.TYPE_PNG);
+		image1.setTextObj(TestDataConstants.TEST_BYTE_ARRAY);
+
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setParameter(
+			"groupId", String.valueOf(_group.getGroupId()));
+		mockHttpServletRequest.setParameter(
+			"uuid", RandomTestUtil.randomString());
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		ReflectionTestUtil.invoke(
+			_webServerServlet, "writeImage",
+			new Class<?>[] {
+				Image.class, HttpServletRequest.class, HttpServletResponse.class
+			},
+			image1, mockHttpServletRequest, mockHttpServletResponse);
+
+		Assert.assertNull(
+			mockHttpServletResponse.getHeader(HttpHeaders.CONTENT_DISPOSITION));
+
+		Image image2 = ImageLocalServiceUtil.createImage(0);
+
+		image2.setType("svg");
+		image2.setTextObj(TestDataConstants.TEST_BYTE_ARRAY);
+
+		mockHttpServletRequest = new MockHttpServletRequest();
+
+		mockHttpServletRequest.setParameter(
+			"groupId", String.valueOf(_group.getGroupId()));
+		mockHttpServletRequest.setParameter(
+			"uuid", RandomTestUtil.randomString());
+
+		mockHttpServletResponse = new MockHttpServletResponse();
+
+		ReflectionTestUtil.invoke(
+			_webServerServlet, "writeImage",
+			new Class<?>[] {
+				Image.class, HttpServletRequest.class, HttpServletResponse.class
+			},
+			image2, mockHttpServletRequest, mockHttpServletResponse);
+
+		Assert.assertEquals(
+			HttpHeaders.CONTENT_DISPOSITION_ATTACHMENT,
+			mockHttpServletResponse.getHeader(HttpHeaders.CONTENT_DISPOSITION));
+
+		Image image3 = ImageLocalServiceUtil.createImage(0);
+
+		image3.setType("html");
+		image3.setTextObj(TestDataConstants.TEST_BYTE_ARRAY);
+
+		mockHttpServletRequest = new MockHttpServletRequest();
+
+		mockHttpServletRequest.setParameter(
+			"groupId", String.valueOf(_group.getGroupId()));
+		mockHttpServletRequest.setParameter(
+			"uuid", RandomTestUtil.randomString());
+
+		mockHttpServletResponse = new MockHttpServletResponse();
+
+		ReflectionTestUtil.invoke(
+			_webServerServlet, "writeImage",
+			new Class<?>[] {
+				Image.class, HttpServletRequest.class, HttpServletResponse.class
+			},
+			image3, mockHttpServletRequest, mockHttpServletResponse);
+
+		Assert.assertEquals(
+			HttpHeaders.CONTENT_DISPOSITION_ATTACHMENT,
+			mockHttpServletResponse.getHeader(HttpHeaders.CONTENT_DISPOSITION));
 	}
 
 	private FileEntry _addFileEntry() throws Exception {
@@ -277,7 +423,9 @@ public class WebServerServletTest {
 		return mockHttpServletResponse;
 	}
 
-	private void _testGetStatus(int status) throws Exception {
+	private MockHttpServletResponse _serviceRestrictedDocumentRequest()
+		throws Exception {
+
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
 
@@ -329,7 +477,60 @@ public class WebServerServletTest {
 		_webServerServlet.service(
 			mockHttpServletRequest, mockHttpServletResponse);
 
-		Assert.assertEquals(status, mockHttpServletResponse.getStatus());
+		return mockHttpServletResponse;
+	}
+
+	private void _testService(String requestURI) throws Exception {
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setAttribute(
+			WebKeys.USER, TestPropsValues.getUser());
+		mockHttpServletRequest.setRequestURI(requestURI);
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		_webServerServlet.service(
+			mockHttpServletRequest, mockHttpServletResponse);
+
+		String contentDisposition = mockHttpServletResponse.getHeader(
+			HttpHeaders.CONTENT_DISPOSITION);
+
+		Assert.assertTrue(
+			contentDisposition.startsWith(
+				HttpHeaders.CONTENT_DISPOSITION_ATTACHMENT));
+
+		Assert.assertEquals(
+			HttpServletResponse.SC_OK, mockHttpServletResponse.getStatus());
+	}
+
+	private void _testServiceGroupIdUUID() throws Exception {
+		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString() + ".html", ContentTypes.TEXT_HTML,
+			TestDataConstants.TEST_BYTE_ARRAY, null, null, null,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		_testService(
+			StringBundler.concat(
+				"/", fileEntry.getGroupId(), "/", fileEntry.getUuid()));
+	}
+
+	private void _testServicePortletFileEntry() throws Exception {
+		FileEntry fileEntry = PortletFileRepositoryUtil.addPortletFileEntry(
+			_group.getGroupId(), TestPropsValues.getUserId(),
+			WebServerServletTest.class.getName(), _group.getGroupId(),
+			"TEST_PORTLET", DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			TestDataConstants.TEST_BYTE_ARRAY,
+			RandomTestUtil.randomString() + ".html", ContentTypes.TEXT_HTML,
+			false);
+
+		_testService(
+			StringBundler.concat(
+				"/portlet_file_entry/", _group.getGroupId(), "/test.html/",
+				fileEntry.getUuid()));
 	}
 
 	@Inject

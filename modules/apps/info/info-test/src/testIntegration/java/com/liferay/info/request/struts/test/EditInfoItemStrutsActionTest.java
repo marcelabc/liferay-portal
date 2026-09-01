@@ -218,7 +218,6 @@ public class EditInfoItemStrutsActionTest {
 			objectEntry.getURLTitle(_objectDefinition.getDefaultLocale()));
 	}
 
-	@FeatureFlag("LPD-17564")
 	@Test
 	public void testAddAndUpdateInfoItemWithEnableObjectEntrySchedule()
 		throws Exception {
@@ -533,7 +532,6 @@ public class EditInfoItemStrutsActionTest {
 			null, WorkflowConstants.STATUS_APPROVED);
 	}
 
-	@FeatureFlag("LPD-17564")
 	@Test
 	public void testUpdateInfoItem() throws Exception {
 		MockHttpServletResponse mockHttpServletResponse =
@@ -668,6 +666,9 @@ public class EditInfoItemStrutsActionTest {
 		mockMultipartHttpServletRequest.setContentType(
 			"multipart/form-data;boundary=" + System.currentTimeMillis());
 
+		ListTypeEntry listTypeEntry1 = _listTypeEntries.get(0);
+		ListTypeEntry listTypeEntry2 = _listTypeEntries.get(1);
+
 		Map<String, List<String>> regularParameters =
 			HashMapBuilder.<String, List<String>>put(
 				"classNameId", Collections.singletonList(_classNameId)
@@ -677,7 +678,14 @@ public class EditInfoItemStrutsActionTest {
 				"groupId",
 				Collections.singletonList(String.valueOf(_group.getGroupId()))
 			).put(
-				"myBoolean", Collections.singletonList(Boolean.TRUE.toString())
+				"ObjectField_myBoolean",
+				Collections.singletonList(Boolean.TRUE.toString())
+			).put(
+				"ObjectField_myLocalizedMultiselectPicklist_en_US",
+				Arrays.asList(listTypeEntry1.getKey(), listTypeEntry2.getKey())
+			).put(
+				"ObjectField_myMultiselectPicklist",
+				Arrays.asList(listTypeEntry1.getKey(), listTypeEntry2.getKey())
 			).put(
 				"p_l_id",
 				Collections.singletonList(String.valueOf(_layout.getPlid()))
@@ -717,14 +725,20 @@ public class EditInfoItemStrutsActionTest {
 
 		regularParameters.put(
 			"checkboxNames",
-			Collections.singletonList("ObjectField_myBoolean"));
+			Arrays.asList(
+				"ObjectField_myBoolean",
+				"ObjectField_myLocalizedMultiselectPicklist",
+				"ObjectField_myMultiselectPicklist"));
 		regularParameters.put(
 			"classNameId", Collections.singletonList(_classNameId));
 		regularParameters.put(
 			"classPK",
 			Collections.singletonList(
 				String.valueOf(objectEntry.getObjectEntryId())));
-		regularParameters.remove("myBoolean");
+		regularParameters.remove("ObjectField_myBoolean");
+		regularParameters.remove(
+			"ObjectField_myLocalizedMultiselectPicklist_en_US");
+		regularParameters.remove("ObjectField_myMultiselectPicklist");
 
 		mockHttpServletResponse = new MockHttpServletResponse();
 
@@ -747,6 +761,47 @@ public class EditInfoItemStrutsActionTest {
 
 		Assert.assertEquals(
 			Boolean.FALSE.toString(), String.valueOf(values.get("myBoolean")));
+		Assert.assertEquals(
+			StringPool.BLANK,
+			String.valueOf(values.get("myLocalizedMultiselectPicklist")));
+		Assert.assertEquals(
+			StringPool.BLANK,
+			String.valueOf(values.get("myMultiselectPicklist")));
+	}
+
+	@Test
+	@TestInfo("LPD-96450")
+	public void testUpdateInfoItemWithDraftObjectEntry() throws Exception {
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), _user.getUserId());
+
+		serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
+
+		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
+			0, _user.getUserId(), _objectDefinition.getObjectDefinitionId(), 0,
+			null,
+			HashMapBuilder.<String, Serializable>put(
+				"myText", RandomTestUtil.randomString()
+			).build(),
+			serviceContext);
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_DRAFT, objectEntry.getStatus());
+
+		Assert.assertNull(
+			_execute(
+				HashMapBuilder.<String, List<String>>put(
+					"classPK",
+					Collections.singletonList(
+						String.valueOf(objectEntry.getObjectEntryId()))
+				).build()));
+
+		objectEntry = _objectEntryLocalService.fetchObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_APPROVED, objectEntry.getStatus());
 	}
 
 	@Test
@@ -990,6 +1045,16 @@ public class EditInfoItemStrutsActionTest {
 				_listTypeDefinition.getListTypeDefinitionId()
 			).name(
 				"myMultiselectPicklist"
+			).build(),
+			new MultiselectPicklistObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).listTypeDefinitionId(
+				_listTypeDefinition.getListTypeDefinitionId()
+			).localized(
+				true
+			).name(
+				"myLocalizedMultiselectPicklist"
 			).build(),
 			ObjectFieldUtil.createObjectField(
 				ObjectFieldConstants.BUSINESS_TYPE_DATE,

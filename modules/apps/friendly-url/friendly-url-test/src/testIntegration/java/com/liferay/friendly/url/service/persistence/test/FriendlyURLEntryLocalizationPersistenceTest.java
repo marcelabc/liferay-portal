@@ -111,13 +111,8 @@ public class FriendlyURLEntryLocalizationPersistenceTest {
 
 	@Test
 	public void testUpdateExisting() throws Exception {
-		long pk = RandomTestUtil.nextLong();
-
 		FriendlyURLEntryLocalization newFriendlyURLEntryLocalization =
-			_persistence.create(pk);
-
-		newFriendlyURLEntryLocalization.setMvccVersion(
-			RandomTestUtil.nextLong());
+			addFriendlyURLEntryLocalization();
 
 		newFriendlyURLEntryLocalization.setCtCollectionId(
 			RandomTestUtil.nextLong());
@@ -143,8 +138,10 @@ public class FriendlyURLEntryLocalizationPersistenceTest {
 		newFriendlyURLEntryLocalization.setUrlTitle(
 			RandomTestUtil.randomString());
 
-		_friendlyURLEntryLocalizations.add(
-			_persistence.update(newFriendlyURLEntryLocalization));
+		newFriendlyURLEntryLocalization = _persistence.update(
+			newFriendlyURLEntryLocalization);
+
+		_friendlyURLEntryLocalizations.add(newFriendlyURLEntryLocalization);
 
 		FriendlyURLEntryLocalization existingFriendlyURLEntryLocalization =
 			_persistence.findByPrimaryKey(
@@ -202,6 +199,16 @@ public class FriendlyURLEntryLocalizationPersistenceTest {
 		_persistence.countByFriendlyURLEntryId_LanguageId(0L, "null");
 
 		_persistence.countByFriendlyURLEntryId_LanguageId(0L, (String)null);
+	}
+
+	@Test
+	public void testCountByG_C_U() throws Exception {
+		_persistence.countByG_C_U(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(), "");
+
+		_persistence.countByG_C_U(0L, 0L, "null");
+
+		_persistence.countByG_C_U(0L, 0L, (String)null);
 	}
 
 	@Test
@@ -621,8 +628,6 @@ public class FriendlyURLEntryLocalizationPersistenceTest {
 		FriendlyURLEntryLocalization friendlyURLEntryLocalization =
 			_persistence.create(pk);
 
-		friendlyURLEntryLocalization.setMvccVersion(RandomTestUtil.nextLong());
-
 		friendlyURLEntryLocalization.setCtCollectionId(
 			RandomTestUtil.nextLong());
 
@@ -657,4 +662,4 @@ public class FriendlyURLEntryLocalizationPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:499543209
+// LIFERAY-SERVICE-BUILDER-HASH:-582172179

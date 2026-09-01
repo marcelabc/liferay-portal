@@ -9,13 +9,13 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.LayoutFriendlyURLException;
+import com.liferay.portal.kernel.exception.NoSuchGroupException;
 import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.struts.LastPath;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
@@ -25,9 +25,11 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.virtual.host.SiteVirtualHostUtil;
 import com.liferay.portal.model.impl.LayoutImpl;
 import com.liferay.portal.servlet.I18nServlet;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
+import com.liferay.portal.util.GroupFriendlyURLUtil;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.webserver.WebServerServlet;
 
@@ -261,8 +263,24 @@ public class VirtualHostFilter extends BasePortalFilter {
 		}
 
 		if (layoutSet == null) {
-			Group group = _fetchGroupByFriendlyURLPrefix(
-				CompanyThreadLocal.getCompanyId(), friendlyURL);
+			String groupFriendlyURL =
+				GroupFriendlyURLUtil.parseGroupFriendlyURL(friendlyURL);
+
+			Group group = GroupFriendlyURLUtil.fetchFriendlyURLGroup(
+				CompanyThreadLocal.getCompanyId(), groupFriendlyURL);
+
+			if ((group != null) &&
+				SiteVirtualHostUtil.isRestricted(group, httpServletRequest)) {
+
+				httpServletRequest.setAttribute(
+					WebKeys.SITE_VIRTUAL_HOST_RESTRICTED, Boolean.TRUE);
+
+				PortalUtil.sendError(
+					new NoSuchGroupException(), httpServletRequest,
+					httpServletResponse);
+
+				return;
+			}
 
 			if (!PropsValues.
 					LAYOUT_FRIENDLY_URL_PUBLIC_SERVLET_MAPPING_ENABLED &&
@@ -281,6 +299,11 @@ public class VirtualHostFilter extends BasePortalFilter {
 					_log.debug("Forward to " + sb.toString());
 				}
 
+				httpServletRequest.setAttribute(
+					WebKeys.FRIENDLY_URL_GROUP, group);
+				httpServletRequest.setAttribute(
+					WebKeys.GROUP_FRIENDLY_URL, groupFriendlyURL);
+
 				RequestDispatcher requestDispatcher =
 					_servletContext.getRequestDispatcher(sb.toString());
 
@@ -290,120 +313,107 @@ public class VirtualHostFilter extends BasePortalFilter {
 				return;
 			}
 
-			if (friendlyURL.equals(StringPool.SLASH) &&
-				Validator.isNull(PropsValues.VIRTUAL_HOSTS_DEFAULT_SITE_NAME)) {
-
-				String homeURL = PortalUtil.getHomeURL(httpServletRequest);
-
-				if (Validator.isNotNull(homeURL)) {
-					httpServletResponse.sendRedirect(homeURL);
-
-					return;
-				}
-			}
-
 			processFilter(
 				VirtualHostFilter.class.getName(), httpServletRequest,
 				httpServletResponse, filterChain);
-
-			WebServerServlet.sendMessageObjectEntryAttachmentDownload(
-				httpServletRequest, null);
 
 			return;
 		}
 
 		long companyId = CompanyThreadLocal.getCompanyId();
 
-		try {
-			Map<String, String[]> parameterMap =
-				httpServletRequest.getParameterMap();
+		String parameters = StringPool.BLANK;
 
-			String parameters = StringPool.BLANK;
+		Map<String, String[]> parameterMap =
+			httpServletRequest.getParameterMap();
 
-			if (!parameterMap.isEmpty()) {
-				parameters = HttpComponentsUtil.parameterMapToString(
-					parameterMap);
-			}
+		if (!parameterMap.isEmpty()) {
+			parameters = HttpComponentsUtil.parameterMapToString(parameterMap);
+		}
 
-			LastPath lastPath = new LastPath(
-				_originalContextPath, friendlyURL, parameters);
+		LastPath lastPath = new LastPath(
+			_originalContextPath, friendlyURL, parameters);
 
-			httpServletRequest.setAttribute(WebKeys.LAST_PATH, lastPath);
+		httpServletRequest.setAttribute(WebKeys.LAST_PATH, lastPath);
 
-			StringBundler sb = new StringBundler(5);
+		StringBundler sb = new StringBundler(5);
 
-			if (i18nLanguageId != null) {
-				sb.append(i18nLanguageId);
-			}
+		if (i18nLanguageId != null) {
+			sb.append(i18nLanguageId);
+		}
 
-			if (originalFriendlyURL.startsWith(
-					PropsValues.WIDGET_SERVLET_MAPPING)) {
+		if (originalFriendlyURL.startsWith(
+				PropsValues.WIDGET_SERVLET_MAPPING)) {
 
-				sb.append(PropsValues.WIDGET_SERVLET_MAPPING);
+			sb.append(PropsValues.WIDGET_SERVLET_MAPPING);
 
-				friendlyURL = StringUtil.replaceFirst(
-					friendlyURL, PropsValues.WIDGET_SERVLET_MAPPING,
-					StringPool.BLANK);
-			}
+			friendlyURL = StringUtil.replaceFirst(
+				friendlyURL, PropsValues.WIDGET_SERVLET_MAPPING,
+				StringPool.BLANK);
+		}
 
-			Group group = _fetchGroupByFriendlyURLPrefix(
+		String groupFriendlyURL = GroupFriendlyURLUtil.parseGroupFriendlyURL(
+			friendlyURL);
+
+		Group group = GroupFriendlyURLUtil.fetchFriendlyURLGroup(
+			companyId, groupFriendlyURL);
+
+		if ((group != null) &&
+			SiteVirtualHostUtil.isRestricted(group, httpServletRequest)) {
+
+			httpServletRequest.setAttribute(
+				WebKeys.SITE_VIRTUAL_HOST_RESTRICTED, Boolean.TRUE);
+
+			PortalUtil.sendError(
+				new NoSuchLayoutException(), httpServletRequest,
+				httpServletResponse);
+
+			return;
+		}
+
+		if (group != null) {
+			httpServletRequest.setAttribute(WebKeys.FRIENDLY_URL_GROUP, group);
+			httpServletRequest.setAttribute(
+				WebKeys.GROUP_FRIENDLY_URL, groupFriendlyURL);
+		}
+
+		if (!PropsValues.LAYOUT_FRIENDLY_URL_PUBLIC_SERVLET_MAPPING_ENABLED &&
+			!layoutSet.isPrivateLayout() && (group != null)) {
+
+			sb.append(_PUBLIC_GROUP_SERVLET_MAPPING);
+		}
+		else {
+			long plid = PortalUtil.getPlidFromFriendlyURL(
 				companyId, friendlyURL);
 
-			if (!PropsValues.
-					LAYOUT_FRIENDLY_URL_PUBLIC_SERVLET_MAPPING_ENABLED &&
-				!layoutSet.isPrivateLayout() && (group != null)) {
+			if (friendlyURL.equals(StringPool.SLASH) || (plid <= 0)) {
+				Group layoutSetGroup = layoutSet.getGroup();
 
-				sb.append(_PUBLIC_GROUP_SERVLET_MAPPING);
-			}
-			else {
-				long plid = PortalUtil.getPlidFromFriendlyURL(
-					companyId, friendlyURL);
+				if (isDocumentFriendlyURL(
+						httpServletRequest, httpServletResponse,
+						layoutSetGroup.getGroupId(), friendlyURL)) {
 
-				if (friendlyURL.equals(StringPool.SLASH) || (plid <= 0)) {
-					Group layoutSetGroup = layoutSet.getGroup();
+					processFilter(
+						VirtualHostFilter.class.getName(), httpServletRequest,
+						httpServletResponse, filterChain);
 
-					if (isDocumentFriendlyURL(
-							httpServletRequest, httpServletResponse,
-							layoutSetGroup.getGroupId(), friendlyURL)) {
+					return;
+				}
 
-						processFilter(
-							VirtualHostFilter.class.getName(),
-							httpServletRequest, httpServletResponse,
-							filterChain);
+				if (Objects.equals(
+						layoutSetGroup.getGroupKey(),
+						PropsValues.VIRTUAL_HOSTS_DEFAULT_SITE_NAME) &&
+					friendlyURL.equals(StringPool.SLASH) &&
+					!layoutSet.isPrivateLayout()) {
 
-						return;
+					String homeURL = PortalUtil.getRelativeHomeURL(
+						httpServletRequest);
+
+					if (Validator.isNotNull(homeURL)) {
+						friendlyURL = homeURL;
 					}
 
-					if (Objects.equals(
-							layoutSetGroup.getGroupKey(),
-							PropsValues.VIRTUAL_HOSTS_DEFAULT_SITE_NAME) &&
-						friendlyURL.equals(StringPool.SLASH) &&
-						!layoutSet.isPrivateLayout()) {
-
-						String homeURL = PortalUtil.getRelativeHomeURL(
-							httpServletRequest);
-
-						if (Validator.isNotNull(homeURL)) {
-							friendlyURL = homeURL;
-						}
-
-						if (friendlyURL.equals(StringPool.SLASH)) {
-							if (layoutSet.isPrivateLayout()) {
-								if (layoutSetGroup.isUser()) {
-									sb.append(_PRIVATE_USER_SERVLET_MAPPING);
-								}
-								else {
-									sb.append(_PRIVATE_GROUP_SERVLET_MAPPING);
-								}
-							}
-							else {
-								sb.append(_PUBLIC_GROUP_SERVLET_MAPPING);
-							}
-
-							sb.append(layoutSetGroup.getFriendlyURL());
-						}
-					}
-					else {
+					if (friendlyURL.equals(StringPool.SLASH)) {
 						if (layoutSet.isPrivateLayout()) {
 							if (layoutSetGroup.isUser()) {
 								sb.append(_PRIVATE_USER_SERVLET_MAPPING);
@@ -419,54 +429,40 @@ public class VirtualHostFilter extends BasePortalFilter {
 						sb.append(layoutSetGroup.getFriendlyURL());
 					}
 				}
+				else {
+					if (layoutSet.isPrivateLayout()) {
+						if (layoutSetGroup.isUser()) {
+							sb.append(_PRIVATE_USER_SERVLET_MAPPING);
+						}
+						else {
+							sb.append(_PRIVATE_GROUP_SERVLET_MAPPING);
+						}
+					}
+					else {
+						sb.append(_PUBLIC_GROUP_SERVLET_MAPPING);
+					}
+
+					sb.append(layoutSetGroup.getFriendlyURL());
+				}
 			}
-
-			String forwardURLString = friendlyURL;
-
-			if (sb.index() > 0) {
-				sb.append(friendlyURL);
-
-				forwardURLString = sb.toString();
-			}
-
-			if (_log.isDebugEnabled()) {
-				_log.debug("Forward to " + forwardURLString);
-			}
-
-			RequestDispatcher requestDispatcher =
-				_servletContext.getRequestDispatcher(forwardURLString);
-
-			requestDispatcher.forward(httpServletRequest, httpServletResponse);
-		}
-		catch (Exception exception) {
-			_log.error(exception);
-
-			processFilter(
-				VirtualHostFilter.class.getName(), httpServletRequest,
-				httpServletResponse, filterChain);
-		}
-	}
-
-	private Group _fetchGroupByFriendlyURLPrefix(
-		long companyId, String friendlyURL) {
-
-		if (friendlyURL.equals(StringPool.SLASH)) {
-			return null;
 		}
 
-		int index = friendlyURL.indexOf(CharPool.SLASH, 1);
+		String forwardURLString = friendlyURL;
 
-		String groupFriendlyURL;
+		if (sb.index() > 0) {
+			sb.append(friendlyURL);
 
-		if (index != -1) {
-			groupFriendlyURL = friendlyURL.substring(0, index);
-		}
-		else {
-			groupFriendlyURL = friendlyURL;
+			forwardURLString = sb.toString();
 		}
 
-		return GroupLocalServiceUtil.fetchFriendlyURLGroup(
-			companyId, groupFriendlyURL);
+		if (_log.isDebugEnabled()) {
+			_log.debug("Forward to " + forwardURLString);
+		}
+
+		RequestDispatcher requestDispatcher =
+			_servletContext.getRequestDispatcher(forwardURLString);
+
+		requestDispatcher.forward(httpServletRequest, httpServletResponse);
 	}
 
 	private String _findLanguageId(String friendlyURL) {

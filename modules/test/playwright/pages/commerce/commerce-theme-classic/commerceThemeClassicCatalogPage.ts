@@ -14,8 +14,9 @@ export class CommerceThemeClassicCatalogPage {
 		currencyCode: string,
 		currencySymbol: string
 	) => Locator;
+	readonly firstCardItem: Locator;
 	readonly orderByButton: Locator;
-	readonly ordersTab: Locator;
+	readonly ordersTab: (orderTabName: string) => Locator;
 	readonly page: Page;
 	readonly productCard: (productName: string) => Locator;
 	readonly productCardImage: (productName: string) => Locator;
@@ -28,6 +29,8 @@ export class CommerceThemeClassicCatalogPage {
 		productSku: string
 	) => Locator;
 	readonly productCardAddToCartButton: (productName: string) => Locator;
+	readonly productCardAddToWishListButton: (productName: string) => Locator;
+	readonly productCardLink: (productName: string) => Locator;
 
 	constructor(page: Page) {
 		this.changeCurrencyModal = page.locator('.modal-content');
@@ -47,11 +50,13 @@ export class CommerceThemeClassicCatalogPage {
 				exact: true,
 				name: `${currencySymbol} ${currencyCode}`,
 			});
+		this.firstCardItem = page.locator('.product-card').first();
 		this.orderByButton = page.locator('#commerce-order-by');
-		this.ordersTab = page.getByRole('menuitem', {
-			exact: true,
-			name: 'Orders',
-		});
+		this.ordersTab = (orderTabName: string) =>
+			page.getByRole('menuitem', {
+				exact: true,
+				name: orderTabName,
+			});
 		this.page = page;
 		this.productCard = (productName: string) =>
 			this.page.locator('.product-card').filter({hasText: productName});
@@ -68,6 +73,15 @@ export class CommerceThemeClassicCatalogPage {
 				exact: true,
 				name: 'Add to Cart',
 			});
+		this.productCardAddToWishListButton = (productName: string) =>
+			this.productCard(productName).getByRole('button', {
+				exact: true,
+				name: 'Add to List',
+			});
+		this.productCardLink = (productName: string) =>
+			this.productCard(productName).getByRole('link', {
+				name: productName,
+			});
 	}
 
 	async selectSorting(orderByText: string) {
@@ -75,5 +89,10 @@ export class CommerceThemeClassicCatalogPage {
 		const orderByLink = this.page.getByText(orderByText);
 		await orderByLink.click();
 		await this.page.waitForLoadState('networkidle');
+	}
+
+	async goToOrderPages(orderTabName: string) {
+		await this.ordersTab('Orders').click();
+		await this.ordersTab(orderTabName).click();
 	}
 }

@@ -148,7 +148,10 @@ test(
 	async ({globalMenuPage, page}) => {
 		await globalMenuPage.goToApplications();
 
-		const workflowItem = page.getByRole('menuitem', {name: 'Workflow'});
+		const workflowItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Workflow',
+		});
 
 		try {
 			const categories = page.locator('button.collapse-icon');
@@ -206,6 +209,39 @@ test(
 			await page.reload();
 
 			await expect(menu).toBeVisible();
+		});
+	}
+);
+
+test(
+	'The side navigation shows a visible divider separating it from the content',
+	{tag: '@LPD-93647'},
+	async ({globalMenuPage, page}) => {
+		await test.step('Go to an Applications Panel page', async () => {
+			await globalMenuPage.goToApplications();
+
+			await expect(
+				page.getByLabel('Applications Menu', {exact: true})
+			).toBeVisible();
+		});
+
+		await test.step('Assert the divider border is actually rendered', async () => {
+			const {borderRightColor, borderRightStyle, borderRightWidth} =
+				await page.getByTestId('sideNavigation').evaluate((element) => {
+					const computedStyle = window.getComputedStyle(element);
+
+					return {
+						borderRightColor: computedStyle.borderRightColor,
+						borderRightStyle: computedStyle.borderRightStyle,
+						borderRightWidth: computedStyle.borderRightWidth,
+					};
+				});
+
+			expect(borderRightStyle).toBe('solid');
+
+			expect(parseFloat(borderRightWidth)).toBeGreaterThan(0);
+
+			expect(borderRightColor).not.toBe('rgba(0, 0, 0, 0)');
 		});
 	}
 );

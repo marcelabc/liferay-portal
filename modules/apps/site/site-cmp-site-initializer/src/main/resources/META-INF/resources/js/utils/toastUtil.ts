@@ -19,10 +19,58 @@ const displayAssignSuccessToast = (title: string, value: string) => {
 	});
 };
 
+const displayBulkAssignSuccessToast = (assignee: string, count: number) => {
+	openToast({
+		message:
+			count === 1
+				? sub(
+						Liferay.Language.get(
+							'task-was-successfully-assigned-to-x'
+						),
+						assignee
+					)
+				: sub(
+						Liferay.Language.get(
+							'x-tasks-were-successfully-assigned-to-x'
+						),
+						String(count),
+						assignee
+					),
+		type: 'success',
+	});
+};
+
+const displayBulkDueDateSuccessToast = (count: number) => {
+	openToast({
+		message:
+			count === 1
+				? Liferay.Language.get(
+						'due-date-was-successfully-updated-for-one-task'
+					)
+				: sub(
+						Liferay.Language.get(
+							'due-date-was-successfully-updated-for-x-tasks'
+						),
+						String(count)
+					),
+		type: 'success',
+	});
+};
+
 const displayDeleteSuccessToast = (title: string) => {
 	openToast({
 		message: sub(
 			Liferay.Language.get('x-was-successfully-deleted'),
+			getFormattedLabel(title)
+		),
+		type: 'success',
+	});
+};
+
+const displayDueDateSuccessToast = (title: string) => {
+	openToast({
+		message: sub(
+			Liferay.Language.get('x-due-date-was-successfully-updated'),
 			getFormattedLabel(title)
 		),
 		type: 'success',
@@ -48,7 +96,10 @@ const displayStateSuccessToast = () => {
 
 export {
 	displayAssignSuccessToast,
+	displayBulkAssignSuccessToast,
+	displayBulkDueDateSuccessToast,
 	displayDeleteSuccessToast,
+	displayDueDateSuccessToast,
 	displayErrorToast,
 	displayStateSuccessToast,
 };

@@ -116,12 +116,8 @@ public class CPSpecificationOptionPersistenceTest {
 
 	@Test
 	public void testUpdateExisting() throws Exception {
-		long pk = RandomTestUtil.nextLong();
-
-		CPSpecificationOption newCPSpecificationOption = _persistence.create(
-			pk);
-
-		newCPSpecificationOption.setMvccVersion(RandomTestUtil.nextLong());
+		CPSpecificationOption newCPSpecificationOption =
+			addCPSpecificationOption();
 
 		newCPSpecificationOption.setCtCollectionId(RandomTestUtil.nextLong());
 
@@ -157,8 +153,12 @@ public class CPSpecificationOptionPersistenceTest {
 
 		newCPSpecificationOption.setLastPublishDate(RandomTestUtil.nextDate());
 
-		_cpSpecificationOptions.add(
-			_persistence.update(newCPSpecificationOption));
+		newCPSpecificationOption.setStatus(RandomTestUtil.nextInt());
+
+		newCPSpecificationOption = _persistence.update(
+			newCPSpecificationOption);
+
+		_cpSpecificationOptions.add(newCPSpecificationOption);
 
 		CPSpecificationOption existingCPSpecificationOption =
 			_persistence.findByPrimaryKey(
@@ -222,6 +222,9 @@ public class CPSpecificationOptionPersistenceTest {
 				existingCPSpecificationOption.getLastPublishDate()),
 			Time.getShortTimestamp(
 				newCPSpecificationOption.getLastPublishDate()));
+		Assert.assertEquals(
+			existingCPSpecificationOption.getStatus(),
+			newCPSpecificationOption.getStatus());
 	}
 
 	@Test(
@@ -334,7 +337,7 @@ public class CPSpecificationOptionPersistenceTest {
 			"userName", true, "createDate", true, "modifiedDate", true,
 			"CPOptionCategoryId", true, "title", true, "description", true,
 			"facetable", true, "key", true, "priority", true, "visible", true,
-			"lastPublishDate", true);
+			"lastPublishDate", true, "status", true);
 	}
 
 	@Test
@@ -660,8 +663,6 @@ public class CPSpecificationOptionPersistenceTest {
 
 		CPSpecificationOption cpSpecificationOption = _persistence.create(pk);
 
-		cpSpecificationOption.setMvccVersion(RandomTestUtil.nextLong());
-
 		cpSpecificationOption.setCtCollectionId(RandomTestUtil.nextLong());
 
 		cpSpecificationOption.setUuid(RandomTestUtil.randomString());
@@ -695,6 +696,8 @@ public class CPSpecificationOptionPersistenceTest {
 
 		cpSpecificationOption.setLastPublishDate(RandomTestUtil.nextDate());
 
+		cpSpecificationOption.setStatus(RandomTestUtil.nextInt());
+
 		_cpSpecificationOptions.add(_persistence.update(cpSpecificationOption));
 
 		return cpSpecificationOption;
@@ -706,4 +709,4 @@ public class CPSpecificationOptionPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-887121174
+// LIFERAY-SERVICE-BUILDER-HASH:595868825

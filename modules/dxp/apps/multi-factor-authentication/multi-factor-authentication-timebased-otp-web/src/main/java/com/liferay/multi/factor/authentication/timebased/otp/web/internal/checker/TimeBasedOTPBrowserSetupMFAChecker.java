@@ -53,6 +53,10 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
+import java.nio.charset.StandardCharsets;
+
+import java.security.MessageDigest;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -115,7 +119,8 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 					_mfaTimeBasedOTPConfiguration.algorithmKeySize());
 
 			httpServletRequest.setAttribute(
-				MFATimeBasedOTPWebKeys.MFA_TIME_BASED_OTP_ALGORITHM, "SHA1");
+				MFATimeBasedOTPWebKeys.MFA_TIME_BASED_OTP_ALGORITHM,
+				PropsValues.FIPS_ENABLED ? "SHA256" : "SHA1");
 			httpServletRequest.setAttribute(
 				MFATimeBasedOTPWebKeys.
 					MFA_TIME_BASED_OTP_CHECKER_DISPLAY_CONTEXT,
@@ -501,12 +506,17 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 			return false;
 		}
 
-		if (!Objects.equals(
-				mfaTimeBasedOTP, mfaTimeBasedOTPEntry.getLastValidTOTP())) {
+		String lastValidTOTP = mfaTimeBasedOTPEntry.getLastValidTOTP();
+
+		if (!MessageDigest.isEqual(
+				mfaTimeBasedOTP.getBytes(StandardCharsets.UTF_8),
+				lastValidTOTP.getBytes(StandardCharsets.UTF_8))) {
 
 			return MFATimeBasedOTPUtil.verifyTimeBasedOTP(
 				_mfaTimeBasedOTPConfiguration.clockSkew(),
-				mfaTimeBasedOTPEntry.getSharedSecret(), mfaTimeBasedOTP);
+				_mfaTimeBasedOTPEntryLocalService.getPlaintextSharedSecret(
+					mfaTimeBasedOTPEntry),
+				mfaTimeBasedOTP);
 		}
 
 		_sendEmail(user, user.getEmailAddress(), httpServletRequest);

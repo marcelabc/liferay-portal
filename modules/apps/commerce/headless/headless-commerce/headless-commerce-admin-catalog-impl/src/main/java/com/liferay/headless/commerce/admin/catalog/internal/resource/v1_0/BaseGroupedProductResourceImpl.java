@@ -75,11 +75,12 @@ public abstract class BaseGroupedProductResourceImpl
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/grouped-products/{groupedProductId}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Removes the grouped product entry identified by groupedProductId. Calls CPDefinitionGroupedEntryService.deleteCPDefinitionGroupedEntry. Validation -- Service-level NoSuchCPDefinitionGroupedEntryException -> 404. Side effects -- Removes the grouped product link from the parent CPDefinition."
+		description = "Removes the grouped product entry identified by groupedProductId. Returns 404 when the record is not found. Side effects -- Removes the grouped product link from the parent product definition."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Identifier of a grouped-product entry. Addresses a single CPDefinitionGroupedEntry that binds a child product to its parent with a priority and quantity.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "groupedProductId"
 			)
@@ -154,19 +155,22 @@ public abstract class BaseGroupedProductResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/by-externalReferenceCode/{externalReferenceCode}/grouped-products'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Lists the grouped product entries of the product identified by external reference code. Calls CPDefinitionService.fetchCPDefinitionByCProductExternalReferenceCode + CPDefinitionGroupedEntryService.getCPDefinitionGroupedEntries. Validation -- NoSuchCPDefinitionException -> 404 when product ERC not found."
+		description = "Lists the grouped product entries of the product identified by external reference code. Returns 404 when the product external reference code is not found."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "One-based page index. Combined with pageSize to paginate the result set; defaults to 1 when omitted.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "page"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Number of items per page. Defaults to the portal's configured page size when omitted; capped by the portal configuration to prevent unbounded reads.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "pageSize"
 			)
@@ -201,19 +205,22 @@ public abstract class BaseGroupedProductResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/{id}/grouped-products'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Lists the grouped product entries of the product identified by product id. Calls CPDefinitionService.fetchCPDefinitionByCProductId + CPDefinitionGroupedEntryService.getCPDefinitionGroupedEntries. Validation -- NoSuchCPDefinitionException -> 404 when product id not found."
+		description = "Lists the grouped product entries of the product identified by product ID. Returns 404 when the product ID is not found."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "One-based page index. Combined with pageSize to paginate the result set; defaults to 1 when omitted.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "page"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Number of items per page. Defaults to the portal's configured page size when omitted; capped by the portal configuration to prevent unbounded reads.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "pageSize"
 			)
@@ -245,11 +252,12 @@ public abstract class BaseGroupedProductResourceImpl
 	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/grouped-products/{groupedProductId}' -d $'{"entryProductExternalReferenceCode": ___, "entryProductId": ___, "priority": ___, "quantity": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Partially updates priority and quantity of the grouped product entry identified by groupedProductId. Calls CPDefinitionGroupedEntryService.getCPDefinitionGroupedEntry + updateCPDefinitionGroupedEntry. Validation -- NoSuchCPDefinitionGroupedEntryException -> 404 when id not found. Side effects -- None (updates priority and quantity)."
+		description = "Partially updates priority and quantity of the grouped product entry identified by groupedProductId. Returns 404 when the ID is not found. Side effects -- None (updates priority and quantity)."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Identifier of a grouped-product entry. Addresses a single CPDefinitionGroupedEntry that binds a child product to its parent with a priority and quantity.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "groupedProductId"
 			)
@@ -282,11 +290,12 @@ public abstract class BaseGroupedProductResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/by-externalReferenceCode/{externalReferenceCode}/grouped-products' -d $'{"entryProductExternalReferenceCode": ___, "entryProductId": ___, "priority": ___, "quantity": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Adds a grouped product entry to the parent product identified by external reference code. Calls CPDefinitionService.fetchCPDefinitionByCProductExternalReferenceCode + CPDefinitionGroupedEntryService.addCPDefinitionGroupedEntry. Validation -- NoSuchCPDefinitionException -> 404 when either the parent product ERC or the entry product is missing. Side effects -- Links the entry product to the parent grouped product."
+		description = "Adds a grouped product entry to the parent product identified by external reference code. Returns 404 when the either the parent product ERC or the entry product is missing. Side effects -- Links the entry product to the parent grouped product."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -321,11 +330,12 @@ public abstract class BaseGroupedProductResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/{id}/grouped-products' -d $'{"entryProductExternalReferenceCode": ___, "entryProductId": ___, "priority": ___, "quantity": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Adds a grouped product entry to the parent product identified by product id. Calls CPDefinitionService.fetchCPDefinitionByCProductId + CPDefinitionGroupedEntryService.addCPDefinitionGroupedEntry. Validation -- NoSuchCPDefinitionException -> 404 when parent product id or entry product is missing. Side effects -- Links the entry product to the parent grouped product."
+		description = "Adds a grouped product entry to the parent product identified by product ID. Returns 404 when the parent product ID or entry product is missing. Side effects -- Links the entry product to the parent grouped product."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -1141,4 +1151,4 @@ public abstract class BaseGroupedProductResourceImpl
 		LogFactoryUtil.getLog(BaseGroupedProductResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-654722264
+// LIFERAY-REST-BUILDER-HASH:266972252

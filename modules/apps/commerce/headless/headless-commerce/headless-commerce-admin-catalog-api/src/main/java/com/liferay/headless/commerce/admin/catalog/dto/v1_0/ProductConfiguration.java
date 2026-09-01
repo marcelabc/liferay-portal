@@ -45,6 +45,9 @@ import java.util.function.Supplier;
 	description = "Inventory, ordering, and fulfillment configuration for a single product or for a reusable configuration template; bundles inventory engine selection, order quantity rules, low-stock behavior, shipping dimensions, and tax classification under one configuration list entry.",
 	value = "ProductConfiguration"
 )
+@io.swagger.v3.oas.annotations.media.Schema(
+	description = "Inventory, ordering, and fulfillment configuration for a single product or for a reusable configuration template; bundles inventory engine selection, order quantity rules, low-stock behavior, shipping dimensions, and tax classification under one configuration list entry."
+)
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "ProductConfiguration")
 public class ProductConfiguration implements Serializable {
@@ -198,6 +201,58 @@ public class ProductConfiguration implements Serializable {
 
 	@JsonIgnore
 	private Supplier<BigDecimal[]> _allowedOrderQuantitiesSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "External reference code of the linked availability estimate; resolved before `availabilityEstimateId` and never falling back to it. An unresolved code fails the request, except during an import, where it creates an empty availability estimate to be completed later.",
+		example = "AB-34098-789-N"
+	)
+	public String getAvailabilityEstimateExternalReferenceCode() {
+		if (_availabilityEstimateExternalReferenceCodeSupplier != null) {
+			availabilityEstimateExternalReferenceCode =
+				_availabilityEstimateExternalReferenceCodeSupplier.get();
+
+			_availabilityEstimateExternalReferenceCodeSupplier = null;
+		}
+
+		return availabilityEstimateExternalReferenceCode;
+	}
+
+	public void setAvailabilityEstimateExternalReferenceCode(
+		String availabilityEstimateExternalReferenceCode) {
+
+		this.availabilityEstimateExternalReferenceCode =
+			availabilityEstimateExternalReferenceCode;
+
+		_availabilityEstimateExternalReferenceCodeSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setAvailabilityEstimateExternalReferenceCode(
+		UnsafeSupplier<String, Exception>
+			availabilityEstimateExternalReferenceCodeUnsafeSupplier) {
+
+		_availabilityEstimateExternalReferenceCodeSupplier = () -> {
+			try {
+				return availabilityEstimateExternalReferenceCodeUnsafeSupplier.
+					get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "External reference code of the linked availability estimate; resolved before `availabilityEstimateId` and never falling back to it. An unresolved code fails the request, except during an import, where it creates an empty availability estimate to be completed later."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String availabilityEstimateExternalReferenceCode;
+
+	@JsonIgnore
+	private Supplier<String> _availabilityEstimateExternalReferenceCodeSupplier;
 
 	@DecimalMin("0")
 	@io.swagger.v3.oas.annotations.media.Schema(
@@ -1220,6 +1275,23 @@ public class ProductConfiguration implements Serializable {
 			sb.append("]");
 		}
 
+		String availabilityEstimateExternalReferenceCode =
+			getAvailabilityEstimateExternalReferenceCode();
+
+		if (availabilityEstimateExternalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"availabilityEstimateExternalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(availabilityEstimateExternalReferenceCode));
+
+			sb.append("\"");
+		}
+
 		Long availabilityEstimateId = getAvailabilityEstimateId();
 
 		if (availabilityEstimateId != null) {
@@ -1638,4 +1710,4 @@ public class ProductConfiguration implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:307733337
+// LIFERAY-REST-BUILDER-HASH:-1062706431

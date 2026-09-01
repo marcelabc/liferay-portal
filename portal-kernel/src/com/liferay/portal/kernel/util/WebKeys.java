@@ -45,6 +45,8 @@ public interface WebKeys {
 
 	public static final String ASSET_VOCABULARY = "ASSET_VOCABULARY";
 
+	public static final String AUDIT_SESSION_ID = "AUDIT_SESSION_ID";
+
 	public static final String AUI_SCRIPT_DATA =
 		"LIFERAY_SHARED_AUI_SCRIPT_DATA";
 
@@ -188,11 +190,15 @@ public interface WebKeys {
 
 	public static final String FORWARD_URL = "FORWARD_URL";
 
+	public static final String FRIENDLY_URL_GROUP = "FRIENDLY_URL_GROUP";
+
 	public static final String FTL_VARIABLES = "FTL_VARIABLES";
 
 	public static final String GOOGLE_GADGET = "GOOGLE_GADGET";
 
 	public static final String GROUP = "GROUP";
+
+	public static final String GROUP_FRIENDLY_URL = "GROUP_FRIENDLY_URL";
 
 	public static final String HTTPS_INITIAL = "HTTPS_INITIAL";
 
@@ -620,6 +626,9 @@ public interface WebKeys {
 
 	public static final String SITE_ADMINISTRATION_CATEGORIES_MAP =
 		"SITES_ADMINISTRATION_CATEGORIES_MAP";
+
+	public static final String SITE_VIRTUAL_HOST_RESTRICTED =
+		"SITE_VIRTUAL_HOST_RESTRICTED";
 
 	public static final String SOURCE_NAME = "SOURCE_NAME";
 

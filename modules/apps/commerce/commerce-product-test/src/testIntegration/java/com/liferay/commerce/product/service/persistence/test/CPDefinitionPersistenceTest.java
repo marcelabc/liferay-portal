@@ -116,11 +116,7 @@ public class CPDefinitionPersistenceTest {
 
 	@Test
 	public void testUpdateExisting() throws Exception {
-		long pk = RandomTestUtil.nextLong();
-
-		CPDefinition newCPDefinition = _persistence.create(pk);
-
-		newCPDefinition.setMvccVersion(RandomTestUtil.nextLong());
+		CPDefinition newCPDefinition = addCPDefinition();
 
 		newCPDefinition.setCtCollectionId(RandomTestUtil.nextLong());
 
@@ -139,6 +135,9 @@ public class CPDefinitionPersistenceTest {
 		newCPDefinition.setCreateDate(RandomTestUtil.nextDate());
 
 		newCPDefinition.setModifiedDate(RandomTestUtil.nextDate());
+
+		newCPDefinition.setCProductExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		newCPDefinition.setCProductId(RandomTestUtil.nextLong());
 
@@ -222,7 +221,9 @@ public class CPDefinitionPersistenceTest {
 
 		newCPDefinition.setStatusDate(RandomTestUtil.nextDate());
 
-		_cpDefinitions.add(_persistence.update(newCPDefinition));
+		newCPDefinition = _persistence.update(newCPDefinition);
+
+		_cpDefinitions.add(newCPDefinition);
 
 		CPDefinition existingCPDefinition = _persistence.findByPrimaryKey(
 			newCPDefinition.getPrimaryKey());
@@ -256,6 +257,9 @@ public class CPDefinitionPersistenceTest {
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingCPDefinition.getModifiedDate()),
 			Time.getShortTimestamp(newCPDefinition.getModifiedDate()));
+		Assert.assertEquals(
+			existingCPDefinition.getCProductExternalReferenceCode(),
+			newCPDefinition.getCProductExternalReferenceCode());
 		Assert.assertEquals(
 			existingCPDefinition.getCProductId(),
 			newCPDefinition.getCProductId());
@@ -507,7 +511,8 @@ public class CPDefinitionPersistenceTest {
 			"CPDefinition", "mvccVersion", true, "ctCollectionId", true, "uuid",
 			true, "defaultLanguageId", true, "CPDefinitionId", true, "groupId",
 			true, "companyId", true, "userId", true, "userName", true,
-			"createDate", true, "modifiedDate", true, "CProductId", true,
+			"createDate", true, "modifiedDate", true,
+			"CProductExternalReferenceCode", true, "CProductId", true,
 			"CPTaxCategoryId", true, "accountGroupFilterEnabled", true,
 			"availableIndividually", true, "channelFilterEnabled", true,
 			"DDMStructureKey", true, "deliveryMaxSubscriptionCycles", true,
@@ -818,8 +823,6 @@ public class CPDefinitionPersistenceTest {
 
 		CPDefinition cpDefinition = _persistence.create(pk);
 
-		cpDefinition.setMvccVersion(RandomTestUtil.nextLong());
-
 		cpDefinition.setCtCollectionId(RandomTestUtil.nextLong());
 
 		cpDefinition.setUuid(RandomTestUtil.randomString());
@@ -837,6 +840,9 @@ public class CPDefinitionPersistenceTest {
 		cpDefinition.setCreateDate(RandomTestUtil.nextDate());
 
 		cpDefinition.setModifiedDate(RandomTestUtil.nextDate());
+
+		cpDefinition.setCProductExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		cpDefinition.setCProductId(RandomTestUtil.nextLong());
 
@@ -926,4 +932,4 @@ public class CPDefinitionPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-653082843
+// LIFERAY-SERVICE-BUILDER-HASH:-498638898

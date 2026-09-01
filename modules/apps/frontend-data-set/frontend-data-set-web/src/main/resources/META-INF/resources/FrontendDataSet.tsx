@@ -60,7 +60,7 @@ import {readConfigFromURL} from './utils/configInURL';
 import EVENTS from './utils/eventsDefinitions';
 import {activateFilter} from './utils/filters/activateFilter';
 import {deactivateFilter} from './utils/filters/deactivateFilter';
-import {getFDSAtom} from './utils/getFDSAtom';
+import {getOrCreateFDSAtom} from './utils/getOrCreateFDSAtom';
 import getRandomId from './utils/getRandomId';
 
 // @ts-ignore
@@ -123,6 +123,8 @@ const FrontendDataSetContent = ({
 	hideManagementBarInEmptyState = false,
 	id,
 	infoPanelComponent,
+	infoPanelContainerRef,
+	infoPanelPosition,
 	inlineAddingSettings,
 	inlineEditingSettings,
 	inlineNotificationComponent,
@@ -368,7 +370,7 @@ const FrontendDataSetContent = ({
 	});
 
 	const memoizedAtom = useMemo(
-		() => getFDSAtom({atom, fdsName: id}),
+		() => getOrCreateFDSAtom({atom, fdsName: id}),
 		[atom, id]
 	);
 
@@ -1758,7 +1760,10 @@ const FrontendDataSetContent = ({
 		items: any;
 	}): void {
 		const updatedItems = new Map(
-			[...items, ...itemsChanged].map((item) => [item[itemKey], item])
+			[...items, ...itemsChanged].map((item) => [
+				getObjectValueFromPath({object: item, path: itemKey}),
+				item,
+			])
 		);
 
 		setItems(Array.from(updatedItems.values()));
@@ -1979,7 +1984,7 @@ const FrontendDataSetContent = ({
 		setAdditionalAPIURLParameters(parameters);
 	}
 
-	const selectable = !!selectionType;
+	const selectable = !!selectionType && (activeView.selectable ?? true);
 
 	const {className} = useFDSDrop({
 		targetDropRef: dataSetWrapperRef,
@@ -2173,10 +2178,11 @@ const FrontendDataSetContent = ({
 							<InfoPanel
 								className="fds-info-panel"
 								component={infoPanelComponent}
-								containerRef={fdsRef}
+								containerRef={infoPanelContainerRef ?? fdsRef}
 								id={dataSetSupportInfoPanelIdRef.current}
 								onOpenChange={setInfoPanelOpen}
 								open={infoPanelOpen}
+								position={infoPanelPosition}
 							/>
 						)}
 

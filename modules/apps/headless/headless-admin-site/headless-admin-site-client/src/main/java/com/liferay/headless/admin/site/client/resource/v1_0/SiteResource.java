@@ -74,11 +74,15 @@ public interface SiteResource {
 		throws Exception;
 
 	public Page<Site> getSitesPage(
-			Boolean active, String search, Pagination pagination)
+			Boolean active, String[] excludedExternalReferenceCodes,
+			String[] externalReferenceCodes, String search,
+			Pagination pagination)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getSitesPageHttpResponse(
-			Boolean active, String search, Pagination pagination)
+			Boolean active, String[] excludedExternalReferenceCodes,
+			String[] externalReferenceCodes, String search,
+			Pagination pagination)
 		throws Exception;
 
 	public Site postSite(Site site) throws Exception;
@@ -102,12 +106,14 @@ public interface SiteResource {
 		throws Exception;
 
 	public void postSitesPageExportBatch(
-			Boolean active, String search, String callbackURL,
+			Boolean active, String[] excludedExternalReferenceCodes,
+			String[] externalReferenceCodes, String search, String callbackURL,
 			String contentType, String fieldNames)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse postSitesPageExportBatchHttpResponse(
-			Boolean active, String search, String callbackURL,
+			Boolean active, String[] excludedExternalReferenceCodes,
+			String[] externalReferenceCodes, String search, String callbackURL,
 			String contentType, String fieldNames)
 		throws Exception;
 
@@ -782,11 +788,14 @@ public interface SiteResource {
 		}
 
 		public Page<Site> getSitesPage(
-				Boolean active, String search, Pagination pagination)
+				Boolean active, String[] excludedExternalReferenceCodes,
+				String[] externalReferenceCodes, String search,
+				Pagination pagination)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse = getSitesPageHttpResponse(
-				active, search, pagination);
+				active, excludedExternalReferenceCodes, externalReferenceCodes,
+				search, pagination);
 
 			String content = httpResponse.getContent();
 
@@ -848,7 +857,9 @@ public interface SiteResource {
 		}
 
 		public HttpInvoker.HttpResponse getSitesPageHttpResponse(
-				Boolean active, String search, Pagination pagination)
+				Boolean active, String[] excludedExternalReferenceCodes,
+				String[] externalReferenceCodes, String search,
+				Pagination pagination)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -874,6 +885,24 @@ public interface SiteResource {
 
 			if (active != null) {
 				httpInvoker.parameter("active", String.valueOf(active));
+			}
+
+			if (excludedExternalReferenceCodes != null) {
+				for (int i = 0; i < excludedExternalReferenceCodes.length;
+					 i++) {
+
+					httpInvoker.parameter(
+						"excludedExternalReferenceCodes",
+						String.valueOf(excludedExternalReferenceCodes[i]));
+				}
+			}
+
+			if (externalReferenceCodes != null) {
+				for (int i = 0; i < externalReferenceCodes.length; i++) {
+					httpInvoker.parameter(
+						"externalReferenceCodes",
+						String.valueOf(externalReferenceCodes[i]));
+				}
 			}
 
 			if (search != null) {
@@ -1213,13 +1242,16 @@ public interface SiteResource {
 		}
 
 		public void postSitesPageExportBatch(
-				Boolean active, String search, String callbackURL,
-				String contentType, String fieldNames)
+				Boolean active, String[] excludedExternalReferenceCodes,
+				String[] externalReferenceCodes, String search,
+				String callbackURL, String contentType, String fieldNames)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				postSitesPageExportBatchHttpResponse(
-					active, search, callbackURL, contentType, fieldNames);
+					active, excludedExternalReferenceCodes,
+					externalReferenceCodes, search, callbackURL, contentType,
+					fieldNames);
 
 			String content = httpResponse.getContent();
 
@@ -1270,8 +1302,9 @@ public interface SiteResource {
 		}
 
 		public HttpInvoker.HttpResponse postSitesPageExportBatchHttpResponse(
-				Boolean active, String search, String callbackURL,
-				String contentType, String fieldNames)
+				Boolean active, String[] excludedExternalReferenceCodes,
+				String[] externalReferenceCodes, String search,
+				String callbackURL, String contentType, String fieldNames)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -1299,6 +1332,24 @@ public interface SiteResource {
 
 			if (active != null) {
 				httpInvoker.parameter("active", String.valueOf(active));
+			}
+
+			if (excludedExternalReferenceCodes != null) {
+				for (int i = 0; i < excludedExternalReferenceCodes.length;
+					 i++) {
+
+					httpInvoker.parameter(
+						"excludedExternalReferenceCodes",
+						String.valueOf(excludedExternalReferenceCodes[i]));
+				}
+			}
+
+			if (externalReferenceCodes != null) {
+				for (int i = 0; i < externalReferenceCodes.length; i++) {
+					httpInvoker.parameter(
+						"externalReferenceCodes",
+						String.valueOf(externalReferenceCodes[i]));
+				}
 			}
 
 			if (search != null) {
@@ -2001,4 +2052,4 @@ public interface SiteResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:91890992
+// LIFERAY-REST-BUILDER-HASH:170547828

@@ -24,7 +24,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -68,6 +67,8 @@ import java.util.List;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Eudaldo Alonso
@@ -158,12 +159,6 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 
 	private Page<AssetLibrary> _getAssetLibrariesPage(ThemeDisplay themeDisplay)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled(
-				themeDisplay.getCompanyId(), "LPD-17564")) {
-
-			return null;
-		}
 
 		AssetLibraryResource.Builder builder =
 			_assetLibraryResourceFactory.create();
@@ -559,8 +554,11 @@ public class ApplicationsMenuPanelAppsMVCResourceCommand
 	@Reference
 	private Portal _portal;
 
-	@Reference
-	private RecentGroupManager _recentGroupManager;
+	@Reference(
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY
+	)
+	private volatile RecentGroupManager _recentGroupManager;
 
 	@Reference
 	private WebServerServletToken _webServerServletToken;

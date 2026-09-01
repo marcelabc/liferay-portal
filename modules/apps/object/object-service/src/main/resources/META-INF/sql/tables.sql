@@ -84,7 +84,7 @@ create table ObjectDefinitionSetting (
 create table ObjectEntry (
 	mvccVersion LONG default 0 not null,
 	uuid_ VARCHAR(75) null,
-	externalReferenceCode VARCHAR(1000) null,
+	externalReferenceCode VARCHAR(500) null,
 	objectEntryId LONG not null primary key,
 	groupId LONG,
 	companyId LONG,
@@ -412,6 +412,7 @@ create table ObjectValidationRuleSetting (
 create table ObjectView (
 	mvccVersion LONG default 0 not null,
 	uuid_ VARCHAR(75) null,
+	externalReferenceCode VARCHAR(75) null,
 	objectViewId LONG not null primary key,
 	companyId LONG,
 	userId LONG,

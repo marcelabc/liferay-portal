@@ -7,7 +7,6 @@ import {Locator, Page, expect} from '@playwright/test';
 import path from 'path';
 
 import {ProductMenuPage} from '../../../../pages/product-navigation-control-menu-web/ProductMenuPage';
-import {clickAndExpectToBeHidden} from '../../../../utils/clickAndExpectToBeHidden';
 import {clickAndExpectToBeVisible} from '../../../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../../../utils/getRandomString';
 import {PORTLET_URLS} from '../../../../utils/portletUrls';
@@ -24,30 +23,29 @@ type DateFilter = {
 export type taskStatus = 'success' | 'completedWithErrors';
 
 export class ExportImportPage {
-	readonly allRadioButton: Locator;
+	readonly addFilterButton: Locator;
 	readonly cancelButton: Locator;
 	readonly clearMenuItem: Locator;
+	readonly clearSearchButton: Locator;
 	readonly continueButton: Locator;
-	readonly copyAsNewRadioButton: Locator;
-	readonly deleteApplicationDataAlert: Locator;
-	readonly deleteApplicationDataCheckbox: Locator;
-	readonly deleteApplicationDataBeforeImportingWarningLabel: Locator;
 	readonly deletionsLabel: Locator;
 	readonly downloadButton: Locator;
 	readonly exportButton: Locator;
+	readonly excludeSwitch: Locator;
 	readonly exportPermissionsButton: Locator;
 	readonly exportReportEntriesMenuItem: Locator;
 	readonly exportReportEntriesModal: Locator;
 	readonly exportReportEntriesModalDownloadButton: Locator;
 	readonly exportReportEntriesModalProgressbar: Locator;
 	readonly fileSelector: Locator;
+	readonly filterBackButton: Locator;
+	readonly filterButton: Locator;
 	readonly importButton: Locator;
-	readonly importModalButton: Locator;
 	readonly importPermissionsCheckbox: Locator;
-	readonly mirrorWithOverwritingRadioButton: Locator;
 	readonly newExportButton: Locator;
 	readonly newImportButton: Locator;
 	readonly page: Page;
+	readonly pagesFieldset: Locator;
 	readonly portletListContainer: Locator;
 	readonly productMenuPage: ProductMenuPage;
 	readonly rangeDateRangeEndDate: Locator;
@@ -58,6 +56,10 @@ export class ExportImportPage {
 	readonly rangeLast: Locator;
 	readonly rangeLastRadioButton: Locator;
 	readonly refreshCountsLink: Locator;
+	readonly removeFilterButton: Locator;
+	readonly searchButton: Locator;
+	readonly searchInput: Locator;
+	readonly showResultsButton: Locator;
 	readonly taskActionsMenu: (taskName: string) => Locator;
 	readonly taskRow: (taskName: string) => Locator;
 	readonly taskStatusLabel: (
@@ -65,29 +67,18 @@ export class ExportImportPage {
 		taskStatus?: taskStatus
 	) => Locator;
 	readonly title: Locator;
-	readonly updateDataAlert: Locator;
-	readonly updateDataMirrorWarningLabel: Locator;
 	readonly useCurrentUserAsAuthorCheckbox: Locator;
 	readonly viewReportEntriesMenuItem: Locator;
-	readonly warningHeader: Locator;
 
 	constructor(page: Page) {
-		this.allRadioButton = page.getByTestId('range_rangeAll');
+		this.addFilterButton = page.getByRole('button', {name: 'Add Filter'});
 		this.cancelButton = page.getByRole('button', {name: 'Cancel'});
 		this.clearMenuItem = page.getByRole('link', {name: 'Clear'});
-		this.continueButton = page.getByRole('button', {name: 'Continue'});
-		this.copyAsNewRadioButton = page.getByLabel('Copy as new');
-		this.deleteApplicationDataAlert = page.locator('[role="alert"]', {
-			hasText: 'This option does not apply to object entries.',
+		this.clearSearchButton = page.getByRole('button', {
+			exact: true,
+			name: 'Clear',
 		});
-		this.deleteApplicationDataCheckbox = page.getByLabel(
-			'Delete Application Data'
-		);
-		this.deleteApplicationDataBeforeImportingWarningLabel = page
-			.getByLabel('Important Info About Your Import')
-			.getByText(
-				'Delete Application Data Before Importing: This option does not apply to object'
-			);
+		this.continueButton = page.getByRole('button', {name: 'Continue'});
 		this.deletionsLabel = page
 			.getByLabel('Deletions', {exact: true})
 			.locator('label');
@@ -96,6 +87,7 @@ export class ExportImportPage {
 		this.exportReportEntriesMenuItem = page.getByRole('menuitem', {
 			name: 'Export Report Entries',
 		});
+		this.excludeSwitch = page.getByRole('switch', {name: 'Exclude'});
 		this.exportPermissionsButton = page.getByLabel('Export Permissions');
 		this.exportReportEntriesModal = page.getByRole('dialog', {
 			name: 'Export Report Entries',
@@ -107,17 +99,16 @@ export class ExportImportPage {
 		this.exportReportEntriesModalProgressbar =
 			this.exportReportEntriesModal.getByRole('progressbar');
 		this.fileSelector = page.getByRole('button', {name: 'Select File'});
+		this.filterBackButton = page.getByRole('button', {name: 'Back'});
+		this.filterButton = page
+			.getByTestId('managementToolbar')
+			.getByRole('button', {name: 'Filter'});
 		this.importButton = page.getByRole('button', {name: 'Import'});
-		this.importModalButton = page
-			.getByLabel('Important Info About Your Import')
-			.getByRole('button', {name: 'Import'});
 		this.importPermissionsCheckbox = page.getByLabel('Import Permissions');
-		this.mirrorWithOverwritingRadioButton = page.getByLabel(
-			'Mirror with overwriting'
-		);
 		this.newExportButton = page.getByRole('link', {name: 'Custom Export'});
 		this.newImportButton = page.getByRole('link', {name: 'Import'});
 		this.page = page;
+		this.pagesFieldset = page.locator('#pages-fieldset');
 		this.portletListContainer = page
 			.locator(
 				'#_com_liferay_exportimport_web_portlet_ExportPortlet_selectContents .portlet-list'
@@ -174,6 +165,12 @@ export class ExportImportPage {
 		this.refreshCountsLink = page.getByRole('link', {
 			name: 'Refresh Counts',
 		});
+		this.removeFilterButton = page.getByLabel('Remove Filter');
+		this.searchButton = page.getByRole('button', {name: 'Search'});
+		this.searchInput = page.getByRole('searchbox', {name: 'Search'});
+		this.showResultsButton = page.getByRole('button', {
+			name: 'Show Results',
+		});
 		this.taskActionsMenu = (taskName) =>
 			this.taskRow(taskName).getByRole('button');
 		this.taskRow = (taskName) =>
@@ -182,7 +179,7 @@ export class ExportImportPage {
 			});
 		this.taskStatusLabel = (taskName, taskStatus = 'success') => {
 			const taskStatusTexts: Record<taskStatus, string> = {
-				completedWithErrors: 'Completed with errors',
+				completedWithErrors: 'Completed With Errors',
 				success: 'Successful',
 			};
 
@@ -191,23 +188,11 @@ export class ExportImportPage {
 				.getByText(taskStatusTexts[taskStatus]);
 		};
 		this.title = page.getByPlaceholder('Enter the name of the process');
-		this.updateDataAlert = page.locator('[role="alert"]', {
-			hasText:
-				'Objects entries are always mirrored regardless of the selection.',
-		});
-		this.updateDataMirrorWarningLabel = page
-			.getByLabel('Important Info About Your Import')
-			.getByText(
-				'Update Data (Mirror): Objects entries are always mirrored regardless of the selection.'
-			);
 		this.useCurrentUserAsAuthorCheckbox = page.getByLabel(
 			'Use the Current User as Author: Assign the current user as the author of all'
 		);
 		this.viewReportEntriesMenuItem = page.getByRole('menuitem', {
 			name: 'View Report Entries',
-		});
-		this.warningHeader = page.getByRole('heading', {
-			name: 'Important Info About Your Import',
 		});
 	}
 
@@ -229,15 +214,44 @@ export class ExportImportPage {
 		label: string | RegExp,
 		{
 			counts = {},
+			portletId,
 			registrations,
 		}: {
 			counts?: {deletions?: number; items?: number};
+			portletId?: string;
 			registrations?: Array<{
 				counts: {deletions?: number; items?: number};
 				label: string | RegExp;
 			}>;
 		} = {}
 	) {
+		if (portletId) {
+			if (registrations) {
+				await this._expandPortlet(portletId);
+			}
+
+			await this._assertLabelCounts(
+				this._portletLabel(portletId),
+				counts
+			);
+
+			const contentLocator = this.page.locator(
+				`[id$="_content_${portletId}"]`
+			);
+
+			for (const registration of registrations ?? []) {
+				await this._assertLabelCounts(
+					this._filterLabels(
+						contentLocator.locator('label'),
+						registration.label
+					),
+					registration.counts
+				);
+			}
+
+			return;
+		}
+
 		if (registrations) {
 			if (typeof label === 'string') {
 				await this.page
@@ -284,6 +298,34 @@ export class ExportImportPage {
 		await this._assertPortletEntryCounts(label, {deletions: 'hidden'});
 	}
 
+	private _filterLabels(labels: Locator, label: string | RegExp): Locator {
+		return labels.filter(
+			typeof label === 'string'
+				? {has: this.page.locator(`:text-is("${label}")`)}
+				: {hasText: label}
+		);
+	}
+
+	private _portletLabel(portletId: string): Locator {
+		return this.page.locator('label').filter({
+			has: this.page.locator(`input[name$="_PORTLET_DATA_${portletId}"]`),
+		});
+	}
+
+	private async _expandPortlet(portletId: string) {
+		const dataCheckbox = this.page.locator(
+			`input[name$="_PORTLET_DATA_${portletId}"]`
+		);
+
+		if (!(await dataCheckbox.isChecked())) {
+			await dataCheckbox.check();
+		}
+
+		await this.page
+			.locator(`button.content-link[data-portletid="${portletId}"]`)
+			.click();
+	}
+
 	private async _assertPortletEntryCounts(
 		label: string | RegExp,
 		counts: {
@@ -291,12 +333,19 @@ export class ExportImportPage {
 			items?: 'absent' | number;
 		}
 	) {
-		const filter =
-			typeof label === 'string'
-				? {has: this.page.locator(`:text-is("${label}")`)}
-				: {hasText: label};
+		await this._assertLabelCounts(
+			this._filterLabels(this.page.locator('label'), label),
+			counts
+		);
+	}
 
-		const labelLocator = this.page.locator('label').filter(filter);
+	private async _assertLabelCounts(
+		labelLocator: Locator,
+		counts: {
+			deletions?: 'absent' | 'hidden' | number;
+			items?: 'absent' | number;
+		}
+	) {
 		const {deletions, items} = counts;
 
 		if (items !== undefined) {
@@ -333,6 +382,18 @@ export class ExportImportPage {
 		}
 	}
 
+	async uncheckPageSettings() {
+		await this.pagesFieldset.waitFor({state: 'attached'});
+
+		await this.pagesFieldset.evaluate((fieldset) => {
+			fieldset
+				.querySelectorAll<HTMLInputElement>(
+					'input[type="checkbox"]:checked'
+				)
+				.forEach((input) => input.click());
+		});
+	}
+
 	async uncheckPortlets() {
 		const portletListContainer = this.portletListContainer;
 
@@ -350,12 +411,14 @@ export class ExportImportPage {
 	async export({
 		dateFilter,
 		exportAllPortlets = false,
+		includePageSettings = true,
 		includePermissions = false,
 		portletLabels,
 		taskName = `Export-${getRandomString()}`,
 	}: {
 		dateFilter?: DateFilter;
 		exportAllPortlets?: boolean;
+		includePageSettings?: boolean;
 		includePermissions?: boolean;
 		portletLabels?: string[];
 		taskName?: string;
@@ -363,6 +426,10 @@ export class ExportImportPage {
 		await this.newExportButton.click();
 
 		await this.title.fill(taskName);
+
+		if (!includePageSettings) {
+			await this.uncheckPageSettings();
+		}
 
 		if (exportAllPortlets) {
 			await this.checkAllPortlets();
@@ -493,16 +560,6 @@ export class ExportImportPage {
 		});
 	}
 
-	async importByDefault(filePath: string) {
-		await this.selectImportFile({filePath});
-
-		await this.importButton.click();
-
-		await expect(
-			this.taskStatusLabel(path.basename(filePath), 'success')
-		).toBeVisible();
-	}
-
 	async getExportableItems() {
 		await this.newExportButton.click();
 
@@ -574,35 +631,6 @@ export class ExportImportPage {
 		await this.clickTaskAction(exportName, 'View Report Entries');
 	}
 
-	async goToImportOptions(
-		folderPath: string,
-		siteUrl?: Site['friendlyUrlPath']
-	) {
-		await this.goToImport(siteUrl);
-		await this.newImportButton.click();
-		await this.page.getByRole('button', {name: 'Select File'}).waitFor();
-
-		const previousFileAlert = this.page.getByText(
-			'Warning:This file was previously uploaded'
-		);
-		if (await previousFileAlert.isVisible()) {
-			await clickAndExpectToBeHidden({
-				target: previousFileAlert,
-				trigger: this.page.getByRole('link', {
-					name: 'Delete File',
-				}),
-			});
-		}
-
-		const fileChooserPromise = this.page.waitForEvent('filechooser');
-		await this.fileSelector.click();
-		const fileChooser = await fileChooserPromise;
-		await fileChooser.setFiles(folderPath);
-
-		await this.continueButton.click();
-		this.page.getByText('File Summary');
-	}
-
 	async goToImportReportEntryDetails(externalReferenceCode: string) {
 		await this.page
 			.getByRole('row', {name: externalReferenceCode})
@@ -614,10 +642,81 @@ export class ExportImportPage {
 		).toBeVisible();
 	}
 
+	async clearReportSearch() {
+		await this.clearSearchButton.click();
+		await this.page.waitForLoadState('networkidle');
+	}
+
+	async excludeReportFilter() {
+		await this.filterButton.click();
+		await this.excludeSwitch.check();
+		await this.showResultsButton.click();
+		const responsePromise = this.page.waitForResponse(
+			(response) =>
+				response.url().includes('report-entries') &&
+				response.status() === 200
+		);
+		await responsePromise;
+	}
+
+	async filterReportBy(category: string, value: string) {
+		await this.filterButton.click();
+		if (await this.filterBackButton.isVisible()) {
+			await this.filterBackButton.click();
+		}
+		await this.page
+			.getByRole('menuitem', {exact: true, name: category})
+			.click();
+		await this.page.getByRole('checkbox', {name: value}).check();
+		await this.addFilterButton.click();
+		await this.page.waitForLoadState('networkidle');
+	}
+
+	async getReportColumnValues(headerName: string): Promise<string[]> {
+		const header = this.page.getByRole('columnheader', {
+			exact: true,
+			name: headerName,
+		});
+		const index = await header.evaluate((node) => {
+			return (
+				Array.from(
+					(node as HTMLElement).parentElement!.children
+				).indexOf(node as HTMLElement) + 1
+			);
+		});
+
+		return this.page
+			.locator(`tbody tr td:nth-child(${index})`)
+			.allTextContents();
+	}
+
 	async openExportReportEntriesModal(exportName) {
 		await this.clickTaskAction(exportName, 'Export Report Entries');
 
 		await this.exportReportEntriesModal.waitFor();
+	}
+
+	async removeReportFilter() {
+		await this.removeFilterButton.click();
+		await this.page.waitForLoadState('networkidle');
+	}
+
+	async searchReportEntries(searchTerm: string) {
+		await this.searchInput.fill(searchTerm);
+		await this.searchButton.click();
+		await expect(
+			this.page.getByRole('button', {name: 'Clear Search'})
+		).toBeVisible({timeout: 2000});
+
+		await this.page.waitForLoadState('networkidle');
+	}
+
+	async sortReportBy(headerName: string) {
+		await this.page
+			.getByRole('columnheader', {exact: true, name: headerName})
+			.getByRole('button')
+			.click();
+		await this.page.waitForLoadState('networkidle');
 	}
 
 	async selectImportFile({

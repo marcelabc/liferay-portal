@@ -11,9 +11,12 @@ import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.bag.ObjectFieldBag;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectViewLocalService;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.search.BooleanClause;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.BooleanQuery;
+import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.MatchQuery;
 import com.liferay.portal.kernel.search.NestedQuery;
 import com.liferay.portal.kernel.search.Query;
@@ -22,17 +25,24 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.TermQuery;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.language.LanguageImpl;
 import com.liferay.portal.search.localization.SearchLocalizationHelper;
 import com.liferay.portal.search.spi.model.query.contributor.helper.KeywordQueryContributorHelper;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+import com.liferay.portal.util.LocalizationImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,19 +61,29 @@ public class ObjectEntryKeywordQueryContributorTest {
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
+	@Before
+	public void setUp() {
+		LanguageUtil languageUtil = new LanguageUtil();
+
+		languageUtil.setLanguage(new LanguageImpl());
+
+		LocalizationUtil localizationUtil = new LocalizationUtil();
+
+		localizationUtil.setLocalization(new LocalizationImpl());
+	}
+
 	@Test
 	public void testContributeWithAssigneeObjectField() throws Exception {
-		ObjectDefinition objectDefinition = _mockObjectDefinition(false);
+		ObjectDefinition objectDefinition = _mockObjectDefinition();
 
 		ObjectFieldBag objectFieldBag = objectDefinition.getObjectFieldBag();
 
 		ObjectField assigneeObjectField = _mockObjectField(
 			ObjectFieldConstants.BUSINESS_TYPE_ASSIGNEE,
-			ObjectFieldConstants.DB_TYPE_LONG, RandomTestUtil.randomString(),
-			false);
+			ObjectFieldConstants.DB_TYPE_LONG, RandomTestUtil.randomString());
 
 		Mockito.when(
-			objectFieldBag.getNonsystemIndexedObjectFields()
+			objectFieldBag.getNestedIndexedObjectFields()
 		).thenReturn(
 			Arrays.asList(assigneeObjectField)
 		);
@@ -118,40 +138,10 @@ public class ObjectEntryKeywordQueryContributorTest {
 	}
 
 	@Test
-	public void testContributeWithCustomObjectDefinition() throws Exception {
-		ObjectDefinition objectDefinition = _mockObjectDefinition(false);
+	public void testContributeWithNestedIndexedObjectField() throws Exception {
+		ObjectDefinition objectDefinition = _mockObjectDefinition();
 
-		ObjectFieldBag objectFieldBag = objectDefinition.getObjectFieldBag();
-
-		_mockObjectFields(objectFieldBag);
-
-		BooleanQuery booleanQuery = _mockBooleanQuery(null);
-
-		ObjectEntryKeywordQueryContributor objectEntryKeywordQueryContributor =
-			_createObjectEntryKeywordQueryContributor(objectDefinition);
-
-		objectEntryKeywordQueryContributor.contribute(
-			RandomTestUtil.randomString(), booleanQuery,
-			_mockKeywordQueryContributorHelper());
-
-		Mockito.verify(
-			objectFieldBag, Mockito.never()
-		).getIndexedObjectFields();
-
-		Mockito.verify(
-			objectFieldBag
-		).getNonsystemIndexedObjectFields();
-	}
-
-	@Test
-	public void testContributeWithModifiableSystemObjectDefinition()
-		throws Exception {
-
-		ObjectDefinition objectDefinition = _mockObjectDefinition(true);
-
-		ObjectFieldBag objectFieldBag = objectDefinition.getObjectFieldBag();
-
-		_mockObjectFields(objectFieldBag);
+		_mockObjectFields(objectDefinition.getObjectFieldBag());
 
 		ArgumentCaptor<Query> argumentCaptor = ArgumentCaptor.forClass(
 			Query.class);
@@ -165,29 +155,99 @@ public class ObjectEntryKeywordQueryContributorTest {
 			RandomTestUtil.randomString(), booleanQuery,
 			_mockKeywordQueryContributorHelper());
 
-		Mockito.verify(
-			objectFieldBag
-		).getIndexedObjectFields();
-
-		Mockito.verify(
-			objectFieldBag, Mockito.never()
-		).getNonsystemIndexedObjectFields();
-
 		List<Query> queries = argumentCaptor.getAllValues();
 
 		Assert.assertEquals(1, _countNestedQueries(queries));
 	}
 
-	private SearchContext _buildSearchContext() {
+	@Test
+	public void testContributeWithNonlocalizedField() throws Exception {
+		ObjectDefinition objectDefinition = _mockObjectDefinition();
+
+		Mockito.when(
+			objectDefinition.getDefaultLanguageId()
+		).thenReturn(
+			"en_US"
+		);
+
+		_mockObjectFields(objectDefinition.getObjectFieldBag());
+
+		ArgumentCaptor<Query> argumentCaptor = ArgumentCaptor.forClass(
+			Query.class);
+
+		BooleanQuery booleanQuery = _mockBooleanQuery(argumentCaptor);
+
+		ObjectEntryKeywordQueryContributor objectEntryKeywordQueryContributor =
+			_createObjectEntryKeywordQueryContributor(objectDefinition);
+
+		objectEntryKeywordQueryContributor.contribute(
+			RandomTestUtil.randomString(), booleanQuery,
+			_mockKeywordQueryContributorHelper(LocaleUtil.SPAIN));
+
+		Set<String> matchQueryFields = new HashSet<>();
+
+		for (Query query : argumentCaptor.getAllValues()) {
+			if (query instanceof NestedQuery) {
+				NestedQuery nestedQuery = (NestedQuery)query;
+
+				_collectMatchQueryFields(
+					matchQueryFields, nestedQuery.getQuery());
+			}
+		}
+
+		String spainLocalizedFieldName = Field.getLocalizedName(
+			LocaleUtil.SPAIN, "nestedFieldArray.value");
+
+		Assert.assertTrue(
+			StringBundler.concat(
+				"Expected ", matchQueryFields, " to contain ",
+				spainLocalizedFieldName),
+			matchQueryFields.contains(spainLocalizedFieldName));
+
+		String usLocalizedFieldName = Field.getLocalizedName(
+			LocaleUtil.US, "nestedFieldArray.value");
+
+		Assert.assertTrue(
+			StringBundler.concat(
+				"Expected ", matchQueryFields, " to contain ",
+				usLocalizedFieldName),
+			matchQueryFields.contains(usLocalizedFieldName));
+
+		Assert.assertFalse(
+			StringBundler.concat(
+				"Expected ", matchQueryFields, " not to contain ",
+				"nestedFieldArray.value_text"),
+			matchQueryFields.contains("nestedFieldArray.value_text"));
+	}
+
+	private SearchContext _buildSearchContext(Locale locale) {
 		SearchContext searchContext = new SearchContext();
 
 		searchContext.setAndSearch(false);
 		searchContext.setAttribute("searchByObjectView", Boolean.FALSE);
-		searchContext.setLocale(LocaleUtil.US);
+		searchContext.setLocale(locale);
 
 		searchContext.getQueryConfig();
 
 		return searchContext;
+	}
+
+	private void _collectMatchQueryFields(
+		Set<String> matchQueryFields, Query query) {
+
+		if (query instanceof MatchQuery) {
+			MatchQuery matchQuery = (MatchQuery)query;
+
+			matchQueryFields.add(matchQuery.getField());
+		}
+		else if (query instanceof BooleanQuery) {
+			BooleanQuery booleanQuery = (BooleanQuery)query;
+
+			for (BooleanClause<Query> booleanClause : booleanQuery.clauses()) {
+				_collectMatchQueryFields(
+					matchQueryFields, booleanClause.getClause());
+			}
+		}
 	}
 
 	private int _countNestedQueries(List<Query> queries) {
@@ -206,10 +266,24 @@ public class ObjectEntryKeywordQueryContributorTest {
 		_createObjectEntryKeywordQueryContributor(
 			ObjectDefinition objectDefinition) {
 
+		SearchLocalizationHelper searchLocalizationHelper = Mockito.mock(
+			SearchLocalizationHelper.class);
+
+		Mockito.when(
+			searchLocalizationHelper.getLocalizedFieldNames(
+				Mockito.any(String[].class), Mockito.any())
+		).thenReturn(
+			new String[] {
+				Field.getLocalizedName(
+					LocaleUtil.SPAIN, "nestedFieldArray.value"),
+				Field.getLocalizedName(LocaleUtil.US, "nestedFieldArray.value")
+			}
+		);
+
 		return new ObjectEntryKeywordQueryContributor(
 			objectDefinition, Mockito.mock(ObjectFieldLocalService.class),
 			Mockito.mock(ObjectViewLocalService.class),
-			Mockito.mock(SearchLocalizationHelper.class));
+			searchLocalizationHelper);
 	}
 
 	private List<Query> _getAssigneeBooleanQueryClauses(List<Query> queries) {
@@ -254,52 +328,38 @@ public class ObjectEntryKeywordQueryContributorTest {
 
 		BooleanQuery booleanQuery = Mockito.mock(BooleanQuery.class);
 
-		if (argumentCaptor != null) {
-			Mockito.when(
-				booleanQuery.add(
-					argumentCaptor.capture(),
-					Mockito.any(BooleanClauseOccur.class))
-			).thenReturn(
-				null
-			);
-		}
-		else {
-			Mockito.when(
-				booleanQuery.add(
-					Mockito.any(Query.class),
-					Mockito.any(BooleanClauseOccur.class))
-			).thenReturn(
-				null
-			);
-		}
+		Mockito.when(
+			booleanQuery.add(
+				argumentCaptor.capture(), Mockito.any(BooleanClauseOccur.class))
+		).thenReturn(
+			null
+		);
 
 		return booleanQuery;
 	}
 
 	private KeywordQueryContributorHelper _mockKeywordQueryContributorHelper() {
+		return _mockKeywordQueryContributorHelper(LocaleUtil.US);
+	}
+
+	private KeywordQueryContributorHelper _mockKeywordQueryContributorHelper(
+		Locale locale) {
+
 		KeywordQueryContributorHelper keywordQueryContributorHelper =
 			Mockito.mock(KeywordQueryContributorHelper.class);
 
 		Mockito.when(
 			keywordQueryContributorHelper.getSearchContext()
 		).thenReturn(
-			_buildSearchContext()
+			_buildSearchContext(locale)
 		);
 
 		return keywordQueryContributorHelper;
 	}
 
-	private ObjectDefinition _mockObjectDefinition(
-		boolean modifiableAndSystem) {
-
+	private ObjectDefinition _mockObjectDefinition() {
 		ObjectDefinition objectDefinition = Mockito.mock(
 			ObjectDefinition.class);
-
-		Mockito.when(
-			objectDefinition.isModifiableAndSystem()
-		).thenReturn(
-			modifiableAndSystem
-		);
 
 		ObjectFieldBag objectFieldBag = Mockito.mock(ObjectFieldBag.class);
 
@@ -313,7 +373,7 @@ public class ObjectEntryKeywordQueryContributorTest {
 	}
 
 	private ObjectField _mockObjectField(
-		String businessType, String dbType, String name, boolean metadata) {
+		String businessType, String dbType, String name) {
 
 		ObjectField objectField = Mockito.mock(ObjectField.class);
 
@@ -359,33 +419,16 @@ public class ObjectEntryKeywordQueryContributorTest {
 			false
 		);
 
-		Mockito.when(
-			objectField.isMetadata()
-		).thenReturn(
-			metadata
-		);
-
 		return objectField;
 	}
 
 	private void _mockObjectFields(ObjectFieldBag objectFieldBag) {
-		ObjectField metadataObjectField = _mockObjectField(
-			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-			ObjectFieldConstants.DB_TYPE_STRING, RandomTestUtil.randomString(),
-			true);
 		ObjectField objectField = _mockObjectField(
 			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-			ObjectFieldConstants.DB_TYPE_STRING, RandomTestUtil.randomString(),
-			false);
+			ObjectFieldConstants.DB_TYPE_STRING, RandomTestUtil.randomString());
 
 		Mockito.when(
-			objectFieldBag.getIndexedObjectFields()
-		).thenReturn(
-			Arrays.asList(metadataObjectField, objectField)
-		);
-
-		Mockito.when(
-			objectFieldBag.getNonsystemIndexedObjectFields()
+			objectFieldBag.getNestedIndexedObjectFields()
 		).thenReturn(
 			Arrays.asList(objectField)
 		);

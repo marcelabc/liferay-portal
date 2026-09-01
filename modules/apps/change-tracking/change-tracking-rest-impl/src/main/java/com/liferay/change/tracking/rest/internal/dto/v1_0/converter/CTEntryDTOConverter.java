@@ -8,6 +8,7 @@ package com.liferay.change.tracking.rest.internal.dto.v1_0.converter;
 import com.liferay.change.tracking.constants.CTConstants;
 import com.liferay.change.tracking.rest.dto.v1_0.CTEntry;
 import com.liferay.change.tracking.rest.dto.v1_0.Status;
+import com.liferay.change.tracking.spi.display.CTDisplayRendererRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -15,10 +16,12 @@ import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistry;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
@@ -60,6 +63,25 @@ public class CTEntryDTOConverter
 		return _toCTEntry(dtoConverterContext, ctEntry);
 	}
 
+	private Document _getDocument(
+			DTOConverterContext dtoConverterContext,
+			com.liferay.change.tracking.model.CTEntry ctEntry)
+		throws Exception {
+
+		Document document = (Document)dtoConverterContext.getAttribute(
+			"document");
+
+		if (document != null) {
+			return document;
+		}
+
+		Indexer<com.liferay.change.tracking.model.CTEntry> indexer =
+			_indexerRegistry.getIndexer(
+				com.liferay.change.tracking.model.CTEntry.class);
+
+		return indexer.getDocument(ctEntry);
+	}
+
 	private String _getLocalizedValue(Field field, Locale locale) {
 		if (field == null) {
 			return StringPool.BLANK;
@@ -73,6 +95,10 @@ public class CTEntryDTOConverter
 		int ctCollectionStatus, Date ctCollectionStatusDate,
 		String ctCollectionStatusUserName,
 		HttpServletRequest httpServletRequest) {
+
+		if (ctCollectionStatusDate == null) {
+			return StringPool.BLANK;
+		}
 
 		if (ctCollectionStatus == WorkflowConstants.STATUS_APPROVED) {
 			return _language.format(
@@ -107,11 +133,7 @@ public class CTEntryDTOConverter
 			com.liferay.change.tracking.model.CTEntry ctEntry)
 		throws Exception {
 
-		Indexer<com.liferay.change.tracking.model.CTEntry> indexer =
-			_indexerRegistry.getIndexer(
-				com.liferay.change.tracking.model.CTEntry.class);
-
-		Document document = indexer.getDocument(ctEntry);
+		Document document = _getDocument(dtoConverterContext, ctEntry);
 
 		return new CTEntry() {
 			{
@@ -153,6 +175,35 @@ public class CTEntryDTOConverter
 					});
 				setDateCreated(ctEntry::getCreateDate);
 				setDateModified(ctEntry::getModifiedDate);
+				setEditURL(
+					() -> {
+						if (!document.hasField(Field.GROUP_ID)) {
+							return null;
+						}
+
+						long groupId = GetterUtil.getLong(
+							document.get(Field.GROUP_ID));
+
+						if (groupId <= 0) {
+							return null;
+						}
+
+						HttpServletRequest httpServletRequest =
+							dtoConverterContext.getHttpServletRequest();
+
+						ThemeDisplay themeDisplay =
+							(ThemeDisplay)httpServletRequest.getAttribute(
+								WebKeys.THEME_DISPLAY);
+
+						if (themeDisplay == null) {
+							return null;
+						}
+
+						themeDisplay.setScopeGroupId(groupId);
+
+						return _ctDisplayRendererRegistry.getEditURL(
+							httpServletRequest, ctEntry);
+					});
 				setHideable(
 					() -> GetterUtil.getBoolean(document.get("hideable")));
 				setId(ctEntry::getCtEntryId);
@@ -220,6 +271,9 @@ public class CTEntryDTOConverter
 			}
 		};
 	}
+
+	@Reference
+	private CTDisplayRendererRegistry _ctDisplayRendererRegistry;
 
 	@Reference
 	private IndexerRegistry _indexerRegistry;

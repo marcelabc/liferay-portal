@@ -44,7 +44,7 @@ public class BatchEngineExportTaskServiceImpl
 			Map<String, Serializable> parameters, String taskItemDelegateName)
 		throws PortalException {
 
-		_checkPermission(companyId);
+		_checkPermission(companyId, userId);
 
 		return batchEngineExportTaskLocalService.addBatchEngineExportTask(
 			externalReferenceCode, companyId, userId, callbackURL, className,
@@ -58,7 +58,7 @@ public class BatchEngineExportTaskServiceImpl
 		throws PortalException {
 
 		BatchEngineExportTask batchEngineExportTask =
-			batchEngineExportTaskLocalService.getBatchEngineExportTask(
+			batchEngineExportTaskPersistence.findByPrimaryKey(
 				batchEngineExportTaskId);
 
 		_checkPermission(batchEngineExportTask);
@@ -92,7 +92,7 @@ public class BatchEngineExportTaskServiceImpl
 		_checkPermission(companyId);
 
 		return _filterBatchEngineExportTasks(
-			batchEngineExportTaskLocalService.getBatchEngineExportTasks(
+			batchEngineExportTaskPersistence.findByCompanyId(
 				companyId, start, end));
 	}
 
@@ -105,7 +105,7 @@ public class BatchEngineExportTaskServiceImpl
 		_checkPermission(companyId);
 
 		return _filterBatchEngineExportTasks(
-			batchEngineExportTaskLocalService.getBatchEngineExportTasks(
+			batchEngineExportTaskPersistence.findByCompanyId(
 				companyId, start, end, orderByComparator));
 	}
 
@@ -117,7 +117,7 @@ public class BatchEngineExportTaskServiceImpl
 
 		List<BatchEngineExportTask> filteredBatchEngineExportTasks =
 			_filterBatchEngineExportTasks(
-				batchEngineExportTaskLocalService.getBatchEngineExportTasks(
+				batchEngineExportTaskPersistence.findByCompanyId(
 					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS));
 
 		return filteredBatchEngineExportTasks.size();
@@ -128,7 +128,7 @@ public class BatchEngineExportTaskServiceImpl
 		throws PortalException {
 
 		_checkPermission(
-			batchEngineExportTaskLocalService.getBatchEngineExportTask(
+			batchEngineExportTaskPersistence.findByPrimaryKey(
 				batchEngineExportTaskId));
 
 		return batchEngineExportTaskLocalService.openContentInputStream(
@@ -149,6 +149,18 @@ public class BatchEngineExportTaskServiceImpl
 		if ((companyId != permissionChecker.getCompanyId()) &&
 			!permissionChecker.isOmniadmin()) {
 
+			throw new PrincipalException();
+		}
+	}
+
+	private void _checkPermission(long companyId, long userId)
+		throws PrincipalException {
+
+		_checkPermission(companyId);
+
+		PermissionChecker permissionChecker = getPermissionChecker();
+
+		if (userId != permissionChecker.getUserId()) {
 			throw new PrincipalException();
 		}
 	}

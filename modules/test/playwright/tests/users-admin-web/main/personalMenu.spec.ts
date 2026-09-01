@@ -12,6 +12,7 @@ import {instanceSettingsPagesTest} from '../../../fixtures/instanceSettingsPages
 import {loginTest} from '../../../fixtures/loginTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
 import {liferayConfig} from '../../../liferay.config';
+import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {getRandomInt} from '../../../utils/getRandomInt';
 import {
 	performLogout,
@@ -100,8 +101,11 @@ test(
 			await page.goto('/');
 			await page.waitForLoadState('networkidle');
 
-			await personalMenuPage.userPersonalMenuButton.click();
-			await personalMenuPage.notificationsMenuItem.click();
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: personalMenuPage.notificationsMenuItem,
+				trigger: personalMenuPage.userPersonalMenuButton,
+			});
 
 			await expect(page).not.toHaveURL(/\/user\//);
 		});
@@ -118,8 +122,11 @@ test(
 			await page.goto('/');
 			await page.waitForLoadState('networkidle');
 
-			await personalMenuPage.userPersonalMenuButton.click();
-			await personalMenuPage.notificationsMenuItem.click();
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: personalMenuPage.notificationsMenuItem,
+				trigger: personalMenuPage.userPersonalMenuButton,
+			});
 
 			await expect(page).toHaveURL(/\/user\//);
 		});
@@ -173,31 +180,33 @@ test(
 	'Render apps with current theme',
 	{tag: '@LPD-81993'},
 	async ({page, personalMenuPage}) => {
-		await page.goto(liferayConfig.environment.baseUrl);
+		const renderNotifications = async () => {
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: personalMenuPage.notificationsMenuItem,
+				trigger: personalMenuPage.userPersonalMenuButton,
+			});
 
-		await personalMenuPage.userPersonalMenuButton.click();
-		await personalMenuPage.notificationsMenuItem.click();
+			await expect(personalMenuPage.notificationsHeading).toBeVisible();
 
-		await expect(personalMenuPage.notificationsHeading).toBeVisible();
+			await page.reload();
 
-		await personalMenuPage.userPersonalMenuButton.click();
-		await personalMenuPage.notificationsMenuItem.click();
+			await expect(personalMenuPage.notificationsHeading).toBeVisible();
+		};
 
-		await expect(personalMenuPage.notificationsHeading).toBeVisible();
+		await test.step('Render in the current site theme', async () => {
+			await page.goto(liferayConfig.environment.baseUrl);
 
-		await page.goto(
-			`${liferayConfig.environment.baseUrl}/group/control_panel/manage/-/com_liferay_users_admin_web_portlet_UsersAdminPortlet`
-		);
+			await renderNotifications();
+		});
 
-		await personalMenuPage.userPersonalMenuButton.click();
-		await personalMenuPage.notificationsMenuItem.click();
+		await test.step('Render in the control panel theme', async () => {
+			await page.goto(
+				`${liferayConfig.environment.baseUrl}/group/control_panel/manage/-/com_liferay_users_admin_web_portlet_UsersAdminPortlet`
+			);
 
-		await expect(personalMenuPage.notificationsHeading).toBeVisible();
-
-		await personalMenuPage.userPersonalMenuButton.click();
-		await personalMenuPage.notificationsMenuItem.click();
-
-		await expect(personalMenuPage.notificationsHeading).toBeVisible();
+			await renderNotifications();
+		});
 	}
 );
 

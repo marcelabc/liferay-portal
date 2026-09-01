@@ -43,8 +43,8 @@ public class GenerateTestrayCSVUtil {
 		TestrayServer testrayServer = TestrayFactory.newTestrayServer(
 			String.valueOf(testrayServerURL));
 
-		TestrayBuild testrayBuild = testrayServer.getTestrayBuildByID(
-			projectTestrayBuildId);
+		TestrayBuild testrayBuild = TestrayFactory.newTestrayBuild(
+			testrayServer, projectTestrayBuildId);
 
 		System.out.println("Generating Testray CSV.");
 
@@ -98,7 +98,7 @@ public class GenerateTestrayCSVUtil {
 					projectBuildDir,
 					JenkinsResultsParserUtil.combine(
 						"testray-results-",
-						String.valueOf(testrayBuild.getID()), ".csv")),
+						String.valueOf(testrayBuild.getId()), ".csv")),
 				sb.toString());
 		}
 		catch (IOException ioException) {

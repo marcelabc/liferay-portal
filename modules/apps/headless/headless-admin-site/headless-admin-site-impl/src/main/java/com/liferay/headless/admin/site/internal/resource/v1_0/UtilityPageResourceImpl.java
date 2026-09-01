@@ -48,9 +48,6 @@ import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.tags.Tags;
-
 import jakarta.ws.rs.core.MultivaluedMap;
 
 import java.util.Collections;
@@ -75,7 +72,6 @@ public class UtilityPageResourceImpl
 	implements ExportImportVulcanBatchEngineTaskItemDelegate<UtilityPage> {
 
 	@Override
-	@Tags({@Tag(description = "[BETA]", name = "UtilityPage")})
 	public void deleteSiteUtilityPage(
 			String siteExternalReferenceCode,
 			String utilityPageExternalReferenceCode)
@@ -122,7 +118,7 @@ public class UtilityPageResourceImpl
 
 			@Override
 			public String getPortletId() {
-				return LayoutAdminPortletKeys.GROUP_PAGES;
+				return LayoutAdminPortletKeys.LAYOUT_UTILITY_PAGES;
 			}
 
 			@Override
@@ -323,8 +319,8 @@ public class UtilityPageResourceImpl
 		}
 
 		long previewFileEntryId = FileEntryUtil.getPreviewFileEntryId(
-			groupId, LayoutAdminPortletKeys.GROUP_PAGES, getResourceName(),
-			serviceContext, utilityPage.getThumbnailURLReference());
+			groupId, LayoutAdminPortletKeys.GROUP_PAGES,
+			utilityPage.getThumbnailURLReference(), contextUser.getUserId());
 
 		if (previewFileEntryId !=
 				layoutUtilityPageEntry.getPreviewFileEntryId()) {
@@ -396,8 +392,8 @@ public class UtilityPageResourceImpl
 				_getLayoutPlid(groupId, utilityPage, serviceContext),
 				FileEntryUtil.getPreviewFileEntryId(
 					groupId, LayoutAdminPortletKeys.GROUP_PAGES,
-					getResourceName(), serviceContext,
-					utilityPage.getThumbnailURLReference()),
+					utilityPage.getThumbnailURLReference(),
+					contextUser.getUserId()),
 				utilityPage.getMarkedAsDefault(), utilityPage.getName(),
 				_getType(utilityPage.getType()), null, serviceContext);
 
@@ -469,8 +465,10 @@ public class UtilityPageResourceImpl
 	}
 
 	private String _getType(UtilityPage.Type type) {
-		if (_externalToInternalValuesMap.containsKey(type)) {
-			return _externalToInternalValuesMap.get(type);
+		String internalType = _externalToInternalValuesMap.get(type);
+
+		if (internalType != null) {
+			return internalType;
 		}
 
 		throw new IllegalArgumentException(

@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
@@ -28,7 +29,7 @@ import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.transaction.TransactionCallbackUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -36,6 +37,8 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
+
+import java.io.Serializable;
 
 import java.util.Objects;
 
@@ -152,15 +155,19 @@ public class LayoutModelListener extends BaseModelListener<Layout> {
 			return segmentsExperience;
 		}
 
+		Serializable defaultSegmentsExperienceExternalReferenceCode =
+			serviceContext.getAttribute(
+				"defaultSegmentsExperienceExternalReferenceCode");
+
 		serviceContext.setUuid(
 			GetterUtil.getString(
 				serviceContext.getAttribute("defaultSegmentsExperienceUuid")));
 
 		return _segmentsExperienceLocalService.addDefaultSegmentsExperience(
 			GetterUtil.getString(
-				serviceContext.getAttribute(
-					"defaultSegmentsExperienceExternalReferenceCode"),
-				layout.getExternalReferenceCode() + "-default"),
+				defaultSegmentsExperienceExternalReferenceCode,
+				layout.getExternalReferenceCode() +
+					LayoutConstants.EXTERNAL_REFERENCE_CODE_SUFFIX_DEFAULT),
 			layout.getUserId(), layout.getPlid(), serviceContext);
 	}
 
@@ -300,7 +307,7 @@ public class LayoutModelListener extends BaseModelListener<Layout> {
 			_getLayoutPageTemplateEntry(layout);
 
 		if (layoutPageTemplateEntry != null) {
-			TransactionCommitCallbackUtil.registerCallback(
+			TransactionCallbackUtil.registerCommitCallback(
 				() -> _copyStructure(layoutPageTemplateEntry, layout));
 		}
 	}

@@ -11,12 +11,13 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
-import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
-import com.liferay.portal.kernel.dao.jdbc.CurrentConnectionUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.messaging.Message;
+import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.portal.kernel.model.ResourceAction;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.scheduler.SchedulerEngine;
 import com.liferay.portal.kernel.scheduler.StorageType;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
@@ -24,7 +25,8 @@ import com.liferay.portal.kernel.scheduler.Trigger;
 import com.liferay.portal.kernel.scheduler.TriggerFactory;
 import com.liferay.portal.kernel.scheduler.messaging.SchedulerResponse;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
@@ -104,8 +106,8 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	public void testAccessCompanyByCompanyThreadLocal() throws Exception {
 		for (long companyId : COMPANY_IDS) {
 			try (SafeCloseable safeCloseable =
-					CompanyThreadLocal.
-						setInitializingCompanyIdWithSafeCloseable(companyId);
+					CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(
+						companyId);
 
 				Connection connection = DataAccess.getConnection();
 
@@ -153,6 +155,70 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	}
 
 	@Test
+	@TestInfo("LPD-103344")
+	public void testAddDBPartitionExcludesObjectDefinitionRows()
+		throws Exception {
+
+		String classNameSuffix = RandomTestUtil.randomString(4);
+
+		String className =
+			"com.liferay.object.model.ObjectDefinition#" + classNameSuffix;
+		String portletId =
+			"com_liferay_object_web_internal_object_definitions_portlet_" +
+				"ObjectDefinitionsPortlet_" + classNameSuffix;
+
+		String resourceName =
+			"com.liferay.object#" + RandomTestUtil.randomLong();
+
+		ClassName objectDefinitionClassName =
+			_classNameLocalService.addClassName(className);
+		ResourceAction objectDefinitionModelResourceAction =
+			_resourceActionLocalService.addResourceAction(className, "VIEW", 1);
+		ResourceAction objectDefinitionPortletResourceAction =
+			_resourceActionLocalService.addResourceAction(
+				portletId, "ACCESS_IN_CONTROL_PANEL", 1);
+		ResourceAction objectDefinitionRootResourceAction =
+			_resourceActionLocalService.addResourceAction(
+				resourceName, "VIEW", 1);
+
+		try {
+			addDBPartitions();
+
+			for (long companyId : COMPANY_IDS) {
+				String partitionName = getPartitionName(companyId);
+
+				Assert.assertFalse(
+					_hasValue(partitionName, "ClassName_", "value", className));
+				Assert.assertFalse(
+					_hasValue(
+						partitionName, "ResourceAction", "name", className));
+				Assert.assertFalse(
+					_hasValue(
+						partitionName, "ResourceAction", "name", portletId));
+				Assert.assertFalse(
+					_hasValue(
+						partitionName, "ResourceAction", "name", resourceName));
+				Assert.assertTrue(
+					_hasValue(
+						partitionName, "ClassName_", "value",
+						User.class.getName()));
+			}
+		}
+		finally {
+			removeDBPartitions();
+
+			_classNameLocalService.deleteClassName(objectDefinitionClassName);
+
+			_resourceActionLocalService.deleteResourceAction(
+				objectDefinitionModelResourceAction);
+			_resourceActionLocalService.deleteResourceAction(
+				objectDefinitionPortletResourceAction);
+			_resourceActionLocalService.deleteResourceAction(
+				objectDefinitionRootResourceAction);
+		}
+	}
+
+	@Test
 	@TestInfo("LPS-108239")
 	public void testAddDefaultDBPartition() throws PortalException {
 		Assert.assertFalse(
@@ -164,18 +230,9 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	public void testCopyDBPartition() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
 
-		CurrentConnection defaultCurrentConnection =
-			CurrentConnectionUtil.getCurrentConnection();
-
 		try (SafeCloseable safeCloseable1 =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					PortalInstancePool.getDefaultCompanyId())) {
-
-			CurrentConnection currentConnection = dataSource -> connection;
-
-			ReflectionTestUtil.setFieldValue(
-				CurrentConnectionUtil.class, "_currentConnection",
-				currentConnection);
 
 			addDBPartitions();
 
@@ -244,10 +301,6 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 			_assertResourcePermissionTable(companyId);
 		}
 		finally {
-			ReflectionTestUtil.setFieldValue(
-				CurrentConnectionUtil.class, "_currentConnection",
-				defaultCurrentConnection);
-
 			removeDBPartitions(new long[] {companyId});
 
 			deletePartitionRequiredData();
@@ -346,7 +399,8 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 				for (long companyId : COMPANY_IDS) {
 					db.runSQL(
 						dbPartitionDB.getDropPartitionSQL(
-							getExportedPartitionName(companyId)));
+							DBPartitionUtil.getExportedPartitionName(
+								companyId)));
 				}
 			}
 
@@ -374,7 +428,8 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 
 			exportCompany(companyId);
 
-			String exportedPartitionName = getExportedPartitionName(companyId);
+			String exportedPartitionName =
+				DBPartitionUtil.getExportedPartitionName(companyId);
 
 			Assert.assertEquals(
 				tableNames.size(), _getTablesCount(exportedPartitionName));
@@ -423,7 +478,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 
 				db.runSQL(
 					dbPartitionDB.getDropPartitionSQL(
-						getExportedPartitionName(companyId)));
+						DBPartitionUtil.getExportedPartitionName(companyId)));
 			}
 		}
 	}
@@ -461,8 +516,8 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 
 			for (long companyId : COMPANY_IDS) {
 				List<String> companyViewNames = viewNames.get(companyId);
-				String exportedPartitionName = getExportedPartitionName(
-					companyId);
+				String exportedPartitionName =
+					DBPartitionUtil.getExportedPartitionName(companyId);
 
 				Assert.assertEquals(
 					tablesCount.get(companyId) + companyViewNames.size(),
@@ -517,7 +572,8 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 				for (long companyId : COMPANY_IDS) {
 					db.runSQL(
 						dbPartitionDB.getDropPartitionSQL(
-							getExportedPartitionName(companyId)));
+							DBPartitionUtil.getExportedPartitionName(
+								companyId)));
 				}
 			}
 
@@ -552,6 +608,22 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 		finally {
 			deletePartitionRequiredData();
 			removeDBPartitions();
+		}
+	}
+
+	@Test
+	public void testIncrementCounter() throws Exception {
+		long count = DBPartitionUtil.incrementCounter();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					COMPANY_IDS[0])) {
+
+			Assert.assertEquals(count + 1, DBPartitionUtil.incrementCounter());
+
+			Assert.assertEquals(
+				Long.valueOf(COMPANY_IDS[0]),
+				CompanyThreadLocal.getCompanyId());
 		}
 	}
 
@@ -775,6 +847,25 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 		return viewNames.size();
 	}
 
+	private boolean _hasValue(
+			String partitionName, String tableName, String columnName,
+			String value)
+		throws Exception {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select ", columnName, " from ", partitionName,
+					StringPool.PERIOD, tableName, " where ", columnName,
+					" = ?"))) {
+
+			preparedStatement.setString(1, value);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				return resultSet.next();
+			}
+		}
+	}
+
 	private void _populateResourcePermissionTable(Long companyId)
 		throws Exception {
 
@@ -837,6 +928,12 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	private static final String _JOB_NAME_2 = "testjob2";
 
 	private static final int _JOBS_COUNT = 2;
+
+	@Inject
+	private ClassNameLocalService _classNameLocalService;
+
+	@Inject
+	private ResourceActionLocalService _resourceActionLocalService;
 
 	@Inject(
 		filter = "component.name=com.liferay.portal.scheduler.quartz.internal.QuartzSchedulerEngine"

@@ -40,6 +40,9 @@ import java.util.function.Supplier;
 	description = "Single downloadable artifact attached to a product's virtual settings; links one Document Library file (or an external URL) and a version label to the virtual settings record.",
 	value = "ProductVirtualSettingsFileEntry"
 )
+@io.swagger.v3.oas.annotations.media.Schema(
+	description = "Single downloadable artifact attached to a product's virtual settings; links one Document Library file (or an external URL) and a version label to the virtual settings record."
+)
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "ProductVirtualSettingsFileEntry")
 public class ProductVirtualSettingsFileEntry implements Serializable {
@@ -102,7 +105,7 @@ public class ProductVirtualSettingsFileEntry implements Serializable {
 	private Supplier<Map<String, Map<String, String>>> _actionsSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "Base64-encoded payload of the file accepted on write; the service decodes it and stores it as a Document Library file; write-only.",
+		description = "Base64-encoded payload of the file. On write the service decodes it and stores it as a Document Library file. On read it is always populated, so an exported payload carries its content instead of a `src` URL pointing back at the source environment.",
 		example = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
 	)
 	public String getAttachment() {
@@ -139,7 +142,7 @@ public class ProductVirtualSettingsFileEntry implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "Base64-encoded payload of the file accepted on write; the service decodes it and stores it as a Document Library file; write-only."
+		description = "Base64-encoded payload of the file. On write the service decodes it and stores it as a Document Library file. On read it is always populated, so an exported payload carries its content instead of a `src` URL pointing back at the source environment."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String attachment;
@@ -544,4 +547,4 @@ public class ProductVirtualSettingsFileEntry implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1813056324
+// LIFERAY-REST-BUILDER-HASH:1124083791

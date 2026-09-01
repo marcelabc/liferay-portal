@@ -23,6 +23,7 @@ import formatWithStylelint from '../stylelint/formatWithStylelint.mjs';
  * @param options
  * @param {boolean} options.check
  * @param {boolean} options.emitSuppressed
+ * @param {boolean} options.emitSuppressedCss
  * @return {Promise<boolean>} false if file could not be formatted correctly
  */
 export default async function formatSourceFile(filePath, skip, options) {
@@ -40,6 +41,16 @@ export default async function formatSourceFile(filePath, skip, options) {
 
 	try {
 		switch (path.extname(filePath)) {
+			case '.graphql': {
+				if (!skip.prettier) {
+					transformedContent = await formatWithPrettier(
+						transformedContent,
+						filePath
+					);
+				}
+				break;
+			}
+
 			case '.jsp':
 			case '.jspf': {
 				if (!skip.prettier) {
@@ -61,7 +72,8 @@ export default async function formatSourceFile(filePath, skip, options) {
 				if (!skip.stylelint) {
 					const {errorsPresent, output} = await formatWithStylelint(
 						transformedContent,
-						filePath
+						filePath,
+						options.emitSuppressedCss
 					);
 
 					if (errorsPresent) {

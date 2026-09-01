@@ -15,7 +15,6 @@ import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest
 export const test = mergeTests(
 	apiHelpersTest,
 	featureFlagsTest({
-		'LPD-34594': {enabled: true},
 		'LPS-164563': {enabled: true},
 	}),
 	journalPagesTest,
@@ -135,7 +134,7 @@ test('LPD-71138 Add status filter for ongoing publications', async ({
 	await inProgressCheckbox.check();
 	await pendingApprovalCheckbox.uncheck();
 
-	await addFilterButton.click();
+	await page.getByRole('button', {name: 'Show Results'}).click();
 
 	await expect(
 		page.getByRole('link', {name: inProgressCTCollection.body.name})

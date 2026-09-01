@@ -14,6 +14,7 @@ import React, {ComponentProps} from 'react';
 import {manageMembersAction} from '../../index';
 import DefaultPermissionModalContent from '../../main_view/default_permission/DefaultPermissionModalContent';
 import {DefaultPermissionModalContentProps} from '../../main_view/default_permission/DefaultPermissionTypes';
+import importStructuresAction from '../../main_view/props_transformer/actions/importStructuresAction';
 import manageConnectedSitesAction, {
 	ManageConnectedSitesData,
 } from '../../main_view/props_transformer/actions/manageConnectedSitesAction';
@@ -39,6 +40,7 @@ export interface ActionDropdownItemProps {
 		| 'asyncPost'
 		| 'asyncPut'
 		| 'defaultPermissionsModal'
+		| 'importStructureModal'
 		| 'link'
 		| 'manageConnectedSitesModal'
 		| 'manageMembersModal'
@@ -131,6 +133,11 @@ function ActionDropdownItem({
 				size: 'full-screen',
 			});
 		}
+		else if (target === 'importStructureModal') {
+			importStructuresAction(href, () => {
+				navigate(redirect || window.location.href);
+			});
+		}
 		else if (
 			target === 'manageConnectedSitesModal' &&
 			manageConnectedSitesData
@@ -181,6 +188,7 @@ function ActionDropdownItem({
 						},
 					},
 				],
+				center: true,
 				role: 'alertdialog',
 				status: 'danger',
 				title: confirmationTitle || Liferay.Language.get('delete'),

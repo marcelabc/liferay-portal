@@ -12,7 +12,6 @@ import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {serverAdministrationPageTest} from '../../../fixtures/serverAdministrationPageTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
-import {virtualInstancesPagesTest} from '../../../fixtures/virtualInstancesPagesTest';
 import {liferayConfig} from '../../../liferay.config';
 import {AccountUserSelectorPage} from '../../../pages/account-admin-web/AccountUserSelectorPage';
 import {AccountUsersPage} from '../../../pages/account-admin-web/AccountUsersPage';
@@ -21,7 +20,7 @@ import {EditAccountPage} from '../../../pages/account-admin-web/EditAccountPage'
 import {EditUserPage} from '../../../pages/users-admin-web/EditUserPage';
 import getRandomString from '../../../utils/getRandomString';
 import {nextPage, setItemsPerPage} from '../../../utils/pagination';
-import performLogin from '../../../utils/performLogin';
+import {performLoginViaApi} from '../../../utils/performLogin';
 import {waitForAlert} from '../../../utils/waitForAlert';
 
 export const test = mergeTests(
@@ -33,8 +32,7 @@ export const test = mergeTests(
 	}),
 	loginTest(),
 	serverAdministrationPageTest,
-	usersAndOrganizationsPagesTest,
-	virtualInstancesPagesTest
+	usersAndOrganizationsPagesTest
 );
 
 test(
@@ -664,9 +662,9 @@ test(
 
 		await expect(async () => {
 			await accountUserSelectorPage.usersTable.orderButton.click();
-			await accountUserSelectorPage.usersTable
-				.orderMenuItem('First Name')
-				.click({timeout: 1000});
+			await accountUserSelectorPage.usersTable.clickOrderMenuItem(
+				'First Name'
+			);
 		}).toPass();
 
 		await expect(
@@ -681,9 +679,9 @@ test(
 
 		await expect(async () => {
 			await accountUserSelectorPage.usersTable.orderButton.click();
-			await accountUserSelectorPage.usersTable
-				.orderMenuItem('Last Name')
-				.click({timeout: 1000});
+			await accountUserSelectorPage.usersTable.clickOrderMenuItem(
+				'Last Name'
+			);
 		}).toPass();
 
 		await expect(
@@ -698,9 +696,9 @@ test(
 
 		await expect(async () => {
 			await accountUserSelectorPage.usersTable.orderButton.click();
-			await accountUserSelectorPage.usersTable
-				.orderMenuItem('Email Address')
-				.click({timeout: 1000});
+			await accountUserSelectorPage.usersTable.clickOrderMenuItem(
+				'Email Address'
+			);
 		}).toPass();
 
 		await expect(
@@ -715,9 +713,9 @@ test(
 
 		await expect(async () => {
 			await accountUserSelectorPage.usersTable.orderButton.click();
-			await accountUserSelectorPage.usersTable
-				.orderMenuItem('Last Name')
-				.click({timeout: 1000});
+			await accountUserSelectorPage.usersTable.clickOrderMenuItem(
+				'Last Name'
+			);
 		}).toPass();
 
 		await expect(
@@ -1051,39 +1049,47 @@ test(
 				accountUserSelectorPage.usersTable.searchInput
 			).toBeEditable();
 
-			await accountUserSelectorPage.usersTable.filterButton.click();
-			await accountUserSelectorPage.usersTable
-				.filterMenuItem('Valid Domain Users')
-				.click();
+			await accountUserSelectorPage.usersTable.changeFilter(
+				'Valid Domain Users'
+			);
 
-			await page.waitForTimeout(100);
+			await expect(async () => {
+				expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user1.name
+					)
+				).toBeNull();
+				expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user2.name
+					)
+				).toBeNull();
+			}).toPass();
 
-			expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user1.name)
-			).toBeNull();
-			expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user2.name)
-			).toBeNull();
+			await accountUserSelectorPage.usersTable.changeFilter('All Users');
 
-			await accountUserSelectorPage.usersTable.filterButton.click();
-			await accountUserSelectorPage.usersTable
-				.filterMenuItem('All Users')
-				.click();
-
-			await page.waitForTimeout(100);
-
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user1.name)
-			).toBeVisible();
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user1.name)
-			).toBeEnabled();
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user2.name)
-			).toBeVisible();
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user2.name)
-			).toBeEnabled();
+			await expect(async () => {
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user1.name
+					)
+				).toBeVisible({timeout: 1000});
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user1.name
+					)
+				).toBeEnabled({timeout: 1000});
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user2.name
+					)
+				).toBeVisible({timeout: 1000});
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user2.name
+					)
+				).toBeEnabled({timeout: 1000});
+			}).toPass();
 
 			await accountUserSelectorPage.usersTable.selectAllItemsCheckbox.check();
 			await accountUserSelectorPage.assignButton.click();
@@ -1123,42 +1129,55 @@ test(
 				accountUserSelectorPage.usersTable.searchInput
 			).toBeEditable();
 
-			await accountUserSelectorPage.usersTable.filterButton.click();
-			await accountUserSelectorPage.usersTable
-				.filterMenuItem('Valid Domain Users')
-				.click();
+			await expect(async () => {
+				await accountUserSelectorPage.usersTable.changeFilter(
+					'All Users'
+				);
+				await accountUserSelectorPage.usersTable.changeFilter(
+					'Valid Domain Users'
+				);
 
-			await page.waitForTimeout(100);
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user1.name
+					)
+				).toBeVisible({timeout: 1000});
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user1.name
+					)
+				).toBeEnabled({timeout: 1000});
+				expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user2.name
+					)
+				).toBeNull();
+			}).toPass();
 
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user1.name)
-			).toBeVisible();
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user1.name)
-			).toBeEnabled();
-			expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user2.name)
-			).toBeNull();
+			await accountUserSelectorPage.usersTable.changeFilter('All Users');
 
-			await accountUserSelectorPage.usersTable.filterButton.click();
-			await accountUserSelectorPage.usersTable
-				.filterMenuItem('All Users')
-				.click();
-
-			await page.waitForTimeout(100);
-
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user1.name)
-			).toBeVisible();
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user1.name)
-			).toBeEnabled();
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user2.name)
-			).toBeVisible();
-			await expect(
-				await accountUserSelectorPage.usersTable.rowCheckbox(user2.name)
-			).toBeDisabled();
+			await expect(async () => {
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user1.name
+					)
+				).toBeVisible({timeout: 1000});
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user1.name
+					)
+				).toBeEnabled({timeout: 1000});
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user2.name
+					)
+				).toBeVisible({timeout: 1000});
+				await expect(
+					await accountUserSelectorPage.usersTable.rowCheckbox(
+						user2.name
+					)
+				).toBeDisabled({timeout: 1000});
+			}).toPass();
 
 			await accountUserSelectorPage.usersTable.selectAllItemsCheckbox.check();
 			await accountUserSelectorPage.assignButton.click();
@@ -1179,10 +1198,9 @@ test(
 				accountUserSelectorPage.usersTable.searchInput
 			).toBeEditable();
 
-			await accountUserSelectorPage.usersTable.filterButton.click();
-			await accountUserSelectorPage.usersTable
-				.filterMenuItem('Valid Domain Users')
-				.click();
+			await accountUserSelectorPage.usersTable.changeFilter(
+				'Valid Domain Users'
+			);
 		}
 		finally {
 			await emailDomainsInstanceSettingsPage.enableEmailDomainValidation(
@@ -1577,10 +1595,10 @@ test(
 		editUserPage,
 		emailDomainsInstanceSettingsPage,
 		page,
-		virtualInstancesPage,
 	}) => {
 		test.setTimeout(160000);
 
+		const DEFAULT_VIRTUAL_INSTANCE_DOMAIN = 'able.com';
 		const DEFAULT_VIRTUAL_INSTANCE_NAME = 'www.able.com';
 
 		await emailDomainsInstanceSettingsPage.enableEmailDomainValidation(
@@ -1632,9 +1650,17 @@ test(
 				type: 'danger',
 			});
 
-			await virtualInstancesPage.addNewVirtualInstance(
-				DEFAULT_VIRTUAL_INSTANCE_NAME
-			);
+			const virtualInstance =
+				await apiHelpers.headlessPortalInstance.addVirtualInstance({
+					domain: DEFAULT_VIRTUAL_INSTANCE_DOMAIN,
+					portalInstanceId: DEFAULT_VIRTUAL_INSTANCE_NAME,
+					virtualHost: DEFAULT_VIRTUAL_INSTANCE_NAME,
+				});
+
+			apiHelpers.data.push({
+				id: virtualInstance.portalInstanceId,
+				type: 'virtual-instance',
+			});
 
 			newPage = await browser.newPage({
 				baseURL: `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:${liferayConfig.environment.port}`,
@@ -1646,12 +1672,12 @@ test(
 			editAccountPage = new EditAccountPage(newPage);
 			editUserPage = new EditUserPage(newPage);
 
-			await performLogin(
-				newPage,
-				'test',
-				'',
-				`@${DEFAULT_VIRTUAL_INSTANCE_NAME}.com`
-			);
+			await performLoginViaApi({
+				domain: `@${DEFAULT_VIRTUAL_INSTANCE_DOMAIN}`,
+				loginUrl: `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:${liferayConfig.environment.port}`,
+				page: newPage,
+				screenName: 'test',
+			});
 
 			await accountsPage.goto(false);
 
@@ -1693,9 +1719,6 @@ test(
 				await newPage.close();
 			}
 
-			await virtualInstancesPage.deleteVirtualInstance(
-				DEFAULT_VIRTUAL_INSTANCE_NAME
-			);
 			await emailDomainsInstanceSettingsPage.enableEmailDomainValidation(
 				false,
 				''
@@ -1934,7 +1957,7 @@ test(
 
 		await accountUsersPage.usersTable
 			.filterMenuItem('No Assigned Account')
-			.click();
+			.click({force: true});
 
 		await expect(
 			accountUsersPage.usersTable.cell(user1.emailAddress)
@@ -1956,7 +1979,7 @@ test(
 
 		await accountUsersPage.usersTable
 			.filterMenuItem('Selected Accounts')
-			.click();
+			.click({force: true});
 
 		await expect(
 			accountUsersAccountSelectorPage.accountsTable.searchInput
@@ -2007,6 +2030,8 @@ test(
 			accountUsersPage.usersTable.cell(user3.emailAddress)
 		).toHaveCount(0);
 
+		await accountUsersPage.usersTable.clearButton.click();
+
 		await expect(async () => {
 			await accountUsersPage.usersTable.filterButton.click();
 
@@ -2017,7 +2042,7 @@ test(
 
 		await accountUsersPage.usersTable
 			.filterMenuItem('Selected Accounts')
-			.click();
+			.click({force: true});
 
 		await expect(
 			accountUsersAccountSelectorPage.accountsTable.searchInput
@@ -2634,7 +2659,7 @@ test(
 
 test(
 	'Can filter users by account association',
-	{tag: ['@LPD-48750', '@LPS-107598', '@LPS-129713']},
+	{tag: ['@LPD-48750', '@LPD-69113', '@LPS-107598', '@LPS-129713']},
 	async ({apiHelpers, usersAndOrganizationsPage}) => {
 		const account = await apiHelpers.headlessAdminUser.postAccount({
 			type: 'business',
@@ -2662,12 +2687,15 @@ test(
 			await usersAndOrganizationsPage.tableFilterMenu.click();
 
 			await expect(
-				usersAndOrganizationsPage.tableFilterMenuItem('Company Users')
-			).toBeVisible();
+				usersAndOrganizationsPage.tableFilterMenuItem(
+					'Users Without an Account',
+					false
+				)
+			).toHaveCount(1);
 		}).toPass();
 
 		await usersAndOrganizationsPage
-			.tableFilterMenuItem('Company Users')
+			.tableFilterMenuItem('Users Without an Account', false)
 			.click();
 
 		await expect(

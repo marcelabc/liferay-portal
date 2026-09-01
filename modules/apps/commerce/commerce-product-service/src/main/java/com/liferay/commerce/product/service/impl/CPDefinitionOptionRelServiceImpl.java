@@ -10,10 +10,10 @@ import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDefinitionOptionRel;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CommerceCatalog;
-import com.liferay.commerce.product.service.CPDefinitionLocalService;
-import com.liferay.commerce.product.service.CPInstanceLocalService;
 import com.liferay.commerce.product.service.CommerceCatalogLocalService;
 import com.liferay.commerce.product.service.base.CPDefinitionOptionRelServiceBaseImpl;
+import com.liferay.commerce.product.service.persistence.CPDefinitionPersistence;
+import com.liferay.commerce.product.service.persistence.CPInstancePersistence;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.search.BaseModelSearchResult;
@@ -97,7 +97,7 @@ public class CPDefinitionOptionRelServiceImpl
 		throws PortalException {
 
 		CPDefinitionOptionRel cpDefinitionOptionRel =
-			cpDefinitionOptionRelLocalService.getCPDefinitionOptionRel(
+			cpDefinitionOptionRelPersistence.findByPrimaryKey(
 				cpDefinitionOptionRelId);
 
 		_checkCommerceCatalog(
@@ -113,7 +113,7 @@ public class CPDefinitionOptionRelServiceImpl
 		throws PortalException {
 
 		CPDefinitionOptionRel cpDefinitionOptionRel =
-			cpDefinitionOptionRelLocalService.fetchCPDefinitionOptionRel(
+			cpDefinitionOptionRelPersistence.fetchByPrimaryKey(
 				cpDefinitionOptionRelId);
 
 		if (cpDefinitionOptionRel != null) {
@@ -131,8 +131,27 @@ public class CPDefinitionOptionRelServiceImpl
 
 		_checkCommerceCatalog(cpDefinitionId, ActionKeys.VIEW);
 
-		return cpDefinitionOptionRelLocalService.fetchCPDefinitionOptionRel(
+		return cpDefinitionOptionRelPersistence.fetchByC_C(
 			cpDefinitionId, cpOptionId);
+	}
+
+	@Override
+	public CPDefinitionOptionRel
+			fetchCPDefinitionOptionRelByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		CPDefinitionOptionRel cpDefinitionOptionRel =
+			cpDefinitionOptionRelLocalService.
+				fetchCPDefinitionOptionRelByExternalReferenceCode(
+					externalReferenceCode, companyId);
+
+		if (cpDefinitionOptionRel != null) {
+			_checkCommerceCatalog(
+				cpDefinitionOptionRel.getCPDefinitionId(), ActionKeys.VIEW);
+		}
+
+		return cpDefinitionOptionRel;
 	}
 
 	@Override
@@ -141,8 +160,25 @@ public class CPDefinitionOptionRelServiceImpl
 		throws PortalException {
 
 		CPDefinitionOptionRel cpDefinitionOptionRel =
-			cpDefinitionOptionRelLocalService.getCPDefinitionOptionRel(
+			cpDefinitionOptionRelPersistence.findByPrimaryKey(
 				cpDefinitionOptionRelId);
+
+		_checkCommerceCatalog(
+			cpDefinitionOptionRel.getCPDefinitionId(), ActionKeys.VIEW);
+
+		return cpDefinitionOptionRel;
+	}
+
+	@Override
+	public CPDefinitionOptionRel
+			getCPDefinitionOptionRelByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		CPDefinitionOptionRel cpDefinitionOptionRel =
+			cpDefinitionOptionRelLocalService.
+				getCPDefinitionOptionRelByExternalReferenceCode(
+					externalReferenceCode, companyId);
 
 		_checkCommerceCatalog(
 			cpDefinitionOptionRel.getCPDefinitionId(), ActionKeys.VIEW);
@@ -169,7 +205,7 @@ public class CPDefinitionOptionRelServiceImpl
 				long cpInstanceId)
 		throws PortalException {
 
-		CPInstance cpInstance = _cpInstanceLocalService.getCPInstance(
+		CPInstance cpInstance = _cpInstancePersistence.findByPrimaryKey(
 			cpInstanceId);
 
 		_checkCommerceCatalog(cpInstance.getCPDefinitionId(), ActionKeys.VIEW);
@@ -197,7 +233,7 @@ public class CPDefinitionOptionRelServiceImpl
 
 		_checkCommerceCatalog(cpDefinitionId, ActionKeys.VIEW);
 
-		return cpDefinitionOptionRelLocalService.getCPDefinitionOptionRels(
+		return cpDefinitionOptionRelPersistence.findByCPDefinitionId(
 			cpDefinitionId, start, end);
 	}
 
@@ -209,7 +245,7 @@ public class CPDefinitionOptionRelServiceImpl
 
 		_checkCommerceCatalog(cpDefinitionId, ActionKeys.VIEW);
 
-		return cpDefinitionOptionRelLocalService.getCPDefinitionOptionRels(
+		return cpDefinitionOptionRelPersistence.findByCPDefinitionId(
 			cpDefinitionId, start, end, orderByComparator);
 	}
 
@@ -219,7 +255,7 @@ public class CPDefinitionOptionRelServiceImpl
 
 		_checkCommerceCatalog(cpDefinitionId, ActionKeys.VIEW);
 
-		return cpDefinitionOptionRelLocalService.getCPDefinitionOptionRelsCount(
+		return cpDefinitionOptionRelPersistence.countByCPDefinitionId(
 			cpDefinitionId);
 	}
 
@@ -230,7 +266,7 @@ public class CPDefinitionOptionRelServiceImpl
 
 		_checkCommerceCatalog(cpDefinitionId, ActionKeys.VIEW);
 
-		return cpDefinitionOptionRelLocalService.getCPDefinitionOptionRelsCount(
+		return cpDefinitionOptionRelPersistence.countByC_SC(
 			cpDefinitionId, skuContributor);
 	}
 
@@ -269,7 +305,7 @@ public class CPDefinitionOptionRelServiceImpl
 		throws PortalException {
 
 		CPDefinitionOptionRel cpDefinitionOptionRel =
-			cpDefinitionOptionRelLocalService.getCPDefinitionOptionRel(
+			cpDefinitionOptionRelPersistence.findByPrimaryKey(
 				cpDefinitionOptionRelId);
 
 		_checkCommerceCatalog(
@@ -292,7 +328,7 @@ public class CPDefinitionOptionRelServiceImpl
 		throws PortalException {
 
 		CPDefinitionOptionRel cpDefinitionOptionRel =
-			cpDefinitionOptionRelLocalService.getCPDefinitionOptionRel(
+			cpDefinitionOptionRelPersistence.findByPrimaryKey(
 				cpDefinitionOptionRelId);
 
 		_checkCommerceCatalog(
@@ -305,10 +341,26 @@ public class CPDefinitionOptionRelServiceImpl
 			priceType, typeSettings, serviceContext);
 	}
 
+	@Override
+	public CPDefinitionOptionRel updateExternalReferenceCode(
+			long cpDefinitionOptionRelId, String externalReferenceCode)
+		throws PortalException {
+
+		CPDefinitionOptionRel cpDefinitionOptionRel =
+			cpDefinitionOptionRelPersistence.findByPrimaryKey(
+				cpDefinitionOptionRelId);
+
+		_checkCommerceCatalog(
+			cpDefinitionOptionRel.getCPDefinitionId(), ActionKeys.UPDATE);
+
+		return cpDefinitionOptionRelLocalService.updateExternalReferenceCode(
+			cpDefinitionOptionRelId, externalReferenceCode);
+	}
+
 	private void _checkCommerceCatalog(long cpDefinitionId, String actionId)
 		throws PortalException {
 
-		CPDefinition cpDefinition = _cpDefinitionLocalService.fetchCPDefinition(
+		CPDefinition cpDefinition = _cpDefinitionPersistence.fetchByPrimaryKey(
 			cpDefinitionId);
 
 		if (cpDefinition == null) {
@@ -337,9 +389,9 @@ public class CPDefinitionOptionRelServiceImpl
 		_commerceCatalogModelResourcePermission;
 
 	@Reference
-	private CPDefinitionLocalService _cpDefinitionLocalService;
+	private CPDefinitionPersistence _cpDefinitionPersistence;
 
 	@Reference
-	private CPInstanceLocalService _cpInstanceLocalService;
+	private CPInstancePersistence _cpInstancePersistence;
 
 }

@@ -7,7 +7,6 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {collectionsPagesTest} from '../../../../fixtures/collectionsPagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
-import {featureFlagsTest} from '../../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../fixtures/loginTest';
 import getRandomString from '../../../../utils/getRandomString';
@@ -17,9 +16,6 @@ import {waitForAlert} from '../../../../utils/waitForAlert';
 const test = mergeTests(
 	collectionsPagesTest,
 	dataApiHelpersTest,
-	featureFlagsTest({
-		'LPD-17564': {enabled: true},
-	}),
 	isolatedSiteTest,
 	loginTest()
 );
@@ -32,10 +28,19 @@ test(
 		const spaceName = `Space ${getRandomString()}`;
 
 		const expectScopeRowShowsSpace = async () => {
-			const scopeRow = page.getByRole('row', {name: spaceName});
+			const scopeCollapse = page.getByRole('button', {name: 'Scope'});
 
-			await expect(scopeRow).toBeVisible();
-			await expect(scopeRow).toContainText('Asset Library or Space');
+			await expect(scopeCollapse).toBeVisible();
+
+			if (
+				(await scopeCollapse.getAttribute('aria-expanded')) !== 'true'
+			) {
+				await scopeCollapse.click();
+			}
+
+			await expect(
+				page.getByRole('row').filter({hasText: spaceName})
+			).toContainText('Asset Library or Space');
 		};
 
 		await test.step('Create a Space', async () => {
@@ -93,15 +98,13 @@ test(
 				.getByRole('menuitem', {name: 'Other Site, Asset Library, or'})
 				.click();
 
-			await page
+			const scopeFrame = page
 				.locator('iframe[title="Scope"]')
-				.contentFrame()
-				.getByRole('link', {name: 'Spaces'})
-				.click();
+				.contentFrame();
 
-			await page
-				.locator('iframe[title="Scope"]')
-				.contentFrame()
+			await scopeFrame.getByRole('link', {name: 'Spaces'}).click();
+
+			await scopeFrame
 				.getByRole('link', {exact: true, name: spaceName})
 				.click();
 		});

@@ -78,11 +78,12 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups/{id}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Deletes the product group identified by id. Calls CommercePricingClassService.deleteCommercePricingClass. Validation -- Service-level NoSuchPricingClassException -> 404. Side effects -- Cascades deletion of CommercePricingClassCPDefinitionRel rows and associated pricing rules."
+		description = "Deletes the product group identified by ID. Returns 404 when the record is not found. Side effects -- Cascades deletion of product group assignment rows and associated pricing rules."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -153,11 +154,12 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups/by-externalReferenceCode/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Deletes the product group identified by external reference code. Calls CommercePricingClassService.fetchCommercePricingClassByExternalReferenceCode + deleteCommercePricingClass. Validation -- NoSuchPricingClassException -> 404 when ERC not found. Side effects -- Cascades deletion of rels and rules."
+		description = "Deletes the product group identified by external reference code. Returns 404 when the external reference code is not found. Side effects -- Cascades deletion of rels and rules."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -186,11 +188,12 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups/{id}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Fetches the product group identified by id. Calls CommercePricingClassService.getCommercePricingClass (via DTO converter). Validation -- NoSuchPricingClassException -> 404 when id not found."
+		description = "Fetches the product group identified by ID. Returns 404 when the ID is not found."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -219,11 +222,12 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups/by-externalReferenceCode/{externalReferenceCode}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Fetches the product group identified by external reference code. Calls CommercePricingClassService.fetchCommercePricingClassByExternalReferenceCode. Validation -- NoSuchPricingClassException -> 404 when ERC not found."
+		description = "Fetches the product group identified by external reference code. Returns 404 when the external reference code is not found."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -254,27 +258,32 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Returns a page of product groups scoped to the current company. Calls SearchUtil.search over CommercePricingClass. List query support — filterable fields -- title; sortable fields -- title."
+		description = "Returns a page of product groups scoped to the current company. List query support — filterable fields -- title; sortable fields -- title."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "OData v4 filter expression that narrows the result set. Supported fields depend on the endpoint and are sourced from the matching entity model (typically createDate, externalReferenceCode, modifiedDate, productExternalReferenceCode, productId, and similar). Example -- filter=productId eq 12345.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "filter"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "One-based page index. Combined with pageSize to paginate the result set; defaults to 1 when omitted.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "page"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Number of items per page. Defaults to the portal's configured page size when omitted; capped by the portal configuration to prevent unbounded reads.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "pageSize"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Full-text search expression matched against the resource's indexed fields. Returns the items whose searchable content matches the expression.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "search"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Sort expression of the form `field:asc` or `field:desc`, comma-separated for multi-field sorting. Supported sort fields depend on the endpoint and are sourced from the matching entity model (typically createDate, modifiedDate, and the resource's name or code field).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "sort"
 			)
@@ -307,11 +316,12 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups/{id}' -d $'{"description": ___, "externalReferenceCode": ___, "id": ___, "products": ___, "productsCount": ___, "title": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Partially updates the product group identified by id, optionally appending new product bindings. Calls CommercePricingClassService.getCommercePricingClass + updateCommercePricingClass + ExpandoUtil.updateExpando + nested addCommercePricingClassCPDefinitionRel. Validation -- NoSuchPricingClassException -> 404 when id not found; NoSuchCProductException -> 404 when nested products fail to resolve. Side effects -- Reindexes; updates ExpandoBridge; appends new product bindings without removing existing ones."
+		description = "Partially updates the product group identified by ID, optionally appending new product bindings. Returns 404 when the ID is not found, and 404 when nested products fail to resolve. Side effects -- Reindexes; updates custom field storage; appends new product bindings without removing existing ones."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -344,11 +354,12 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups/by-externalReferenceCode/{externalReferenceCode}' -d $'{"description": ___, "externalReferenceCode": ___, "id": ___, "products": ___, "productsCount": ___, "title": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Partially updates the product group identified by external reference code. Calls CommercePricingClassService.fetchCommercePricingClassByExternalReferenceCode + updateCommercePricingClass + nested updates. Validation -- NoSuchPricingClassException -> 404 when ERC not found; NoSuchCProductException -> 404 when nested products fail to resolve. Side effects -- Reindexes; updates ExpandoBridge; appends new product bindings."
+		description = "Partially updates the product group identified by external reference code. Returns 404 when the external reference code is not found, and 404 when nested products fail to resolve. Side effects -- Reindexes; updates custom field storage; appends new product bindings."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -383,7 +394,7 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups' -d $'{"description": ___, "externalReferenceCode": ___, "id": ___, "products": ___, "productsCount": ___, "title": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates or updates a product group, optionally including product bindings. Calls CommercePricingClassService.addOrUpdateCommercePricingClass + nested addCommercePricingClassCPDefinitionRel. POST is upsert by external reference code -- creates a new entity when the ERC is unknown, otherwise updates the existing one. Validation -- NoSuchCProductException -> 404 when nested products fail to resolve. Side effects -- Reindexes; creates the rel rows for any supplied products."
+		description = "Creates or updates a product group, optionally including product bindings. POST is upsert by external reference code -- creates a new entity when the ERC is unknown, otherwise updates the existing one. Returns 404 when nested products fail to resolve. Side effects -- Reindexes; creates the rel rows for any supplied products."
 	)
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "ProductGroup")}
@@ -451,14 +462,17 @@ public abstract class BaseProductGroupResourceImpl
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "OData v4 filter expression that narrows the result set. Supported fields depend on the endpoint and are sourced from the matching entity model (typically createDate, externalReferenceCode, modifiedDate, productExternalReferenceCode, productId, and similar). Example -- filter=productId eq 12345.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "filter"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Full-text search expression matched against the resource's indexed fields. Returns the items whose searchable content matches the expression.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "search"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Sort expression of the form `field:asc` or `field:desc`, comma-separated for multi-field sorting. Supported sort fields depend on the endpoint and are sourced from the matching entity model (typically createDate, modifiedDate, and the resource's name or code field).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "sort"
 			),
@@ -529,11 +543,12 @@ public abstract class BaseProductGroupResourceImpl
 	 * curl -X 'PUT' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/product-groups/by-externalReferenceCode/{externalReferenceCode}' -d $'{"description": ___, "externalReferenceCode": ___, "id": ___, "products": ___, "productsCount": ___, "title": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates or replaces the product group identified by external reference code. Calls CommercePricingClassService.addOrUpdateCommercePricingClass + nested updates. POST is upsert by external reference code -- creates a new entity when the ERC is unknown, otherwise updates the existing one. Validation -- NoSuchCProductException -> 404 when nested products fail to resolve. Side effects -- Reindexes; appends new product bindings."
+		description = "Creates or replaces the product group identified by external reference code. POST is upsert by external reference code -- creates a new entity when the ERC is unknown, otherwise updates the existing one. Returns 404 when nested products fail to resolve. Side effects -- Reindexes; appends new product bindings."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -1360,4 +1375,4 @@ public abstract class BaseProductGroupResourceImpl
 		LogFactoryUtil.getLog(BaseProductGroupResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:313551564
+// LIFERAY-REST-BUILDER-HASH:542394908

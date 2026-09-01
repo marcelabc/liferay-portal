@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.JAXRSWhiteboardTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -84,6 +85,8 @@ public abstract class BaseToolSetResourceTestCase {
 	public static void setUpClass() throws Exception {
 		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		JAXRSWhiteboardTestUtil.ensureReady();
 	}
 
 	@Before
@@ -181,26 +184,26 @@ public abstract class BaseToolSetResourceTestCase {
 	}
 
 	@Test
-	public void testGetToolSets() throws Exception {
-		Page<ToolSet> page = toolSetResource.getToolSets();
+	public void testGetToolSetsPage() throws Exception {
+		Page<ToolSet> page = toolSetResource.getToolSetsPage();
 
 		long totalCount = page.getTotalCount();
 
-		ToolSet toolSet1 = testGetToolSets_addToolSet(randomToolSet());
+		ToolSet toolSet1 = testGetToolSetsPage_addToolSet(randomToolSet());
 
-		ToolSet toolSet2 = testGetToolSets_addToolSet(randomToolSet());
+		ToolSet toolSet2 = testGetToolSetsPage_addToolSet(randomToolSet());
 
-		page = toolSetResource.getToolSets();
+		page = toolSetResource.getToolSetsPage();
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
 		assertContains(toolSet1, (List<ToolSet>)page.getItems());
 		assertContains(toolSet2, (List<ToolSet>)page.getItems());
-		assertValid(page, testGetToolSets_getExpectedActions());
+		assertValid(page, testGetToolSetsPage_getExpectedActions());
 	}
 
 	protected Map<String, Map<String, String>>
-			testGetToolSets_getExpectedActions()
+			testGetToolSetsPage_getExpectedActions()
 		throws Exception {
 
 		Map<String, Map<String, String>> expectedActions = new HashMap<>();
@@ -208,7 +211,7 @@ public abstract class BaseToolSetResourceTestCase {
 		return expectedActions;
 	}
 
-	protected ToolSet testGetToolSets_addToolSet(ToolSet toolSet)
+	protected ToolSet testGetToolSetsPage_addToolSet(ToolSet toolSet)
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -907,4 +910,4 @@ public abstract class BaseToolSetResourceTestCase {
 		_toolSetResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1245916398
+// LIFERAY-REST-BUILDER-HASH:1838648977

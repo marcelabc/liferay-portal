@@ -9,6 +9,7 @@ import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogContext;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -28,6 +29,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.security.audit.configuration.AuditConfigurationUtil;
 import com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration;
 
 import jakarta.servlet.Filter;
@@ -53,7 +55,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration",
-	enabled = false,
 	property = {
 		"after-filter=Session Max Allowed Filter", "servlet-context-name=",
 		"servlet-filter-name=Audit Filter", "url-pattern=/*",
@@ -115,30 +116,60 @@ public class AuditFilter extends BaseFilter implements TryFilter {
 			httpServletRequest.getServerName());
 		auditRequestThreadLocal.setServerPort(
 			httpServletRequest.getServerPort());
-		auditRequestThreadLocal.setSessionID(httpSession.getId());
+		auditRequestThreadLocal.setSessionID(
+			(String)httpSession.getAttribute(WebKeys.AUDIT_SESSION_ID));
+
+		long companyId = CompanyThreadLocal.getCompanyId();
+
+		String xRequestId = httpServletRequest.getHeader(
+			HttpHeaders.X_REQUEST_ID);
+
+		if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-6417")) {
+			if (!_isValidXRequestId(xRequestId)) {
+				xRequestId = PortalUUIDUtil.generate();
+
+				auditRequestThreadLocal.setRequestIdGenerated(true);
+			}
+
+			auditRequestThreadLocal.setRequestId(xRequestId);
+		}
 
 		if (!_auditLogContextConfiguration.enabled()) {
 			return null;
 		}
 
-		String xRequestId = null;
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-6417") &&
+			(!_auditLogContextConfiguration.useIncomingXRequestId() ||
+			 !_isValidXRequestId(xRequestId))) {
 
-		if (_auditLogContextConfiguration.useIncomingXRequestId()) {
-			xRequestId = httpServletRequest.getHeader(HttpHeaders.X_REQUEST_ID);
-		}
-
-		if (!_isValidXRequestId(xRequestId)) {
 			xRequestId = PortalUUIDUtil.generate();
 		}
 
 		httpServletResponse.setHeader(HttpHeaders.X_REQUEST_ID, xRequestId);
 
 		_auditLogContext.setContext(
-			remoteAddr, CompanyThreadLocal.getCompanyId(),
-			httpServletRequest.getServerName(), userEmailAddress, userId,
-			userLogin, xRequestId);
+			remoteAddr, companyId, httpServletRequest.getServerName(),
+			userEmailAddress, userId, userLogin, xRequestId);
 
 		return null;
+	}
+
+	@Override
+	public boolean isFilterEnabled(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
+
+		long companyId = CompanyThreadLocal.getCompanyId();
+
+		if (companyId == CompanyConstants.SYSTEM) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Skip filter for company ID 0");
+			}
+
+			return false;
+		}
+
+		return AuditConfigurationUtil.isEnabled(companyId);
 	}
 
 	@Activate

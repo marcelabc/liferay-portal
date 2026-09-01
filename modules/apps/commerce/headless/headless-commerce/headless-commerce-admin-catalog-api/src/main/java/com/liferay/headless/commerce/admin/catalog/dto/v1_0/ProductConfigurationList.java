@@ -44,6 +44,9 @@ import java.util.function.Supplier;
 	description = "Container that groups product configuration entries under a single inventory, shipping, and tax template; each catalog has one master configuration list used as the catalog-level default, and additional sub-templates can inherit from a parent and be qualified by account, account group, channel, or order type.",
 	value = "ProductConfigurationList"
 )
+@io.swagger.v3.oas.annotations.media.Schema(
+	description = "Container that groups product configuration entries under a single inventory, shipping, and tax template; each catalog has one master configuration list used as the catalog-level default, and additional sub-templates can inherit from a parent and be qualified by account, account group, channel, or order type."
+)
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "ProductConfigurationList")
 public class ProductConfigurationList implements Serializable {
@@ -301,7 +304,7 @@ public class ProductConfigurationList implements Serializable {
 		_customFieldsSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "Date at which the configuration list becomes effective; interpreted in the requesting user's time zone; rejected when invalid.",
+		description = "Date and time at which the configuration list becomes effective; interpreted in the requesting user's time zone; rejected when invalid.",
 		example = "2017-07-21"
 	)
 	public Date getDisplayDate() {
@@ -338,7 +341,7 @@ public class ProductConfigurationList implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "Date at which the configuration list becomes effective; interpreted in the requesting user's time zone; rejected when invalid."
+		description = "Date and time at which the configuration list becomes effective; interpreted in the requesting user's time zone; rejected when invalid."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Date displayDate;
@@ -347,7 +350,7 @@ public class ProductConfigurationList implements Serializable {
 	private Supplier<Date> _displayDateSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "Date after which the configuration list is no longer effective; ignored when `neverExpire` is true; rejected when invalid.",
+		description = "Date and time after which the configuration list is no longer effective; ignored when `neverExpire` is true; rejected when invalid.",
 		example = "2017-08-21"
 	)
 	public Date getExpirationDate() {
@@ -384,7 +387,7 @@ public class ProductConfigurationList implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "Date after which the configuration list is no longer effective; ignored when `neverExpire` is true; rejected when invalid."
+		description = "Date and time after which the configuration list is no longer effective; ignored when `neverExpire` is true; rejected when invalid."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected Date expirationDate;
@@ -618,6 +621,62 @@ public class ProductConfigurationList implements Serializable {
 
 	@JsonIgnore
 	private Supplier<Boolean> _neverExpireSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "External reference code of the parent configuration list; it takes precedence over `parentProductConfigurationListId`. An unresolved code fails the request, except during an import, where it creates an empty configuration list to be completed later. The parent must belong to the same site as the child.",
+		example = "AB-34098-789-N"
+	)
+	public String getParentProductConfigurationListExternalReferenceCode() {
+		if (_parentProductConfigurationListExternalReferenceCodeSupplier !=
+				null) {
+
+			parentProductConfigurationListExternalReferenceCode =
+				_parentProductConfigurationListExternalReferenceCodeSupplier.
+					get();
+
+			_parentProductConfigurationListExternalReferenceCodeSupplier = null;
+		}
+
+		return parentProductConfigurationListExternalReferenceCode;
+	}
+
+	public void setParentProductConfigurationListExternalReferenceCode(
+		String parentProductConfigurationListExternalReferenceCode) {
+
+		this.parentProductConfigurationListExternalReferenceCode =
+			parentProductConfigurationListExternalReferenceCode;
+
+		_parentProductConfigurationListExternalReferenceCodeSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setParentProductConfigurationListExternalReferenceCode(
+		UnsafeSupplier<String, Exception>
+			parentProductConfigurationListExternalReferenceCodeUnsafeSupplier) {
+
+		_parentProductConfigurationListExternalReferenceCodeSupplier = () -> {
+			try {
+				return parentProductConfigurationListExternalReferenceCodeUnsafeSupplier.
+					get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "External reference code of the parent configuration list; it takes precedence over `parentProductConfigurationListId`. An unresolved code fails the request, except during an import, where it creates an empty configuration list to be completed later. The parent must belong to the same site as the child."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String parentProductConfigurationListExternalReferenceCode;
+
+	@JsonIgnore
+	private Supplier<String>
+		_parentProductConfigurationListExternalReferenceCodeSupplier;
 
 	@DecimalMin("0")
 	@io.swagger.v3.oas.annotations.media.Schema(
@@ -976,6 +1035,25 @@ public class ProductConfigurationList implements Serializable {
 			sb.append(neverExpire);
 		}
 
+		String parentProductConfigurationListExternalReferenceCode =
+			getParentProductConfigurationListExternalReferenceCode();
+
+		if (parentProductConfigurationListExternalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append(
+				"\"parentProductConfigurationListExternalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(
+				_escape(parentProductConfigurationListExternalReferenceCode));
+
+			sb.append("\"");
+		}
+
 		Long parentProductConfigurationListId =
 			getParentProductConfigurationListId();
 
@@ -1125,4 +1203,4 @@ public class ProductConfigurationList implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1362019932
+// LIFERAY-REST-BUILDER-HASH:725379502

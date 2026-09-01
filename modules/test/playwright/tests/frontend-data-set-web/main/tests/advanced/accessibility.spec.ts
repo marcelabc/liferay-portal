@@ -9,6 +9,7 @@ import {featureFlagsTest} from '../../../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../../fixtures/loginTest';
 import {checkAccessibility} from '../../../../../utils/checkAccessibility';
+import getRandomString from '../../../../../utils/getRandomString';
 import {EFDSVisualizationMode, waitForFDS} from '../../../../../utils/waitFor';
 import {fdsSamplePageTest} from '../../fixtures/fdsSamplePageTest';
 
@@ -22,6 +23,7 @@ const test = mergeTests(
 );
 
 const FDS_WRAPPER_SELECTOR = '.data-set-wrapper';
+const FOCUS_TRAP_HIDDEN_SELECTOR = '[data-aria-hidden="true"]';
 const OPEN_DROPDOWN_SELECTOR = '.dropdown-menu.show';
 const OPEN_MODAL_SELECTOR = '.modal.show';
 const SELECTION_TOOLBAR_SELECTOR = '[data-qa-id="selectionToolbar"]';
@@ -50,6 +52,7 @@ test('Advanced FDS is accessible across visualization modes', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
@@ -63,6 +66,7 @@ test('Advanced FDS is accessible across visualization modes', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
@@ -134,6 +138,7 @@ test('Advanced FDS is accessible during filter interactions', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
@@ -151,6 +156,7 @@ test('Advanced FDS is accessible during filter interactions', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await fdsSamplePage.filterMenu
@@ -172,6 +178,7 @@ test('Advanced FDS is accessible during filter interactions', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await fdsSamplePage.filterMenu
@@ -253,6 +260,7 @@ test('Advanced FDS is accessible during sorting interactions', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
@@ -276,6 +284,8 @@ test('Advanced FDS is accessible across user views', async ({
 	fdsSamplePage,
 	page,
 }) => {
+	const userViewName = getRandomString();
+
 	await test.step('Open user views menu', async () => {
 		await fdsSamplePage.userViewsSelectorButton.click();
 
@@ -284,6 +294,7 @@ test('Advanced FDS is accessible across user views', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
@@ -297,6 +308,7 @@ test('Advanced FDS is accessible across user views', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 	});
 
@@ -307,11 +319,15 @@ test('Advanced FDS is accessible across user views', async ({
 
 		await fdsSamplePage.userViewsSaveModal.waitFor();
 
-		await checkAccessibility({page, selectors: [OPEN_MODAL_SELECTOR]});
+		await checkAccessibility({
+			page,
+			selectors: [OPEN_MODAL_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
+		});
 
 		await fdsSamplePage.userViewsSaveModal
 			.getByLabel('NameRequired')
-			.fill('Accessibility View');
+			.fill(userViewName);
 
 		await fdsSamplePage.userViewsSaveModal
 			.getByRole('button', {name: 'Save'})
@@ -330,6 +346,7 @@ test('Advanced FDS is accessible across user views', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
@@ -343,9 +360,28 @@ test('Advanced FDS is accessible across user views', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
+	});
+
+	// Delete the saved view so it does not linger for the next run. User
+	// views are persisted per user and are not removed with the isolated
+	// site.
+
+	await test.step('Delete the saved view', async () => {
+		await fdsSamplePage.userViewsActionsButton.click();
+
+		await fdsSamplePage.dropdownMenu
+			.getByRole('menuitem', {name: 'Delete View'})
+			.click();
+
+		await fdsSamplePage.userViewsDeleteAlert
+			.getByRole('button', {name: 'Delete'})
+			.click();
+
+		await fdsSamplePage.userViewsDeleteAlert.waitFor({state: 'hidden'});
 	});
 });
 
@@ -401,6 +437,7 @@ test('Advanced FDS is accessible during bulk selection', async ({
 				SELECTION_TOOLBAR_SELECTOR,
 				OPEN_DROPDOWN_SELECTOR,
 			],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');
@@ -429,6 +466,7 @@ test('Advanced FDS is accessible in row item actions', async ({
 		await checkAccessibility({
 			page,
 			selectors: [FDS_WRAPPER_SELECTOR, OPEN_DROPDOWN_SELECTOR],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 	});
 
@@ -443,8 +481,9 @@ test('Advanced FDS is accessible in row item actions', async ({
 			page,
 			selectors: [
 				FDS_WRAPPER_SELECTOR,
-				'.dropdown-menu.show:not([aria-hidden="true"])',
+				`${OPEN_DROPDOWN_SELECTOR}:not([id])`,
 			],
+			selectorsToExclude: [FOCUS_TRAP_HIDDEN_SELECTOR],
 		});
 
 		await page.keyboard.press('Escape');

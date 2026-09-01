@@ -35,13 +35,15 @@ import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.BaseModelSearchResult;
+import com.liferay.portal.kernel.search.Indexable;
+import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.AddressLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.RegionLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.persistence.UserPersistence;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -59,6 +61,7 @@ import java.util.Map;
  */
 public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public Country addCountry(
 			String externalReferenceCode, String a2, String a3, boolean active,
@@ -79,7 +82,8 @@ public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 
 		Country country = countryPersistence.create(countryId);
 
-		User user = _userLocalService.getUser(serviceContext.getUserId());
+		User user = _userPersistence.findByPrimaryKey(
+			serviceContext.getUserId());
 
 		country.setExternalReferenceCode(externalReferenceCode);
 		country.setCompanyId(user.getCompanyId());
@@ -122,6 +126,7 @@ public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 		}
 	}
 
+	@Indexable(type = IndexableType.DELETE)
 	@Override
 	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public Country deleteCountry(Country country) throws PortalException {
@@ -299,6 +304,7 @@ public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 			start, end);
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public Country updateActive(long countryId, boolean active)
 		throws PortalException {
@@ -310,6 +316,7 @@ public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 		return countryPersistence.update(country);
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public Country updateCountry(
 			String externalReferenceCode, long countryId, String a2, String a3,
@@ -355,12 +362,13 @@ public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 		return super.updateCountryLocalizations(country, titleMap);
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public Country updateGroupFilterEnabled(
 			long countryId, boolean groupFilterEnabled)
 		throws PortalException {
 
-		Country country = countryLocalService.getCountry(countryId);
+		Country country = countryPersistence.findByPrimaryKey(countryId);
 
 		country.setGroupFilterEnabled(groupFilterEnabled);
 
@@ -545,7 +553,7 @@ public class CountryLocalServiceImpl extends CountryLocalServiceBaseImpl {
 	@BeanReference(type = ResourceLocalService.class)
 	private ResourceLocalService _resourceLocalService;
 
-	@BeanReference(type = UserLocalService.class)
-	private UserLocalService _userLocalService;
+	@BeanReference(type = UserPersistence.class)
+	private UserPersistence _userPersistence;
 
 }

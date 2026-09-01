@@ -23,6 +23,8 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.lpkg.StaticLPKGResolver;
 import com.liferay.portal.kernel.module.framework.ThrowableCollector;
+import com.liferay.portal.kernel.security.fips.FIPSApplicationStateMachineUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.service.BaseLocalService;
 import com.liferay.portal.kernel.service.BaseService;
 import com.liferay.portal.kernel.spring.osgi.OSGiBeanProperties;
@@ -205,6 +207,11 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 
 	@Override
 	public void initFramework() throws Exception {
+		if (PropsValues.FIPS_ENABLED) {
+			FIPSApplicationStateMachineUtil.selfTest(
+				FIPSModeValidator::validate);
+		}
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("Initializing the new OSGi framework instance");
 		}
@@ -348,6 +355,10 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 
 		if (Boolean.parseBoolean(System.getenv("LIFERAY_CLEAN_OSGI_STATE"))) {
 			_cleanOSGiStateFolder();
+		}
+
+		if (PropsValues.FIPS_ENABLED) {
+			FIPSApplicationStateMachineUtil.powerOff("Portal");
 		}
 	}
 

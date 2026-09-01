@@ -11,7 +11,7 @@ import React, {ComponentProps} from 'react';
 
 import {ActionDropdownItemProps} from '../../../common/components/Breadcrumb';
 import {openCMSModal} from '../../../common/utils/openCMSModal';
-import MultipleSpacesRenderer from '../../props_transformer/cell_renderers/MultipleSpacesRenderer';
+import MultipleScopesRenderer from '../../props_transformer/cell_renderers/MultipleScopesRenderer';
 import {executeAsyncItemAction} from '../../props_transformer/utils/executeAsyncItemAction';
 import CategorizationToolbar from '../CategorizationToolbar';
 import CreateTagsModal from './CreateTagsModal';
@@ -68,7 +68,7 @@ export default function ViewTags({
 			apiURL: "/o/headless-asset-library/v1.0/asset-libraries?filter=type eq 'Space'",
 			entityFieldType: 'string',
 			id: 'groupIds',
-			itemKey: 'id',
+			itemKey: 'siteId',
 			itemLabel: 'name',
 			label: 'Space',
 			multiple: true,
@@ -152,6 +152,7 @@ export default function ViewTags({
 					},
 				},
 			],
+			center: true,
 			status: 'danger',
 			title: sub(
 				Liferay.Language.get('delete-x'),
@@ -227,7 +228,7 @@ export default function ViewTags({
 	};
 
 	return (
-		<div className="categorization-section">
+		<>
 			<CategorizationToolbar
 				actionItems={actionItems}
 				activeTab="tags"
@@ -268,7 +269,7 @@ export default function ViewTags({
 							type: 'internal',
 						},
 						{
-							component: MultipleSpacesRenderer,
+							component: MultipleScopesRenderer,
 							name: VIEWS_SPACE_TABLE_CELL_RENDERER_NAME,
 							type: 'internal',
 						},
@@ -320,6 +321,6 @@ export default function ViewTags({
 				showSearch={true}
 				views={views}
 			/>
-		</div>
+		</>
 	);
 }

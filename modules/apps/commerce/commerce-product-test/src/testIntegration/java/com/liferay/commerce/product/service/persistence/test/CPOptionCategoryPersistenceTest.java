@@ -113,11 +113,7 @@ public class CPOptionCategoryPersistenceTest {
 
 	@Test
 	public void testUpdateExisting() throws Exception {
-		long pk = RandomTestUtil.nextLong();
-
-		CPOptionCategory newCPOptionCategory = _persistence.create(pk);
-
-		newCPOptionCategory.setMvccVersion(RandomTestUtil.nextLong());
+		CPOptionCategory newCPOptionCategory = addCPOptionCategory();
 
 		newCPOptionCategory.setCtCollectionId(RandomTestUtil.nextLong());
 
@@ -146,7 +142,11 @@ public class CPOptionCategoryPersistenceTest {
 
 		newCPOptionCategory.setLastPublishDate(RandomTestUtil.nextDate());
 
-		_cpOptionCategories.add(_persistence.update(newCPOptionCategory));
+		newCPOptionCategory.setStatus(RandomTestUtil.nextInt());
+
+		newCPOptionCategory = _persistence.update(newCPOptionCategory);
+
+		_cpOptionCategories.add(newCPOptionCategory);
 
 		CPOptionCategory existingCPOptionCategory =
 			_persistence.findByPrimaryKey(newCPOptionCategory.getPrimaryKey());
@@ -195,6 +195,9 @@ public class CPOptionCategoryPersistenceTest {
 			Time.getShortTimestamp(
 				existingCPOptionCategory.getLastPublishDate()),
 			Time.getShortTimestamp(newCPOptionCategory.getLastPublishDate()));
+		Assert.assertEquals(
+			existingCPOptionCategory.getStatus(),
+			newCPOptionCategory.getStatus());
 	}
 
 	@Test(
@@ -292,7 +295,7 @@ public class CPOptionCategoryPersistenceTest {
 			true, "companyId", true, "userId", true, "userName", true,
 			"createDate", true, "modifiedDate", true, "title", true,
 			"description", true, "priority", true, "key", true,
-			"lastPublishDate", true);
+			"lastPublishDate", true, "status", true);
 	}
 
 	@Test
@@ -592,8 +595,6 @@ public class CPOptionCategoryPersistenceTest {
 
 		CPOptionCategory cpOptionCategory = _persistence.create(pk);
 
-		cpOptionCategory.setMvccVersion(RandomTestUtil.nextLong());
-
 		cpOptionCategory.setCtCollectionId(RandomTestUtil.nextLong());
 
 		cpOptionCategory.setUuid(RandomTestUtil.randomString());
@@ -621,6 +622,8 @@ public class CPOptionCategoryPersistenceTest {
 
 		cpOptionCategory.setLastPublishDate(RandomTestUtil.nextDate());
 
+		cpOptionCategory.setStatus(RandomTestUtil.nextInt());
+
 		_cpOptionCategories.add(_persistence.update(cpOptionCategory));
 
 		return cpOptionCategory;
@@ -632,4 +635,4 @@ public class CPOptionCategoryPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1795567093
+// LIFERAY-SERVICE-BUILDER-HASH:-1726270435

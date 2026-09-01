@@ -9,6 +9,7 @@ import com.liferay.document.library.constants.DLFileVersionPreviewConstants;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.exception.NoSuchFileShortcutException;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.processor.RawMetadataProcessorUtil;
 import com.liferay.document.library.kernel.service.DLAppServiceUtil;
 import com.liferay.document.library.service.DLFileVersionPreviewLocalServiceUtil;
@@ -52,27 +53,15 @@ import java.util.List;
 public class ActionUtil {
 
 	public static List<FileEntry> getFileEntries(
-			HttpServletRequest httpServletRequest)
-		throws PortalException {
+		HttpServletRequest httpServletRequest) {
 
 		return TransformUtil.transformToList(
 			ParamUtil.getLongValues(httpServletRequest, "rowIdsFileEntry"),
-			fileEntryId -> {
-				try {
-					return DLAppServiceUtil.getFileEntry(fileEntryId);
-				}
-				catch (NoSuchFileEntryException noSuchFileEntryException) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(noSuchFileEntryException);
-					}
-				}
-
-				return null;
-			});
+			DLAppServiceUtil::fetchFileEntry);
 	}
 
-	public static List<FileEntry> getFileEntries(PortletRequest portletRequest)
-		throws PortalException {
+	public static List<FileEntry> getFileEntries(
+		PortletRequest portletRequest) {
 
 		return getFileEntries(PortalUtil.getHttpServletRequest(portletRequest));
 	}
@@ -126,8 +115,7 @@ public class ActionUtil {
 	}
 
 	public static List<FileShortcut> getFileShortcuts(
-			HttpServletRequest httpServletRequest)
-		throws PortalException {
+		HttpServletRequest httpServletRequest) {
 
 		return TransformUtil.transformToList(
 			ParamUtil.getLongValues(httpServletRequest, "rowIdsDLFileShortcut"),
@@ -148,8 +136,7 @@ public class ActionUtil {
 	}
 
 	public static List<FileShortcut> getFileShortcuts(
-			PortletRequest portletRequest)
-		throws PortalException {
+		PortletRequest portletRequest) {
 
 		return getFileShortcuts(
 			PortalUtil.getHttpServletRequest(portletRequest));
@@ -205,18 +192,20 @@ public class ActionUtil {
 		boolean ignoreRootFolder = ParamUtil.getBoolean(
 			httpServletRequest, "ignoreRootFolder");
 
+		long rootFolderId = DLFolderConstants.DEFAULT_PARENT_FOLDER_ID;
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setProductionModeWithSafeCloseable()) {
+
+			DLPortletInstanceSettingsHelper dlPortletInstanceSettingsHelper =
+				new DLPortletInstanceSettingsHelper(
+					new DLRequestHelper(httpServletRequest));
+
+			rootFolderId = dlPortletInstanceSettingsHelper.getRootFolderId();
+		}
+
 		if ((folderId <= 0) && !ignoreRootFolder) {
-			try (SafeCloseable safeCloseable =
-					CTCollectionThreadLocal.
-						setProductionModeWithSafeCloseable()) {
-
-				DLPortletInstanceSettingsHelper
-					dlPortletInstanceSettingsHelper =
-						new DLPortletInstanceSettingsHelper(
-							new DLRequestHelper(httpServletRequest));
-
-				folderId = dlPortletInstanceSettingsHelper.getRootFolderId();
-			}
+			folderId = rootFolderId;
 		}
 
 		if (folderId <= 0) {
@@ -228,6 +217,10 @@ public class ActionUtil {
 		}
 
 		Folder folder = DLAppServiceUtil.getFolder(folderId);
+
+		if (!ignoreRootFolder) {
+			DLFolderUtil.validateFolder(folder, rootFolderId);
+		}
 
 		DLFolderUtil.validateDepotFolder(
 			folderId, folder.getGroupId(), themeDisplay.getScopeGroupId());
@@ -259,8 +252,8 @@ public class ActionUtil {
 		return getFolder(PortalUtil.getHttpServletRequest(portletRequest));
 	}
 
-	public static List<Folder> getFolders(HttpServletRequest httpServletRequest)
-		throws PortalException {
+	public static List<Folder> getFolders(
+		HttpServletRequest httpServletRequest) {
 
 		return TransformUtil.transformToList(
 			ParamUtil.getLongValues(httpServletRequest, "rowIdsFolder"),
@@ -278,9 +271,7 @@ public class ActionUtil {
 			});
 	}
 
-	public static List<Folder> getFolders(PortletRequest portletRequest)
-		throws PortalException {
-
+	public static List<Folder> getFolders(PortletRequest portletRequest) {
 		return getFolders(PortalUtil.getHttpServletRequest(portletRequest));
 	}
 

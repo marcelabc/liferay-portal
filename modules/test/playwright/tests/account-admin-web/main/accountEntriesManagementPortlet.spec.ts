@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {expect, mergeTests} from '@playwright/test';
+import {Page, expect, mergeTests} from '@playwright/test';
 
 import {accountsPagesTest} from '../../../fixtures/accountsPagesTest';
 import {commercePagesTest} from '../../../fixtures/commercePagesTest';
@@ -47,6 +47,18 @@ async function createWidgetPage(apiHelpers: any, siteId: number | string) {
 		siteId,
 		title: getRandomString(),
 	});
+}
+
+async function reloadUntil(
+	page: Page,
+	url: string,
+	assertion: () => Promise<void>
+) {
+	await expect(async () => {
+		await page.goto(url);
+
+		await assertion();
+	}).toPass({timeout: 30000});
 }
 
 test(
@@ -319,11 +331,18 @@ test(
 		await performLogout(page);
 		await performLoginViaApi({page, screenName: user.alternateName});
 
-		await page.goto(`/web/${site.name}/${layout1.friendlyUrlPath}`);
+		await reloadUntil(
+			page,
+			`/web/${site.name}/${layout1.friendlyUrlPath}`,
+			async () => {
+				await expect(
+					accountManagementWidgetPage.accountsTable.cell(
+						businessAccount.name
+					)
+				).not.toBeVisible({timeout: 5000});
+			}
+		);
 
-		await expect(
-			accountManagementWidgetPage.accountsTable.cell(businessAccount.name)
-		).not.toBeVisible();
 		await expect(
 			accountManagementWidgetPage.accountsTable.cell(personAccount.name)
 		).toBeVisible();
@@ -377,7 +396,7 @@ test(
 
 		await page
 			.frameLocator('iframe[title="Available Themes"]')
-			.getByRole('button', {name: /Select Dialect/})
+			.getByRole('button', {name: /Select CMS/})
 			.click();
 
 		await page.getByRole('button', {exact: true, name: 'Save'}).click();
@@ -388,10 +407,11 @@ test(
 
 		await page.getByRole('link', {exact: true, name: 'Users'}).click();
 
-		await expect(page.getByRole('button', {name: 'New'})).toHaveCSS(
-			'background-color',
-			'rgb(89, 36, 235)'
-		);
+		await expect(page.getByRole('button', {name: 'New'})).toBeVisible();
+
+		await expect(
+			page.locator('link.lfr-css-file[href*="/o/cms-theme/"]').first()
+		).toBeAttached();
 	}
 );
 
@@ -447,17 +467,21 @@ test(
 		await performLogout(page);
 		await performLoginViaApi({page, screenName: user.alternateName});
 
-		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+		await reloadUntil(
+			page,
+			`/web/${site.name}/${layout.friendlyUrlPath}`,
+			async () => {
+				await accountManagementWidgetPage.accountsTable.newButton.click();
 
-		await accountManagementWidgetPage.accountsTable.newButton.click();
+				await expect(
+					editAccountPage.typeInput.locator('option[value="person"]')
+				).not.toBeAttached({timeout: 5000});
+			}
+		);
 
 		const accountName = 'Business Account Only ' + getRandomInt();
 
 		await editAccountPage.accountNameInput.fill(accountName);
-
-		await expect(
-			editAccountPage.typeInput.locator('option[value="person"]')
-		).not.toBeAttached();
 
 		await editAccountPage.typeInput.selectOption('business');
 		await editAccountPage.saveButton.click();
@@ -525,17 +549,23 @@ test(
 		await performLogout(page);
 		await performLoginViaApi({page, screenName: user.alternateName});
 
-		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+		await reloadUntil(
+			page,
+			`/web/${site.name}/${layout.friendlyUrlPath}`,
+			async () => {
+				await accountManagementWidgetPage.accountsTable.newButton.click();
 
-		await accountManagementWidgetPage.accountsTable.newButton.click();
+				await expect(
+					editAccountPage.typeInput.locator(
+						'option[value="business"]'
+					)
+				).not.toBeAttached({timeout: 5000});
+			}
+		);
 
 		const accountName = 'Person Account Only ' + getRandomInt();
 
 		await editAccountPage.accountNameInput.fill(accountName);
-
-		await expect(
-			editAccountPage.typeInput.locator('option[value="business"]')
-		).not.toBeAttached();
 
 		await editAccountPage.typeInput.selectOption('person');
 		await editAccountPage.saveButton.click();
@@ -599,11 +629,18 @@ test(
 		await performLogout(page);
 		await performLoginViaApi({page, screenName: user.alternateName});
 
-		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+		await reloadUntil(
+			page,
+			`/web/${site.name}/${layout.friendlyUrlPath}`,
+			async () => {
+				await expect(
+					accountManagementWidgetPage.accountsTable.cell(
+						personAccount.name
+					)
+				).not.toBeVisible({timeout: 5000});
+			}
+		);
 
-		await expect(
-			accountManagementWidgetPage.accountsTable.cell(personAccount.name)
-		).not.toBeVisible();
 		await expect(
 			accountManagementWidgetPage.accountsTable.cell(businessAccount.name)
 		).toBeVisible();

@@ -48,6 +48,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -56,12 +57,15 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -195,11 +199,28 @@ public class CommerceRoleHelperImpl implements CommerceRoleHelper {
 			_setRolePermissions(role, serviceContext);
 		}
 		else if (AccountRoleConstants.REQUIRED_ROLE_NAME_ACCOUNT_ADMINISTRATOR.
-					equals(name) ||
-				 GetterUtil.getBoolean(
-					 serviceContext.getAttribute("forceReloadPermissions"))) {
+					equals(name)) {
 
 			_setRolePermissions(role, serviceContext);
+		}
+		else if (GetterUtil.getBoolean(
+					serviceContext.getAttribute("forceReloadPermissions"))) {
+
+			if (Objects.equals(
+					name,
+					AccountRoleConstants.REQUIRED_ROLE_NAME_ACCOUNT_MEMBER)) {
+
+				_setRolePermissions(role, serviceContext);
+			}
+			else {
+				List<ResourcePermission> resourcePermissions =
+					_resourcePermissionLocalService.getRoleResourcePermissions(
+						role.getRoleId());
+
+				if (ListUtil.isEmpty(resourcePermissions)) {
+					_setRolePermissions(role, serviceContext);
+				}
+			}
 		}
 	}
 
@@ -222,7 +243,22 @@ public class CommerceRoleHelperImpl implements CommerceRoleHelper {
 		else if (GetterUtil.getBoolean(
 					serviceContext.getAttribute("forceReloadPermissions"))) {
 
-			_setRolePermissions(role, serviceContext);
+			if (Objects.equals(
+					name,
+					AccountRoleConstants.REQUIRED_ROLE_NAME_ACCOUNT_MANAGER) ||
+				Objects.equals(name, RoleConstants.USER)) {
+
+				_setRolePermissions(role, serviceContext);
+			}
+			else {
+				List<ResourcePermission> resourcePermissions =
+					_resourcePermissionLocalService.getRoleResourcePermissions(
+						role.getRoleId());
+
+				if (ListUtil.isEmpty(resourcePermissions)) {
+					_setRolePermissions(role, serviceContext);
+				}
+			}
 		}
 	}
 
@@ -361,6 +397,9 @@ public class CommerceRoleHelperImpl implements CommerceRoleHelper {
 				});
 			groupResourceActionIds.put(
 				CommerceOrderAttachment.class.getName(),
+				new String[] {ActionKeys.VIEW});
+			groupResourceActionIds.put(
+				CommerceShipment.class.getName(),
 				new String[] {ActionKeys.VIEW});
 			groupResourceActionIds.put(
 				"com.liferay.commerce.order",

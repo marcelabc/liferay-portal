@@ -14,19 +14,22 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Ticket;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.TicketLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.site.dsr.site.initializer.constants.DSRTicketConstants;
 import com.liferay.site.dsr.site.initializer.test.util.DSRTestUtil;
 
 import java.io.Serializable;
@@ -43,7 +46,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Stefano Motta
  */
-@FeatureFlag("LPD-66359")
 @RunWith(Arquillian.class)
 public class GroupModelListenerTest {
 
@@ -61,7 +63,7 @@ public class GroupModelListenerTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
 			RandomTestUtil.randomString() + "@liferay.com", null, null,
 			"business", 1, ServiceContextTestUtil.getServiceContext());
-		_group = DSRTestUtil.getOrAddGroup(GroupModelListenerTest.class);
+		_group = DSRTestUtil.getOrAddGroup();
 		_objectDefinition =
 			_objectDefinitionLocalService.
 				getObjectDefinitionByExternalReferenceCode(
@@ -112,6 +114,25 @@ public class GroupModelListenerTest {
 		Assert.assertEquals(name, values.get("name"));
 	}
 
+	@Test
+	public void testOnBeforeRemove() throws Exception {
+		Group group = GroupTestUtil.addGroup();
+
+		Ticket ticket1 = _ticketLocalService.addTicket(
+			group.getCompanyId(), Group.class.getName(), group.getGroupId(),
+			DSRTicketConstants.TYPE_EXPIRE_MEMBERSHIP, null, null, null,
+			ServiceContextTestUtil.getServiceContext());
+		Ticket ticket2 = _ticketLocalService.addTicket(
+			group.getCompanyId(), Group.class.getName(), group.getGroupId(),
+			DSRTicketConstants.TYPE_INVITE_MEMBER, null, null, null,
+			ServiceContextTestUtil.getServiceContext());
+
+		_groupLocalService.deleteGroup(group);
+
+		Assert.assertNull(_ticketLocalService.fetchTicket(ticket1.getKey()));
+		Assert.assertNull(_ticketLocalService.fetchTicket(ticket2.getKey()));
+	}
+
 	private AccountEntry _accountEntry;
 
 	@Inject
@@ -132,5 +153,8 @@ public class GroupModelListenerTest {
 
 	@Inject
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Inject
+	private TicketLocalService _ticketLocalService;
 
 }

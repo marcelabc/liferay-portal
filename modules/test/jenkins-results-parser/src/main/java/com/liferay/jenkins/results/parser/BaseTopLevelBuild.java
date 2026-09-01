@@ -7,6 +7,7 @@ package com.liferay.jenkins.results.parser;
 
 import com.liferay.jenkins.results.parser.failure.message.generator.CIFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.CITestSuiteValidationFailureMessageGenerator;
+import com.liferay.jenkins.results.parser.failure.message.generator.ClosedChannelExceptionFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.CompileFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.DownstreamFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.failure.message.generator.FailureMessageGenerator;
@@ -1805,10 +1806,10 @@ public abstract class BaseTopLevelBuild
 	protected Element getReevaluationDetailsElement(
 		TopLevelBuildReport upstreamTopLevelBuildReport) {
 
-		String buildID = JenkinsResultsParserUtil.getBuildID(getBuildURL());
+		String buildId = JenkinsResultsParserUtil.getBuildId(getBuildURL());
 
 		Element preElement = Dom4JUtil.getNewElement(
-			"pre", null, "ci:reevaluate:" + buildID);
+			"pre", null, "ci:reevaluate:" + buildId);
 
 		return Dom4JUtil.getNewElement(
 			"p", null, "This pull is eligible for reevaluation. When this ",
@@ -2255,12 +2256,21 @@ public abstract class BaseTopLevelBuild
 			return;
 		}
 
+		String buildURL = getBuildURL();
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(buildURL)) {
+			System.out.println(
+				"Unable to archive properties to " + archiveFile);
+
+			return;
+		}
+
 		long start = JenkinsResultsParserUtil.getCurrentTimeMillis();
 
 		Properties archiveProperties = new Properties();
 
 		archiveProperties.setProperty(
-			"top.level.build.url", replaceBuildURL(getBuildURL()));
+			"top.level.build.url", replaceBuildURL(buildURL));
 
 		StringWriter sw = new StringWriter();
 
@@ -2483,6 +2493,7 @@ public abstract class BaseTopLevelBuild
 			new DownstreamFailureMessageGenerator(),
 			//
 			new CIFailureMessageGenerator(),
+			new ClosedChannelExceptionFailureMessageGenerator(),
 			//
 			new GenericFailureMessageGenerator()
 		};

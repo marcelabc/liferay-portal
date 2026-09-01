@@ -5,7 +5,6 @@
 
 package com.liferay.portal.security.auth;
 
-import com.liferay.exportimport.kernel.staging.MergeLayoutPrototypesThreadLocal;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
@@ -32,6 +31,10 @@ import jakarta.portlet.PortletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpSession;
+
+import java.nio.charset.StandardCharsets;
+
+import java.security.MessageDigest;
 
 /**
  * @author Amos Fong
@@ -99,11 +102,7 @@ public class SessionAuthToken implements AuthToken {
 			return;
 		}
 
-		boolean skipMerge = MergeLayoutPrototypesThreadLocal.isSkipMerge();
-
 		try {
-			MergeLayoutPrototypesThreadLocal.setSkipMerge(true);
-
 			Layout layout = LayoutLocalServiceUtil.getLayout(plid);
 
 			LayoutTypePortlet layoutTypePortlet =
@@ -119,9 +118,6 @@ public class SessionAuthToken implements AuthToken {
 			if (_log.isDebugEnabled()) {
 				_log.debug(exception);
 			}
-		}
-		finally {
-			MergeLayoutPrototypesThreadLocal.setSkipMerge(skipMerge);
 		}
 
 		liferayPortletURL.setParameter(
@@ -178,7 +174,10 @@ public class SessionAuthToken implements AuthToken {
 				httpServletRequest.getHeader("X-CSRF-Token"));
 		}
 
-		if (!csrfToken.equals(sessionToken)) {
+		if (!MessageDigest.isEqual(
+				csrfToken.getBytes(StandardCharsets.UTF_8),
+				sessionToken.getBytes(StandardCharsets.UTF_8))) {
+
 			throw new PrincipalException.MustHaveValidCSRFToken(
 				PortalUtil.getUserId(httpServletRequest), origin);
 		}
@@ -227,7 +226,9 @@ public class SessionAuthToken implements AuthToken {
 				httpServletRequest, key, false);
 
 			if (Validator.isNotNull(sessionToken) &&
-				sessionToken.equals(portletToken)) {
+				MessageDigest.isEqual(
+					portletToken.getBytes(StandardCharsets.UTF_8),
+					sessionToken.getBytes(StandardCharsets.UTF_8))) {
 
 				return true;
 			}

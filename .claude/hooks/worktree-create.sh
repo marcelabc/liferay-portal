@@ -105,7 +105,7 @@ function _create_worktree {
 
 	local main_worktree target_path
 
-	main_worktree="$(git -C "${cwd}" worktree list --porcelain | grep --extended-regexp "^worktree " | head --lines=1 | sed "s/^worktree //")"
+	main_worktree="$(git -C "${cwd}" worktree list --porcelain | grep --extended-regexp "^worktree " | head --lines=1 | _sed "s/^worktree //")"
 
 	target_path="$(dirname "${main_worktree}")/$(basename "${main_worktree}")-${name}"
 
@@ -127,7 +127,7 @@ function _resolve_main_worktree_dir {
 
 	repo_dir="$(git -C "${WORKTREE_DIR}" rev-parse --show-toplevel)"
 
-	git -C "${repo_dir}" worktree list --porcelain | grep --extended-regexp "^worktree .*/liferay-portal\$" | head --lines=1 | sed "s/^worktree //"
+	git -C "${repo_dir}" worktree list --porcelain | grep --extended-regexp "^worktree .*/liferay-portal\$" | head --lines=1 | _sed "s/^worktree //"
 }
 
 function _reuse_worktree {
@@ -148,9 +148,14 @@ function _reuse_worktree {
 
 		if [[ -d ${MAIN_WORKTREE_DIR}/.gradle/caches && ! -e ${WORKTREE_DIR}/.gradle/caches ]]
 		then
-			mkdir --parents "${WORKTREE_DIR}/.gradle"
+			mkdir -p "${WORKTREE_DIR}/.gradle"
 
-			cp --archive --link "${MAIN_WORKTREE_DIR}/.gradle/caches" "${WORKTREE_DIR}/.gradle/caches"
+			if [[ $(uname) == Darwin ]]
+			then
+				rsync --archive --link-dest="${MAIN_WORKTREE_DIR}/.gradle/caches" "${MAIN_WORKTREE_DIR}/.gradle/caches/" "${WORKTREE_DIR}/.gradle/caches/"
+			else
+				cp --archive --link "${MAIN_WORKTREE_DIR}/.gradle/caches" "${WORKTREE_DIR}/.gradle/caches"
+			fi
 		fi
 	fi
 
@@ -164,20 +169,16 @@ function _reuse_worktree {
 
 		[[ -d ${main_bundles} ]] || _die "Main bundle directory ${main_bundles} does not exist."
 
-		mkdir --parents "${BUNDLES_DIR}"
+		mkdir -p "${BUNDLES_DIR}"
 
-		cp --archive "${main_bundles}/." "${BUNDLES_DIR}"
+		if [[ $(uname) == Darwin ]]
+		then
+			rsync --archive "${main_bundles}/" "${BUNDLES_DIR}/"
+		else
+			cp --archive "${main_bundles}/." "${BUNDLES_DIR}"
+		fi
 
 		_bundle_exists "${BUNDLES_DIR}" || _die "Bundle copy finished but no \"tomcat-*\" directory exists under ${BUNDLES_DIR}."
-	fi
-}
-
-function _sed_inplace {
-	if [[ $(uname) == Darwin ]]
-	then
-		sed -i "" "${@}"
-	else
-		sed --in-place "${@}"
 	fi
 }
 
@@ -186,7 +187,7 @@ function _set_arquillian_port {
 
 	local config_file="${BUNDLES_DIR}/osgi/configs/com.liferay.arquillian.extension.junit.bridge.connector.ArquillianConnector.config"
 
-	mkdir --parents "$(dirname "${config_file}")"
+	mkdir -p "$(dirname "${config_file}")"
 
 	_atomic_write "${config_file}" <<EOF
 port="${target}"
@@ -208,45 +209,13 @@ function _set_bundle_path {
 function _set_data_guard_port {
 	local file="${BUNDLES_DIR}/osgi/configs/com.liferay.data.guard.connector.DataGuardConnector.config"
 
-	mkdir --parents "$(dirname "${file}")"
+	mkdir -p "$(dirname "${file}")"
 
 	local target=$((42763 + OFFSET))
 
 	_atomic_write "${file}" <<EOF
 port="${target}"
 EOF
-}
-
-function _set_database {
-	local db_name
-
-	db_name="$(_derive_db_name "$(basename "${WORKTREE_DIR}")")"
-
-	local file="${BUNDLES_DIR}/portal-ext.properties"
-	local wizard_file="${BUNDLES_DIR}/portal-setup-wizard.properties"
-
-	local existing_user existing_password
-
-	existing_user="$(_get_property_from_files "jdbc\.default\.username" root "${file}" "${wizard_file}")"
-	existing_password="$(_get_property_from_files "jdbc\.default\.password" "" "${file}" "${wizard_file}")"
-
-	_set_property "${file}" jdbc.default.driverClassName com.mysql.cj.jdbc.Driver
-	_set_property "${file}" jdbc.default.url "jdbc:mysql://localhost/${db_name}?characterEncoding=UTF-8&dontTrackOpenResources=true&holdResultsOpenOverStatementClose=true&serverTimezone=GMT&useFastDateParsing=false&useUnicode=true"
-	_set_property "${file}" jdbc.default.username "${existing_user}"
-	_set_property "${file}" jdbc.default.password "${existing_password}"
-
-	command -v mysql >/dev/null 2>&1 || return 0
-
-	local mysql_args=()
-
-	if [[ -n ${existing_password} ]]
-	then
-		mysql_args+=(--password="${existing_password}")
-	fi
-
-	mysql_args+=(--user "${existing_user}")
-
-	mysql "${mysql_args[@]}" --execute "CREATE DATABASE IF NOT EXISTS ${db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;" >&2 || true
 }
 
 function _set_debug_port {
@@ -266,7 +235,7 @@ function _set_debug_port {
 function _set_elasticsearch_ports {
 	local configs_dir="${BUNDLES_DIR}/osgi/configs"
 
-	mkdir --parents "${configs_dir}"
+	mkdir -p "${configs_dir}"
 
 	local es_version=elasticsearch8
 
@@ -343,7 +312,8 @@ function _set_gradle_paths {
 
 	[[ -n ${main_bundles_literal} ]] || _die "The \"liferay.home\" property is missing from ${file}."
 
-	_sed_inplace \
+	_sed \
+		--in-place \
 		--expression "s|${main_bundles_literal}/|${BUNDLES_DIR}/|g" \
 		--expression "s|${main_bundles_literal}\$|${BUNDLES_DIR}|g" \
 		--expression "s|${main_worktree}/|${WORKTREE_DIR}/|g" \
@@ -354,7 +324,7 @@ function _set_playwright_port {
 	local file="${WORKTREE_DIR}/modules/test/playwright/.env.local"
 	local http_port=$((8080 + OFFSET))
 
-	mkdir --parents "$(dirname "${file}")"
+	mkdir -p "$(dirname "${file}")"
 
 	_atomic_write "${file}" <<EOF
 PORTAL_URL=http://localhost:${http_port}
@@ -461,7 +431,7 @@ function _set_property {
 
 	local escaped="${key//./\\.}"
 
-	_sed_inplace --regexp-extended --expression "/^[[:space:]]*${escaped}=/d" "${file}"
+	_sed --in-place --regexp-extended --expression "/^[[:space:]]*${escaped}=/d" "${file}"
 
 	if [[ -s ${file} ]] && [[ -n $(tail --bytes=1 "${file}") ]]
 	then
@@ -474,7 +444,7 @@ function _set_property {
 function _set_test_integration_port {
 	local file="${WORKTREE_DIR}/.gradle/init.d/worktree-ports.gradle"
 
-	mkdir --parents "$(dirname "${file}")"
+	mkdir -p "$(dirname "${file}")"
 
 	local http_port=$((8080 + OFFSET))
 
@@ -501,7 +471,8 @@ function _set_tomcat_ports {
 	local target_ajp=$((8009 + OFFSET))
 	local target_https=$((8443 + OFFSET))
 
-	_sed_inplace \
+	_sed \
+		--in-place \
 		--regexp-extended \
 		--expression "/<Server/s/port=\"[0-9]+\"/port=\"${target_shutdown}\"/" \
 		--expression "/protocol=\"HTTP\\/1\\.1\"/s/port=\"[0-9]+\"/port=\"${target_http}\"/" \
@@ -525,7 +496,8 @@ function _set_worktree_paths {
 
 	[[ -f ${file} ]] || return 0
 
-	_sed_inplace \
+	_sed \
+		--in-place \
 		--expression "s|${main_tomcat}/|$(_find_tomcat_dir "${BUNDLES_DIR}")/|g" \
 		--expression "s|${main_bundles}/|${BUNDLES_DIR}/|g" \
 		--expression "s|${main_worktree}/|${WORKTREE_DIR}/|g" \

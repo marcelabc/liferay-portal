@@ -106,6 +106,14 @@ public abstract class BaseSectionDisplayContextTestCase {
 			"getCreationMenu", new Class<?>[0]);
 	}
 
+	protected Map<String, Object> getEmptyState(AssetEntry assetEntry)
+		throws Exception {
+
+		return ReflectionTestUtil.invoke(
+			getSectionDisplayContext(_getHttpServletRequest(assetEntry)),
+			"getEmptyState", new Class<?>[0]);
+	}
+
 	protected List<FDSActionDropdownItem> getFDSActionDropdownItems(
 			AssetEntry assetEntry)
 		throws Exception {
@@ -121,6 +129,14 @@ public abstract class BaseSectionDisplayContextTestCase {
 		return ReflectionTestUtil.invoke(
 			getSectionDisplayContext(_getHttpServletRequest(assetEntry)),
 			"getFDSFilters", new Class<?>[0]);
+	}
+
+	protected Map<String, Object> getHeaderProps(AssetEntry assetEntry)
+		throws Exception {
+
+		return ReflectionTestUtil.invoke(
+			getSectionDisplayContext(_getHttpServletRequest(assetEntry)),
+			"getHeaderProps", new Class<?>[0]);
 	}
 
 	protected abstract String getObjectDefinitionExternalReferenceCode();

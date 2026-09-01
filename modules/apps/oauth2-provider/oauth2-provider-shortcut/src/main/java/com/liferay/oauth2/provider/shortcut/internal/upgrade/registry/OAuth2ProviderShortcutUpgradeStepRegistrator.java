@@ -7,6 +7,8 @@ package com.liferay.oauth2.provider.shortcut.internal.upgrade.registry;
 
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.shortcut.internal.upgrade.v1_0_0.OAuth2ApplicationAnalyticsCloudUpgradeProcess;
+import com.liferay.oauth2.provider.shortcut.internal.upgrade.v2_0_0.OAuth2ApplicationLDPDomainUpgradeProcess;
+import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
@@ -33,6 +35,9 @@ public class OAuth2ProviderShortcutUpgradeStepRegistrator
 				_companyLocalService, _oAuth2ApplicationLocalService,
 				_resourcePermissionLocalService, _roleLocalService,
 				_userLocalService));
+
+		registry.register(
+			"1.0.0", "2.0.0", new OAuth2ApplicationLDPDomainUpgradeProcess());
 	}
 
 	@Reference
@@ -40,6 +45,11 @@ public class OAuth2ProviderShortcutUpgradeStepRegistrator
 
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
+
+	@Reference(
+		target = "(&(release.bundle.symbolic.name=com.liferay.oauth2.provider.service)(release.schema.version>=4.2.8))"
+	)
+	private Release _release;
 
 	@Reference
 	private ResourcePermissionLocalService _resourcePermissionLocalService;

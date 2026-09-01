@@ -96,7 +96,7 @@ public class ResourceOpenAPIParser {
 
 							List<JavaMethodParameter> javaMethodParameters =
 								_getJavaMethodParameters(
-									javaDataTypeMap, operation,
+									configYAML, javaDataTypeMap, operation,
 									requestBodyMediaTypes);
 
 							JavaMethodSignature javaMethodSignature =
@@ -136,6 +136,9 @@ public class ResourceOpenAPIParser {
 
 		Set<String> methodAnnotations = new TreeSet<>();
 
+		String requestBodyAnnotation = _getRequestBodyAnnotation(
+			javaMethodSignature, operation);
+
 		if ((operation.getDescription() != null) || operation.isDeprecated()) {
 			StringBundler sb = new StringBundler(
 				"@io.swagger.v3.oas.annotations.Operation(");
@@ -163,12 +166,9 @@ public class ResourceOpenAPIParser {
 					sb.append("\"");
 				}
 
-				if (getMultipartBodySchemas(javaMethodSignature) != null) {
-					sb.append(", requestBody = ");
-					sb.append("@io.swagger.v3.oas.annotations.parameters.");
-					sb.append("RequestBody(content = ");
-					sb.append(_getRequestBodyContent(javaMethodSignature));
-					sb.append(")");
+				if (!requestBodyAnnotation.isEmpty()) {
+					sb.append(", ");
+					sb.append(requestBodyAnnotation);
 				}
 			}
 
@@ -176,17 +176,13 @@ public class ResourceOpenAPIParser {
 
 			methodAnnotations.add(sb.toString());
 		}
-		else if (getMultipartBodySchemas(javaMethodSignature) != null) {
-			StringBundler sb = new StringBundler(
-				"@io.swagger.v3.oas.annotations.Operation(");
-
-			sb.append("requestBody = ");
-			sb.append("@io.swagger.v3.oas.annotations.parameters.");
-			sb.append("RequestBody(content = ");
-			sb.append(_getRequestBodyContent(javaMethodSignature));
-			sb.append("))");
-
-			methodAnnotations.add(sb.toString());
+		else {
+			if (!requestBodyAnnotation.isEmpty()) {
+				methodAnnotations.add(
+					StringBundler.concat(
+						"@io.swagger.v3.oas.annotations.Operation(",
+						requestBodyAnnotation, ")"));
+			}
 		}
 
 		if (operation.getTags() != null) {
@@ -444,7 +440,7 @@ public class ResourceOpenAPIParser {
 	}
 
 	public static boolean hasReadVulcanBatchImplementation(
-		List<JavaMethodSignature> javaMethodSignatures) {
+		ConfigYAML configYAML, List<JavaMethodSignature> javaMethodSignatures) {
 
 		for (JavaMethodSignature javaMethodSignature : javaMethodSignatures) {
 			String methodName = javaMethodSignature.getMethodName();
@@ -458,7 +454,8 @@ public class ResourceOpenAPIParser {
 			if (methodName.equals(
 					StringBundler.concat(
 						"get", parentSchemaName,
-						TextFormatter.formatPlural(schemaName), "Page"))) {
+						OpenAPIUtil.formatPlural(configYAML, schemaName),
+						"Page"))) {
 
 				return true;
 			}
@@ -557,7 +554,8 @@ public class ResourceOpenAPIParser {
 			methodName.equals(
 				StringBundler.concat(
 					"get", parentSchemaName,
-					TextFormatter.formatPlural(schemaName), "Page"))) {
+					OpenAPIUtil.formatPlural(configYAML, schemaName),
+					"Page"))) {
 
 			batchOperationType = BatchOperationType.EXPORT;
 		}
@@ -641,7 +639,7 @@ public class ResourceOpenAPIParser {
 			return "";
 		}
 
-		StringBundler sb = new StringBundler(4);
+		StringBundler sb = new StringBundler(5);
 
 		sb.append(
 			StringBundler.concat(
@@ -655,6 +653,13 @@ public class ResourceOpenAPIParser {
 				String.format(", deprecated = %s", parameter.isDeprecated()));
 		}
 
+		if (parameter.getDescription() != null) {
+			sb.append(
+				String.format(
+					", description = \"%s\"",
+					_escapeAnnotationValue(parameter.getDescription())));
+		}
+
 		if (parameter.getExample() != null) {
 			sb.append(
 				String.format(", example = \"%s\"", parameter.getExample()));
@@ -663,6 +668,20 @@ public class ResourceOpenAPIParser {
 		sb.append("),");
 
 		return sb.toString();
+	}
+
+	private static String _escapeAnnotationValue(String value) {
+		if (value == null) {
+			return null;
+		}
+
+		String escaped = StringUtil.replace(value, "\\", "\\\\");
+
+		escaped = StringUtil.replace(escaped, "\"", "\\\"");
+		escaped = StringUtil.replace(escaped, "\n", "\\n");
+		escaped = StringUtil.replace(escaped, "\r", "\\r");
+
+		return escaped;
 	}
 
 	private static Parameter _findParameter(
@@ -823,8 +842,8 @@ public class ResourceOpenAPIParser {
 	}
 
 	private static List<JavaMethodParameter> _getJavaMethodParameters(
-		Map<String, String> javaDataTypeMap, Operation operation,
-		Set<String> requestBodyMediaTypes) {
+		ConfigYAML configYAML, Map<String, String> javaDataTypeMap,
+		Operation operation, Set<String> requestBodyMediaTypes) {
 
 		if ((operation == null) || (operation.getParameters() == null)) {
 			return Collections.emptyList();
@@ -948,7 +967,8 @@ public class ResourceOpenAPIParser {
 					simpleClassName = elementClassName.substring(
 						elementClassName.lastIndexOf(".") + 1);
 
-					parameterName = TextFormatter.formatPlural(
+					parameterName = OpenAPIUtil.formatPlural(
+						configYAML,
 						TextFormatter.format(simpleClassName, TextFormatter.I));
 				}
 
@@ -1078,7 +1098,8 @@ public class ResourceOpenAPIParser {
 		operationIdSegments.add(OpenAPIParserUtil.getHTTPMethod(operation));
 
 		String[] pathSegments = path.split("/");
-		String pluralSchemaName = TextFormatter.formatPlural(schemaName);
+		String pluralSchemaName = OpenAPIUtil.formatPlural(
+			configYAML, schemaName);
 
 		for (int i = 0; i < pathSegments.length; i++) {
 			String pathSegment = pathSegments[i];
@@ -1418,6 +1439,59 @@ public class ResourceOpenAPIParser {
 		return parameter;
 	}
 
+	private static String _getRequestBodyAnnotation(
+		JavaMethodSignature javaMethodSignature, Operation operation) {
+
+		Map<String, Schema> multipartBodySchemas = getMultipartBodySchemas(
+			javaMethodSignature);
+		String requestBodyDescription = _getRequestBodyDescription(operation);
+
+		if ((multipartBodySchemas == null) &&
+			(requestBodyDescription == null)) {
+
+			return "";
+		}
+
+		StringBundler sb = new StringBundler(9);
+
+		sb.append("requestBody = @io.swagger.v3.oas.annotations.parameters.");
+		sb.append("RequestBody(");
+
+		boolean hasContent = false;
+
+		if (multipartBodySchemas != null) {
+			sb.append("content = ");
+			sb.append(_getRequestBodyContent(javaMethodSignature));
+
+			hasContent = true;
+		}
+		else {
+			String requestBodyContent = _getRequestBodyJSONContent(
+				javaMethodSignature);
+
+			if (requestBodyContent != null) {
+				sb.append("content = ");
+				sb.append(requestBodyContent);
+
+				hasContent = true;
+			}
+		}
+
+		if (requestBodyDescription != null) {
+			if (hasContent) {
+				sb.append(", ");
+			}
+
+			sb.append("description = \"");
+			sb.append(_escapeAnnotationValue(requestBodyDescription));
+			sb.append("\"");
+		}
+
+		sb.append(")");
+
+		return sb.toString();
+	}
+
 	private static String _getRequestBodyContent(
 		JavaMethodSignature javaMethodSignature) {
 
@@ -1467,6 +1541,56 @@ public class ResourceOpenAPIParser {
 		}
 
 		return sb.toString();
+	}
+
+	private static String _getRequestBodyDescription(Operation operation) {
+		RequestBody requestBody = operation.getRequestBody();
+
+		if (requestBody == null) {
+			return null;
+		}
+
+		return requestBody.getDescription();
+	}
+
+	private static String _getRequestBodyJSONContent(
+		JavaMethodSignature javaMethodSignature) {
+
+		Set<String> requestBodyMediaTypes =
+			javaMethodSignature.getRequestBodyMediaTypes();
+
+		if (!requestBodyMediaTypes.contains("application/json")) {
+			return null;
+		}
+
+		Schema schema = _getOperationSchema(
+			javaMethodSignature.getOperation(), requestBodyMediaTypes);
+
+		if (schema == null) {
+			return null;
+		}
+
+		List<JavaMethodParameter> javaMethodParameters =
+			javaMethodSignature.getJavaMethodParameters();
+
+		if (javaMethodParameters.isEmpty()) {
+			return null;
+		}
+
+		JavaMethodParameter bodyJavaMethodParameter = javaMethodParameters.get(
+			javaMethodParameters.size() - 1);
+
+		String parameterType = bodyJavaMethodParameter.getParameterType();
+
+		if (parameterType.startsWith("[")) {
+			return null;
+		}
+
+		return StringBundler.concat(
+			"@io.swagger.v3.oas.annotations.media.Content(mediaType = \"",
+			"application/json\", schema = ",
+			"@io.swagger.v3.oas.annotations.media.Schema(implementation = ",
+			parameterType, ".class))");
 	}
 
 	private static String _getReturnType(

@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.JAXRSWhiteboardTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -86,6 +87,8 @@ public abstract class BaseCookiesConsentPreferenceResourceTestCase {
 	public static void setUpClass() throws Exception {
 		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		JAXRSWhiteboardTestUtil.ensureReady();
 	}
 
 	@Before
@@ -192,6 +195,31 @@ public abstract class BaseCookiesConsentPreferenceResourceTestCase {
 		Assert.assertEquals(regex, cookiesConsentPreference.getDomain());
 		Assert.assertEquals(regex, cookiesConsentPreference.getName());
 		Assert.assertEquals(regex, cookiesConsentPreference.getValue());
+	}
+
+	@Test
+	public void testDeleteCookiesConsentPreference() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		CookiesConsentPreference cookiesConsentPreference =
+			testDeleteCookiesConsentPreference_addCookiesConsentPreference();
+
+		assertHttpResponseStatusCode(
+			204,
+			cookiesConsentPreferenceResource.
+				deleteCookiesConsentPreferenceHttpResponse());
+	}
+
+	protected CookiesConsentPreference
+			testDeleteCookiesConsentPreference_addCookiesConsentPreference()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLDeleteCookiesConsentPreference() throws Exception {
+		Assert.assertTrue(false);
 	}
 
 	@Test
@@ -319,31 +347,6 @@ public abstract class BaseCookiesConsentPreferenceResourceTestCase {
 		throws Exception {
 
 		return testGraphQLCookiesConsentPreference_addCookiesConsentPreference();
-	}
-
-	@Test
-	public void testDeleteCookiesConsentPreferences() throws Exception {
-		@SuppressWarnings("PMD.UnusedLocalVariable")
-		CookiesConsentPreference cookiesConsentPreference =
-			testDeleteCookiesConsentPreferences_addCookiesConsentPreference();
-
-		assertHttpResponseStatusCode(
-			204,
-			cookiesConsentPreferenceResource.
-				deleteCookiesConsentPreferencesHttpResponse());
-	}
-
-	protected CookiesConsentPreference
-			testDeleteCookiesConsentPreferences_addCookiesConsentPreference()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
-	public void testGraphQLDeleteCookiesConsentPreferences() throws Exception {
-		Assert.assertTrue(false);
 	}
 
 	@Test
@@ -510,11 +513,6 @@ public abstract class BaseCookiesConsentPreferenceResourceTestCase {
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
-	}
-
-	@Test
-	public void testBatchEngineDeleteImportTask() throws Exception {
-		Assert.assertTrue(true);
 	}
 
 	protected CookiesConsentPreference
@@ -1431,4 +1429,4 @@ public abstract class BaseCookiesConsentPreferenceResourceTestCase {
 			_cookiesConsentPreferenceResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:811696207
+// LIFERAY-REST-BUILDER-HASH:-1877775746

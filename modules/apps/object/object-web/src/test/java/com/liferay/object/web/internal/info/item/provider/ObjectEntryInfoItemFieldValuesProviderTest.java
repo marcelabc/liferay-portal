@@ -5,6 +5,7 @@
 
 package com.liferay.object.web.internal.info.item.provider;
 
+import com.liferay.asset.info.item.provider.AssetEntryInfoItemFieldSetProvider;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalService;
@@ -23,6 +24,7 @@ import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.web.internal.model.ProxyObjectEntry;
@@ -108,6 +110,7 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 
 		_objectEntryInfoItemFieldValuesProvider =
 			new ObjectEntryInfoItemFieldValuesProvider(
+				Mockito.mock(AssetEntryInfoItemFieldSetProvider.class),
 				displayPageInfoItemFieldSetProvider,
 				Mockito.mock(DLAppLocalService.class),
 				Mockito.mock(DLURLHelper.class),
@@ -119,7 +122,7 @@ public class ObjectEntryInfoItemFieldValuesProviderTest {
 				Mockito.mock(ObjectFieldInfoFieldConverter.class),
 				Mockito.mock(ObjectEntryLocalService.class),
 				Mockito.mock(ObjectEntryManagerRegistry.class),
-				objectFieldLocalService,
+				Mockito.mock(ObjectEntryService.class), objectFieldLocalService,
 				Mockito.mock(ObjectRelatedModelsProviderRegistry.class),
 				Mockito.mock(ObjectRelationshipLocalService.class),
 				Mockito.mock(ObjectScopeProviderRegistry.class),

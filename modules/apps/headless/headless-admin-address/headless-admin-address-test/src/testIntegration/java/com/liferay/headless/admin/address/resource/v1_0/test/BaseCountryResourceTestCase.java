@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.JAXRSWhiteboardTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -54,6 +55,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -120,6 +122,8 @@ public abstract class BaseCountryResourceTestCase {
 	public static void setUpClass() throws Exception {
 		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		JAXRSWhiteboardTestUtil.ensureReady();
 	}
 
 	@Before
@@ -510,7 +514,7 @@ public abstract class BaseCountryResourceTestCase {
 	@Test
 	public void testGetCountriesPage() throws Exception {
 		Page<Country> page = countryResource.getCountriesPage(
-			null, null, Pagination.of(1, 10), null);
+			null, null, null, Pagination.of(1, 10), null);
 
 		long totalCount = page.getTotalCount();
 
@@ -519,7 +523,7 @@ public abstract class BaseCountryResourceTestCase {
 		Country country2 = testGetCountriesPage_addCountry(randomCountry());
 
 		page = countryResource.getCountriesPage(
-			null, null, Pagination.of(1, 10), null);
+			null, null, null, Pagination.of(1, (int)totalCount + 2), null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -542,9 +546,85 @@ public abstract class BaseCountryResourceTestCase {
 	}
 
 	@Test
+	public void testGetCountriesPageWithFilterDateTimeEquals()
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(
+			EntityField.Type.DATE_TIME);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Country country1 = randomCountry();
+
+		country1 = testGetCountriesPage_addCountry(country1);
+
+		for (EntityField entityField : entityFields) {
+			Page<Country> page = countryResource.getCountriesPage(
+				null, null, getFilterString(entityField, "between", country1),
+				Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(country1),
+				(List<Country>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetCountriesPageWithFilterDoubleEquals() throws Exception {
+		testGetCountriesPageWithFilter("eq", EntityField.Type.DOUBLE);
+	}
+
+	@Test
+	public void testGetCountriesPageWithFilterStringContains()
+		throws Exception {
+
+		testGetCountriesPageWithFilter("contains", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetCountriesPageWithFilterStringEquals() throws Exception {
+		testGetCountriesPageWithFilter("eq", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetCountriesPageWithFilterStringStartsWith()
+		throws Exception {
+
+		testGetCountriesPageWithFilter("startswith", EntityField.Type.STRING);
+	}
+
+	protected void testGetCountriesPageWithFilter(
+			String operator, EntityField.Type type)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		Country country1 = testGetCountriesPage_addCountry(randomCountry());
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Country country2 = testGetCountriesPage_addCountry(randomCountry());
+
+		for (EntityField entityField : entityFields) {
+			Page<Country> page = countryResource.getCountriesPage(
+				null, null, getFilterString(entityField, operator, country1),
+				Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(country1),
+				(List<Country>)page.getItems());
+		}
+	}
+
+	@Test
 	public void testGetCountriesPageWithPagination() throws Exception {
 		Page<Country> countriesPage = countryResource.getCountriesPage(
-			null, null, null, null);
+			null, null, null, null, null);
 
 		int totalCount = GetterUtil.getInteger(countriesPage.getTotalCount());
 
@@ -560,7 +640,7 @@ public abstract class BaseCountryResourceTestCase {
 
 		if (totalCount >= (pageSizeLimit - 2)) {
 			Page<Country> page1 = countryResource.getCountriesPage(
-				null, null,
+				null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -571,7 +651,7 @@ public abstract class BaseCountryResourceTestCase {
 			assertContains(country1, (List<Country>)page1.getItems());
 
 			Page<Country> page2 = countryResource.getCountriesPage(
-				null, null,
+				null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -580,7 +660,7 @@ public abstract class BaseCountryResourceTestCase {
 			assertContains(country2, (List<Country>)page2.getItems());
 
 			Page<Country> page3 = countryResource.getCountriesPage(
-				null, null,
+				null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -590,7 +670,7 @@ public abstract class BaseCountryResourceTestCase {
 		}
 		else {
 			Page<Country> page1 = countryResource.getCountriesPage(
-				null, null, Pagination.of(1, totalCount + 2), null);
+				null, null, null, Pagination.of(1, totalCount + 2), null);
 
 			List<Country> countries1 = (List<Country>)page1.getItems();
 
@@ -598,7 +678,7 @@ public abstract class BaseCountryResourceTestCase {
 				countries1.toString(), totalCount + 2, countries1.size());
 
 			Page<Country> page2 = countryResource.getCountriesPage(
-				null, null, Pagination.of(2, totalCount + 2), null);
+				null, null, null, Pagination.of(2, totalCount + 2), null);
 
 			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
 
@@ -607,7 +687,7 @@ public abstract class BaseCountryResourceTestCase {
 			Assert.assertEquals(countries2.toString(), 1, countries2.size());
 
 			Page<Country> page3 = countryResource.getCountriesPage(
-				null, null, Pagination.of(1, (int)totalCount + 3), null);
+				null, null, null, Pagination.of(1, (int)totalCount + 3), null);
 
 			assertContains(country1, (List<Country>)page3.getItems());
 			assertContains(country2, (List<Country>)page3.getItems());
@@ -721,18 +801,20 @@ public abstract class BaseCountryResourceTestCase {
 		country2 = testGetCountriesPage_addCountry(country2);
 
 		Page<Country> page = countryResource.getCountriesPage(
-			null, null, null, null);
+			null, null, null, null, null);
 
 		for (EntityField entityField : entityFields) {
 			Page<Country> ascPage = countryResource.getCountriesPage(
-				null, null, Pagination.of(1, (int)page.getTotalCount() + 1),
+				null, null, null,
+				Pagination.of(1, (int)page.getTotalCount() + 1),
 				entityField.getName() + ":asc");
 
 			assertContains(country1, (List<Country>)ascPage.getItems());
 			assertContains(country2, (List<Country>)ascPage.getItems());
 
 			Page<Country> descPage = countryResource.getCountriesPage(
-				null, null, Pagination.of(1, (int)page.getTotalCount() + 1),
+				null, null, null,
+				Pagination.of(1, (int)page.getTotalCount() + 1),
 				entityField.getName() + ":desc");
 
 			assertContains(country2, (List<Country>)descPage.getItems());
@@ -749,17 +831,8 @@ public abstract class BaseCountryResourceTestCase {
 
 	@Test
 	public void testGraphQLGetCountriesPage() throws Exception {
-		GraphQLField graphQLField = new GraphQLField(
-			"countries",
-			new HashMap<String, Object>() {
-				{
-					put("search", null);
-					put("page", 1);
-					put("pageSize", 10);
-				}
-			},
-			new GraphQLField("items", getGraphQLFields()),
-			new GraphQLField("page"), new GraphQLField("totalCount"));
+		GraphQLField graphQLField =
+			testGraphQLGetCountriesPageCountry_getGraphQLField();
 
 		// No namespace
 
@@ -808,6 +881,22 @@ public abstract class BaseCountryResourceTestCase {
 			country2,
 			Arrays.asList(
 				CountrySerDes.toDTOs(countriesJSONObject.getString("items"))));
+	}
+
+	protected GraphQLField testGraphQLGetCountriesPageCountry_getGraphQLField()
+		throws Exception {
+
+		return new GraphQLField(
+			"countries",
+			new HashMap<String, Object>() {
+				{
+					put("search", null);
+					put("page", 1);
+					put("pageSize", 10);
+				}
+			},
+			new GraphQLField("items", getGraphQLFields()),
+			new GraphQLField("page"), new GraphQLField("totalCount"));
 	}
 
 	@Test
@@ -1915,6 +2004,9 @@ public abstract class BaseCountryResourceTestCase {
 		}
 	}
 
+	@Rule
+	public SearchTestRule searchTestRule = new SearchTestRule();
+
 	protected Country testGraphQLCountry_addCountry() throws Exception {
 		return testGraphQLCountry_addCountry(randomCountry());
 	}
@@ -2097,6 +2189,14 @@ public abstract class BaseCountryResourceTestCase {
 
 	protected void assertValid(Country country) throws Exception {
 		boolean valid = true;
+
+		if (country.getDateCreated() == null) {
+			valid = false;
+		}
+
+		if (country.getDateModified() == null) {
+			valid = false;
+		}
 
 		if (country.getId() == null) {
 			valid = false;
@@ -2397,6 +2497,27 @@ public abstract class BaseCountryResourceTestCase {
 			if (Objects.equals("creator", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						country1.getCreator(), country2.getCreator())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("dateCreated", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						country1.getDateCreated(), country2.getDateCreated())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("dateModified", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						country1.getDateModified(),
+						country2.getDateModified())) {
 
 					return false;
 				}
@@ -2743,6 +2864,64 @@ public abstract class BaseCountryResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("dateCreated")) {
+			if (operator.equals("between")) {
+				Date date = country.getDateCreated();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(country.getDateCreated()));
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("dateModified")) {
+			if (operator.equals("between")) {
+				Date date = country.getDateModified();
+
+				sb = new StringBundler();
+
+				sb.append("(");
+				sb.append(entityFieldName);
+				sb.append(" gt ");
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(" and ");
+				sb.append(entityFieldName);
+				sb.append(" lt ");
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(")");
+			}
+			else {
+				sb.append(entityFieldName);
+
+				sb.append(" ");
+				sb.append(operator);
+				sb.append(" ");
+
+				sb.append(_format.format(country.getDateModified()));
+			}
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("externalReferenceCode")) {
 			Object object = country.getExternalReferenceCode();
 
@@ -2939,6 +3118,8 @@ public abstract class BaseCountryResourceTestCase {
 				a3 = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				active = RandomTestUtil.randomBoolean();
 				billingAllowed = RandomTestUtil.randomBoolean();
+				dateCreated = RandomTestUtil.nextDate();
+				dateModified = RandomTestUtil.nextDate();
 				externalReferenceCode = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				groupFilterEnabled = RandomTestUtil.randomBoolean();
@@ -3219,4 +3400,4 @@ public abstract class BaseCountryResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1485581455
+// LIFERAY-REST-BUILDER-HASH:-1342702515

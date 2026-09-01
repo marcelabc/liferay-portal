@@ -73,6 +73,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -92,6 +93,7 @@ import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
@@ -113,6 +115,7 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -161,6 +164,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -291,35 +295,11 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 
 	@Override
 	@Test
-	@TestInfo("LPD-56213")
+	@TestInfo({"LPD-56213", "LPD-94135", "LPD-99363"})
 	public void testGetSiteSitePageRenderedPage() throws Exception {
-		Layout layout = LayoutTestUtil.addTypeContentLayout(testGroup);
-
-		Layout draftLayout = layout.fetchDraftLayout();
-
-		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
-			"{}", layout.fetchDraftLayout(),
-			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				draftLayout.getPlid()));
-
-		ContentLayoutTestUtil.publishLayout(draftLayout, layout);
-
-		String friendlyURL = layout.getFriendlyURL();
-
-		String pageHTML = sitePageResource.getSiteSitePageRenderedPage(
-			testGroup.getGroupId(), friendlyURL.substring(1));
-
-		Assert.assertNotNull(pageHTML, pageHTML);
-		Assert.assertTrue(pageHTML, pageHTML.contains("<html"));
-		Assert.assertTrue(pageHTML, pageHTML.contains("<head>"));
-		Assert.assertTrue(pageHTML, pageHTML.contains("<title>"));
-		Assert.assertTrue(pageHTML, pageHTML.contains("</title>"));
-		Assert.assertTrue(
-			pageHTML, pageHTML.contains("<script type=\"importmap\">"));
-		Assert.assertTrue(pageHTML, pageHTML.contains("</head>"));
-		Assert.assertTrue(pageHTML, pageHTML.contains("<body"));
-		Assert.assertTrue(pageHTML, pageHTML.contains("</body>"));
-		Assert.assertTrue(pageHTML, pageHTML.contains("</html>"));
+		_testGetSiteSitePageRenderedPage();
+		_testGetSiteSitePageRenderedPageInRequestedLocale();
+		_testGetSiteSitePageRenderedPagePortalURL();
 	}
 
 	@Test
@@ -841,6 +821,138 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		).user(
 			UserTestUtil.getAdminUser(testCompany.getCompanyId())
 		).build();
+	}
+
+	private void _testGetSiteSitePageRenderedPage() throws Exception {
+		Layout layout = LayoutTestUtil.addTypeContentLayout(testGroup);
+
+		Layout draftLayout = layout.fetchDraftLayout();
+
+		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
+			"{}", layout.fetchDraftLayout(),
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				draftLayout.getPlid()));
+
+		ContentLayoutTestUtil.publishLayout(draftLayout, layout);
+
+		String friendlyURL = layout.getFriendlyURL();
+
+		String pageHTML = sitePageResource.getSiteSitePageRenderedPage(
+			testGroup.getGroupId(), friendlyURL.substring(1));
+
+		Assert.assertTrue(pageHTML, pageHTML.contains("<html"));
+		Assert.assertTrue(pageHTML, pageHTML.contains("<head>"));
+		Assert.assertTrue(pageHTML, pageHTML.contains("<title>"));
+		Assert.assertTrue(pageHTML, pageHTML.contains("</title>"));
+		Assert.assertTrue(
+			pageHTML, pageHTML.contains("<script type=\"importmap\">"));
+		Assert.assertTrue(pageHTML, pageHTML.contains("</head>"));
+		Assert.assertTrue(pageHTML, pageHTML.contains("<body"));
+		Assert.assertTrue(pageHTML, pageHTML.contains("</body>"));
+		Assert.assertTrue(pageHTML, pageHTML.contains("</html>"));
+	}
+
+	private void _testGetSiteSitePageRenderedPageInRequestedLocale()
+		throws Exception {
+
+		String esName = RandomTestUtil.randomString();
+		String usName = RandomTestUtil.randomString();
+
+		Layout layout = LayoutTestUtil.addTypeContentLayout(
+			testGroup,
+			HashMapBuilder.put(
+				LocaleUtil.SPAIN, esName
+			).put(
+				LocaleUtil.US, usName
+			).build());
+
+		String friendlyURL = layout.getFriendlyURL();
+
+		_testGetSiteSitePageRenderedPageInRequestedLocale(
+			esName, friendlyURL.substring(1), LocaleUtil.SPAIN);
+		_testGetSiteSitePageRenderedPageInRequestedLocale(
+			usName, friendlyURL.substring(1), LocaleUtil.US);
+	}
+
+	private void _testGetSiteSitePageRenderedPageInRequestedLocale(
+			String expectedTitle, String friendlyURL, Locale locale)
+		throws Exception {
+
+		SitePageResource sitePageResource = SitePageResource.builder(
+		).authentication(
+			"test@liferay.com", PropsValues.DEFAULT_ADMIN_PASSWORD
+		).locale(
+			locale
+		).build();
+
+		String pageHTML = sitePageResource.getSiteSitePageRenderedPage(
+			testGroup.getGroupId(), friendlyURL);
+
+		Assert.assertTrue(
+			pageHTML,
+			pageHTML.contains(
+				" lang=\"" + LocaleUtil.toW3cLanguageId(locale) + "\""));
+		Assert.assertTrue(pageHTML, pageHTML.contains(expectedTitle));
+	}
+
+	private void _testGetSiteSitePageRenderedPagePortalURL() throws Exception {
+		Layout layout = LayoutTestUtil.addTypeContentLayout(testGroup);
+
+		LayoutSet layoutSet = layout.getLayoutSet();
+
+		_virtualHostLocalService.updateVirtualHosts(
+			layout.getCompanyId(), layoutSet.getLayoutSetId(),
+			TreeMapBuilder.put(
+				"127.0.0.1", StringPool.BLANK
+			).build());
+
+		String friendlyURL = StringUtil.removeFirst(
+			layout.getFriendlyURL(), StringPool.SLASH);
+
+		_testGetSiteSitePageRenderedPagePortalURL(friendlyURL, "127.0.0.1");
+		_testGetSiteSitePageRenderedPagePortalURL(
+			friendlyURL, testCompany.getVirtualHostname());
+
+		_virtualHostLocalService.updateVirtualHosts(
+			layout.getCompanyId(), layoutSet.getLayoutSetId(), new TreeMap<>());
+
+		Group group = GroupTestUtil.addGroup();
+
+		layoutSet = group.getPublicLayoutSet();
+
+		_virtualHostLocalService.updateVirtualHosts(
+			group.getCompanyId(), layoutSet.getLayoutSetId(),
+			TreeMapBuilder.put(
+				"127.0.0.1", StringPool.BLANK
+			).build());
+
+		_testGetSiteSitePageRenderedPagePortalURL(friendlyURL, "127.0.0.1");
+
+		GroupTestUtil.deleteGroup(group);
+	}
+
+	private void _testGetSiteSitePageRenderedPagePortalURL(
+			String friendlyURL, String virtualHostname)
+		throws Exception {
+
+		int port = PortalUtil.getPortalServerPort(false);
+
+		SitePageResource sitePageResource = SitePageResource.builder(
+		).authentication(
+			"test@liferay.com", PropsValues.DEFAULT_ADMIN_PASSWORD
+		).endpoint(
+			virtualHostname, port, "http"
+		).build();
+
+		String pageHTML = sitePageResource.getSiteSitePageRenderedPage(
+			testGroup.getGroupId(), friendlyURL);
+
+		Assert.assertTrue(
+			pageHTML,
+			pageHTML.contains(
+				StringBundler.concat(
+					"getPortalURL: () => 'http://", virtualHostname, ":", port,
+					"'")));
 	}
 
 	private void _testGetSiteSitePagesPagePageSet() throws Exception {
@@ -2168,7 +2280,7 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 			RandomTestUtil.randomString(), irrelevantGroup.getCreatorUserId(),
 			irrelevantGroup.getGroupId(), 0,
 			RandomTestUtil.randomLocaleStringMap(), null,
-			assetVocabulary.getVocabularyId(), null,
+			assetVocabulary.getVocabularyId(), false, null,
 			ServiceContextTestUtil.getServiceContext(
 				irrelevantGroup.getGroupId()));
 
@@ -2296,7 +2408,7 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		AssetCategory assetCategory = _assetCategoryLocalService.addCategory(
 			RandomTestUtil.randomString(), testGroup.getCreatorUserId(),
 			testGroup.getGroupId(), 0, RandomTestUtil.randomLocaleStringMap(),
-			null, assetVocabulary.getVocabularyId(), null,
+			null, assetVocabulary.getVocabularyId(), false, null,
 			ServiceContextTestUtil.getServiceContext(testGroup.getGroupId()));
 
 		TaxonomyCategoryBrief[] expectedTaxonomyCategoryBriefs = {
@@ -2350,7 +2462,7 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		AssetCategory assetCategory = _assetCategoryLocalService.addCategory(
 			RandomTestUtil.randomString(), testGroup.getCreatorUserId(),
 			testGroup.getGroupId(), 0, RandomTestUtil.randomLocaleStringMap(),
-			null, assetVocabulary.getVocabularyId(), null,
+			null, assetVocabulary.getVocabularyId(), false, null,
 			ServiceContextTestUtil.getServiceContext(testGroup.getGroupId()));
 
 		TaxonomyCategoryBrief[] expectedTaxonomyCategoryBriefs = {
@@ -2487,6 +2599,9 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 
 	@Inject
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
+
+	@Inject
+	private VirtualHostLocalService _virtualHostLocalService;
 
 	@Inject
 	private VulcanCRUDItemDelegateBuilderRegistry

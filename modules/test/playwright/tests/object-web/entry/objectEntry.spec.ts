@@ -50,6 +50,7 @@ import {
 import {createFile, deleteFile} from '../utils/fileHelpers';
 import {generateObjectEntryValues} from '../utils/generateObjectEntry';
 import {generateObjectFields} from '../utils/generateObjectFields';
+import {getFreshObjectRelationshipName} from '../utils/getFreshObjectRelationshipName';
 import evaluateKeepCheckingAfterFound from '../utils/keepCheckingAfterFound';
 import {pasteFile} from '../utils/pasteFile';
 import {postListTypeDefinitionListTypeEntries} from '../utils/postListTypeDefinitionListTypeEntries';
@@ -63,7 +64,6 @@ const test = mergeTests(
 	isolatedSiteTest,
 	editObjectDefinitionPagesTest,
 	featureFlagsTest({
-		'LPD-83570': {enabled: true}, // Phone Number field
 		'LPS-178052': {enabled: true},
 	}),
 	globalMenuPagesTest,
@@ -85,8 +85,6 @@ const cmsTest = mergeTests(
 	cmsPagesTest,
 	featureFlagsTest({
 		'LPD-11235': {enabled: false},
-		'LPD-17564': {enabled: true},
-		'LPD-34594': {enabled: true},
 	})
 );
 
@@ -887,7 +885,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 	});
 
 	cmsTest(
-		'can create, read, update, and delete a displayDate of an object entry',
+		'can create, read, and update a displayDate of an object entry',
 		async ({page, viewObjectEntriesPage}) => {
 			await viewObjectEntriesPage.goto(_objectDefinition.className);
 
@@ -901,19 +899,20 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 
 			await page.keyboard.press('Escape');
 
+			const today =
+				await viewObjectEntriesPage.publishDateInput.inputValue();
+
 			await viewObjectEntriesPage.schedulePublicationButton.click();
 
 			await waitForAlert(page);
-
-			const date = new Date();
-
-			const today = getObjectEntryUIDateTimeFormat(date);
 
 			await viewObjectEntriesPage.choosePublicationOption('schedule');
 
 			await expect(viewObjectEntriesPage.publishDateInput).toHaveValue(
 				today
 			);
+
+			const date = new Date(today);
 
 			date.setDate(date.getDate() + 1);
 
@@ -940,7 +939,7 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 			await viewObjectEntriesPage.choosePublicationOption('schedule');
 
 			await expect(viewObjectEntriesPage.publishDateInput).toHaveValue(
-				''
+				new RegExp(`^${today.split(' ')[0]}`)
 			);
 
 			await page.getByRole('button', {name: 'Close'}).click();
@@ -1019,17 +1018,18 @@ cmsTest.describe('Manage object entries schedule properties', () => {
 
 			await page.keyboard.press('Escape');
 
+			const today =
+				await viewObjectEntriesPage.reviewDateInput.inputValue();
+
 			await viewObjectEntriesPage.choosePublicationOption('publish');
 
 			await waitForAlert(page);
 
-			const date = new Date();
-
-			const today = getObjectEntryUIDateTimeFormat(date);
-
 			await expect(viewObjectEntriesPage.reviewDateInput).toHaveValue(
 				today
 			);
+
+			const date = new Date(today);
 
 			date.setDate(date.getDate() + 1);
 
@@ -1585,7 +1585,7 @@ test.describe('Manage object entries through Friendly URL', () => {
 
 			await editObjectDetailsPage.saveObjectDefinition();
 
-			await page.waitForLoadState('networkidle');
+			await waitForAlert(page, 'The object was saved successfully');
 
 			await page.goto(
 				`/web${site.friendlyUrlPath}/${newObjectFriendlyURLSeparator}/` +
@@ -2703,7 +2703,14 @@ test.describe('Manage object entries through View Object Entries', () => {
 			objectDefinition2.externalReferenceCode!,
 			{
 				label: {en_US: 'Relationship'},
-				name: 'relationship' + Math.floor(Math.random() * 99),
+				name: await getFreshObjectRelationshipName(
+					apiHelpers,
+					[
+						objectDefinition2.externalReferenceCode!,
+						objectDefinition1.externalReferenceCode!,
+					],
+					'relationship'
+				),
 				objectDefinitionExternalReferenceCode2:
 					objectDefinition1.externalReferenceCode,
 				objectDefinitionId2: objectDefinition1.id,
@@ -2780,6 +2787,152 @@ test.describe('Manage object entries through View Object Entries', () => {
 			page.getByRole('cell', {name: getFDSDateTimeFormat(date)})
 		).toHaveText('Jun 1, 2023, 12:00:00 PM');
 	});
+
+	test(
+		'can create an object entry with email address field',
+		{tag: ['@LPD-70673']},
+		async ({apiHelpers, page, viewObjectEntriesPage}) => {
+			const email = 'user@example.com';
+
+			let objectDefinition: ObjectDefinition;
+			let objectFields: ObjectField[];
+
+			await test.step('Create an object definition with an Email Address field', async () => {
+				objectFields = generateObjectFields({
+					objectFieldBusinessTypes: [
+						{
+							businessType: 'EmailAddress',
+						},
+					],
+				});
+
+				objectDefinition =
+					await apiHelpers.objectAdmin.postRandomObjectDefinition({
+						objectFields,
+						status: {code: 0},
+					});
+
+				apiHelpers.data.push({
+					id: objectDefinition.id,
+					type: 'objectDefinition',
+				});
+			});
+
+			await test.step('Navigate to the object definition and add an entry', async () => {
+				await viewObjectEntriesPage.goto(objectDefinition.className);
+
+				await viewObjectEntriesPage.clickAddObjectEntry(
+					objectDefinition.label.en_US
+				);
+			});
+
+			await test.step('Fill the email address field and save the entry', async () => {
+				await page.getByLabel(objectFields[0].label.en_US).fill(email);
+
+				await viewObjectEntriesPage.saveObjectEntryButton.click();
+
+				await expect(
+					viewObjectEntriesPage.successMessage
+				).toBeVisible();
+			});
+
+			await test.step('Verify the email address field value is saved', async () => {
+				await viewObjectEntriesPage.backButton.click();
+
+				await viewObjectEntriesPage.frontendDatasetItems
+					.first()
+					.click();
+
+				await expect(
+					page.getByLabel(objectFields[0].label.en_US)
+				).toHaveValue(email);
+			});
+		}
+	);
+
+	test(
+		'can create an object entry with email address field and autocomplete enabled',
+		{tag: ['@LPD-70673']},
+		async ({apiHelpers, page, viewObjectEntriesPage}) => {
+			const autocompleteDomain = '@liferay.com';
+
+			let objectDefinition: ObjectDefinition;
+			let objectFields: ObjectField[];
+
+			await test.step('Create an object definition with autocomplete enabled', async () => {
+				objectFields = generateObjectFields({
+					objectFieldBusinessTypes: [
+						{
+							businessType: 'EmailAddress',
+							objectFieldSettings: [
+								{
+									name: 'autocompleteEnabled',
+									value: 'true',
+								},
+								{
+									name: 'autocompleteDomains',
+									value: '@liferay.com,@gmail.com',
+								},
+							],
+						},
+					],
+				});
+
+				objectDefinition =
+					await apiHelpers.objectAdmin.postRandomObjectDefinition({
+						objectFields,
+						status: {code: 0},
+					});
+
+				apiHelpers.data.push({
+					id: objectDefinition.id,
+					type: 'objectDefinition',
+				});
+			});
+
+			await test.step('Navigate to the object definition and add an entry', async () => {
+				await viewObjectEntriesPage.goto(objectDefinition.className);
+
+				await viewObjectEntriesPage.clickAddObjectEntry(
+					objectDefinition.label['en_US']
+				);
+			});
+
+			await test.step('Type a partial email and select a domain suggestion', async () => {
+				await page
+					.getByLabel(objectFields[0].label.en_US)
+					.fill('user@li');
+
+				await expect(page.getByText(autocompleteDomain)).toBeVisible();
+
+				await expect(page.getByText('@gmail.com')).not.toBeVisible();
+
+				await page.getByText(autocompleteDomain).click();
+
+				await expect(
+					page.getByLabel(objectFields[0].label.en_US)
+				).toHaveValue('user@liferay.com');
+			});
+
+			await test.step('Save the entry and verify the stored value', async () => {
+				await viewObjectEntriesPage.saveObjectEntryButton.click();
+
+				await expect(
+					viewObjectEntriesPage.successMessage
+				).toBeVisible();
+
+				await viewObjectEntriesPage.backButton.click();
+
+				await viewObjectEntriesPage.frontendDatasetItems
+					.first()
+					.click();
+
+				await expect(
+					page.getByLabel(objectFields[0].label.en_US)
+				).toHaveValue('user@liferay.com');
+			});
+		}
+	);
 
 	test('can create an object entry with special characters on a text field named Name', async ({
 		apiHelpers,
@@ -2964,11 +3117,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 			objectLayoutTabName: 'Field Tab',
 		});
 
-		await objectLayoutsPage.createObjectRelationshipTab(
+		const {reload} = await objectLayoutsPage.createObjectRelationshipTab(
 			objectLayoutName,
 			'Relationship Tab',
 			'Relationship'
 		);
+
+		await reload;
 
 		await editObjectDetailsPage.goto(objectDefinition.name);
 
@@ -3361,8 +3516,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		const objectRelationshipLabel =
 			'objectRelationshipLabel' + getRandomInt();
-		const objectRelationshipName =
-			'objectRelationshipName' + getRandomInt();
+		const objectRelationshipName = await getFreshObjectRelationshipName(
+			apiHelpers,
+			[
+				objectDefinition1.externalReferenceCode!,
+				objectDefinition2.externalReferenceCode!,
+			]
+		);
 
 		const objectRelationshipAPIClient = await apiHelpers.buildRestClient(
 			ObjectRelationshipAPI
@@ -3429,11 +3589,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		await objectLayoutsPage.saveAddFieldButton.click();
 
-		await objectLayoutsPage.createObjectRelationshipTab(
+		const {reload} = await objectLayoutsPage.createObjectRelationshipTab(
 			objectLayoutName,
 			objectRelationshipTabName,
 			objectRelationshipLabel
 		);
+
+		await reload;
 
 		await viewObjectEntriesPage.goto(objectDefinition2.className);
 
@@ -3515,8 +3677,10 @@ test.describe('Manage object entries through View Object Entries', () => {
 			const objectRelationshipAPIClient =
 				await apiHelpers.buildRestClient(ObjectRelationshipAPI);
 
-			const objectRelationshipName =
-				'objectRelationshipName' + Math.floor(Math.random() * 99);
+			const objectRelationshipName = await getFreshObjectRelationshipName(
+				apiHelpers,
+				['L_USER', objectDefinition.externalReferenceCode!]
+			);
 
 			const {body: objectRelationship} =
 				await objectRelationshipAPIClient.postObjectDefinitionByExternalReferenceCodeObjectRelationship(
@@ -3554,11 +3718,9 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 			await expect(viewObjectEntriesPage.successMessage).toBeVisible();
 
-			expect(
-				(
-					await page.getByPlaceholder('Search').inputValue()
-				).toLowerCase()
-			).toBe(userAccount.givenName.toLowerCase());
+			await expect(page.getByPlaceholder('Search')).toHaveValue(
+				new RegExp(`^${userAccount.givenName}$`, 'i')
+			);
 		}
 	);
 
@@ -3587,8 +3749,10 @@ test.describe('Manage object entries through View Object Entries', () => {
 			const objectRelationshipAPIClient =
 				await apiHelpers.buildRestClient(ObjectRelationshipAPI);
 
-			const objectRelationshipName =
-				'objectRelationshipName' + Math.floor(Math.random() * 99);
+			const objectRelationshipName = await getFreshObjectRelationshipName(
+				apiHelpers,
+				['L_USER', objectDefinition.externalReferenceCode!]
+			);
 
 			const {body: objectRelationship} =
 				await objectRelationshipAPIClient.postObjectDefinitionByExternalReferenceCodeObjectRelationship(
@@ -3652,11 +3816,9 @@ test.describe('Manage object entries through View Object Entries', () => {
 					viewObjectEntriesPage.successMessage
 				).toBeVisible();
 
-				expect(
-					(
-						await page.getByPlaceholder('Search').inputValue()
-					).toLowerCase()
-				).toBe(userAccount.givenName.toLowerCase());
+				await expect(page.getByPlaceholder('Search')).toHaveValue(
+					new RegExp(`^${userAccount.givenName}$`, 'i')
+				);
 			}
 		}
 	);
@@ -3719,7 +3881,10 @@ test.describe('Manage object entries through View Object Entries', () => {
 					label: {
 						en_US: 'objectRelationshipLabel' + getRandomInt(),
 					},
-					name: 'objectRelationshipName' + getRandomInt(),
+					name: await getFreshObjectRelationshipName(apiHelpers, [
+						'L_ACCOUNT',
+						objectDefinition.externalReferenceCode!,
+					]),
 					objectDefinitionExternalReferenceCode1: 'L_ACCOUNT',
 					objectDefinitionExternalReferenceCode2:
 						objectDefinition.externalReferenceCode,
@@ -3839,6 +4004,322 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		await expect(page.getByText(account2.name)).toBeVisible();
 	});
+
+	test(
+		'can view their own organization in a relationship field',
+		{tag: '@LPD-97608'},
+		async ({apiHelpers, page, viewObjectEntriesPage}) => {
+			const organization1 =
+				await apiHelpers.headlessAdminUser.postOrganization();
+			const organization2 =
+				await apiHelpers.headlessAdminUser.postOrganization();
+
+			const user1 = await apiHelpers.headlessAdminUser.postUserAccount();
+			const user2 = await apiHelpers.headlessAdminUser.postUserAccount();
+
+			apiHelpers.data.push({id: user1.id, type: 'userAccount'});
+			apiHelpers.data.push({id: user2.id, type: 'userAccount'});
+
+			await apiHelpers.headlessAdminUser.assignUserToOrganizationByEmailAddress(
+				organization1.id,
+				user1.emailAddress
+			);
+			await apiHelpers.headlessAdminUser.assignUserToOrganizationByEmailAddress(
+				organization2.id,
+				user2.emailAddress
+			);
+
+			const objectFields = generateObjectFields({
+				objectFieldBusinessTypes: ['Text'],
+			});
+
+			const objectDefinition =
+				await apiHelpers.objectAdmin.postRandomObjectDefinition({
+					objectFields,
+					panelCategoryKey: 'control_panel.object',
+					status: {code: 0},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+
+			const {body: organizationObjectDefinition} =
+				await objectDefinitionAPIClient.getObjectDefinitionByExternalReferenceCode(
+					'L_ORGANIZATION'
+				);
+
+			const objectRelationshipAPIClient =
+				await apiHelpers.buildRestClient(ObjectRelationshipAPI);
+
+			const {body: objectRelationship} =
+				await objectRelationshipAPIClient.postObjectDefinitionByExternalReferenceCodeObjectRelationship(
+					'L_ORGANIZATION',
+					{
+						label: {
+							en_US: 'objectRelationshipLabel' + getRandomInt(),
+						},
+						name: await getFreshObjectRelationshipName(apiHelpers, [
+							'L_ORGANIZATION',
+							objectDefinition.externalReferenceCode!,
+						]),
+						objectDefinitionExternalReferenceCode1:
+							'L_ORGANIZATION',
+						objectDefinitionExternalReferenceCode2:
+							objectDefinition.externalReferenceCode,
+						objectDefinitionId1: organizationObjectDefinition.id,
+						objectDefinitionId2: objectDefinition.id,
+						objectDefinitionName2: objectDefinition.name,
+						type: 'oneToMany',
+					}
+				);
+
+			apiHelpers.data.push({
+				id: objectRelationship.id,
+				type: 'objectRelationship',
+			});
+
+			const companyId = await page.evaluate(() => {
+				return Liferay.ThemeDisplay.getCompanyId();
+			});
+
+			const role = await apiHelpers.headlessAdminUser.postRole({
+				name: 'ObjRole' + getRandomInt(),
+				rolePermissions: [
+					{
+						actionIds: ['VIEW_CONTROL_PANEL'],
+						primaryKey: companyId,
+						resourceName: '90',
+						scope: 1,
+					},
+					{
+						actionIds: ['ACCESS_IN_CONTROL_PANEL'],
+						primaryKey: companyId,
+						resourceName: `com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet_${objectDefinition.className.split('#')[1]}`,
+						scope: 1,
+					},
+					{
+						actionIds: ['ADD_OBJECT_ENTRY'],
+						primaryKey: companyId,
+						resourceName: `com.liferay.object#${objectDefinition.id}`,
+						scope: 1,
+					},
+				],
+			});
+
+			apiHelpers.data.push({id: role.id, type: 'role'});
+
+			await apiHelpers.headlessAdminUser.assignUserToRole(
+				role.externalReferenceCode,
+				user1.id
+			);
+
+			userData[user1.alternateName] = {
+				name: user1.givenName,
+				password: 'test',
+				surname: user1.familyName,
+			};
+
+			await performUserSwitch(page, user1.alternateName);
+
+			await viewObjectEntriesPage.goto(objectDefinition.className);
+
+			await viewObjectEntriesPage.clickAddObjectEntry(
+				objectDefinition.label['en_US']
+			);
+
+			await page.getByRole('textbox', {name: 'Search'}).click();
+
+			await expect(
+				page.getByRole('menuitem', {name: organization1.name})
+			).toBeVisible();
+			await expect(
+				page.getByRole('menuitem', {name: organization2.name})
+			).toBeHidden();
+
+			await page
+				.getByRole('menuitem', {name: organization1.name})
+				.click();
+
+			await viewObjectEntriesPage.saveObjectEntryButton.click();
+
+			await waitForAlert(page);
+
+			await viewObjectEntriesPage.goto(objectDefinition.className);
+
+			await viewObjectEntriesPage.frontendDatasetItems.first().click();
+
+			await viewObjectEntriesPage.editObjectEntryForm.waitFor({
+				state: 'visible',
+			});
+
+			await expect(
+				viewObjectEntriesPage.editObjectEntryForm.getByPlaceholder(
+					'Search'
+				)
+			).toHaveValue(organization1.name);
+		}
+	);
+
+	test(
+		'can view a suborganization they are a member of in a relationship field',
+		{tag: '@LPD-97608'},
+		async ({apiHelpers, page, viewObjectEntriesPage}) => {
+			const parentOrganization =
+				await apiHelpers.headlessAdminUser.postOrganization();
+			const suborganization =
+				await apiHelpers.headlessAdminUser.postOrganization({
+					parentOrganization: {id: parentOrganization.id},
+				});
+
+			const user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+			apiHelpers.data.push({id: user.id, type: 'userAccount'});
+
+			await apiHelpers.headlessAdminUser.assignUserToOrganizationByEmailAddress(
+				suborganization.id,
+				user.emailAddress
+			);
+
+			const objectFields = generateObjectFields({
+				objectFieldBusinessTypes: ['Text'],
+			});
+
+			const objectDefinition =
+				await apiHelpers.objectAdmin.postRandomObjectDefinition({
+					objectFields,
+					panelCategoryKey: 'control_panel.object',
+					status: {code: 0},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+
+			const {body: organizationObjectDefinition} =
+				await objectDefinitionAPIClient.getObjectDefinitionByExternalReferenceCode(
+					'L_ORGANIZATION'
+				);
+
+			const objectRelationshipAPIClient =
+				await apiHelpers.buildRestClient(ObjectRelationshipAPI);
+
+			const {body: objectRelationship} =
+				await objectRelationshipAPIClient.postObjectDefinitionByExternalReferenceCodeObjectRelationship(
+					'L_ORGANIZATION',
+					{
+						label: {
+							en_US: 'objectRelationshipLabel' + getRandomInt(),
+						},
+						name: await getFreshObjectRelationshipName(apiHelpers, [
+							'L_ORGANIZATION',
+							objectDefinition.externalReferenceCode!,
+						]),
+						objectDefinitionExternalReferenceCode1:
+							'L_ORGANIZATION',
+						objectDefinitionExternalReferenceCode2:
+							objectDefinition.externalReferenceCode,
+						objectDefinitionId1: organizationObjectDefinition.id,
+						objectDefinitionId2: objectDefinition.id,
+						objectDefinitionName2: objectDefinition.name,
+						type: 'oneToMany',
+					}
+				);
+
+			apiHelpers.data.push({
+				id: objectRelationship.id,
+				type: 'objectRelationship',
+			});
+
+			const companyId = await page.evaluate(() => {
+				return Liferay.ThemeDisplay.getCompanyId();
+			});
+
+			const role = await apiHelpers.headlessAdminUser.postRole({
+				name: 'ObjRole' + getRandomInt(),
+				rolePermissions: [
+					{
+						actionIds: ['VIEW_CONTROL_PANEL'],
+						primaryKey: companyId,
+						resourceName: '90',
+						scope: 1,
+					},
+					{
+						actionIds: ['ACCESS_IN_CONTROL_PANEL'],
+						primaryKey: companyId,
+						resourceName: `com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet_${objectDefinition.className.split('#')[1]}`,
+						scope: 1,
+					},
+					{
+						actionIds: ['ADD_OBJECT_ENTRY'],
+						primaryKey: companyId,
+						resourceName: `com.liferay.object#${objectDefinition.id}`,
+						scope: 1,
+					},
+				],
+			});
+
+			apiHelpers.data.push({id: role.id, type: 'role'});
+
+			await apiHelpers.headlessAdminUser.assignUserToRole(
+				role.externalReferenceCode,
+				user.id
+			);
+
+			userData[user.alternateName] = {
+				name: user.givenName,
+				password: 'test',
+				surname: user.familyName,
+			};
+
+			await performUserSwitch(page, user.alternateName);
+
+			await viewObjectEntriesPage.goto(objectDefinition.className);
+
+			await viewObjectEntriesPage.clickAddObjectEntry(
+				objectDefinition.label['en_US']
+			);
+
+			await page.getByRole('textbox', {name: 'Search'}).click();
+
+			await expect(
+				page.getByRole('menuitem', {name: suborganization.name})
+			).toBeVisible();
+			await expect(
+				page.getByRole('menuitem', {name: parentOrganization.name})
+			).toBeHidden();
+
+			await page
+				.getByRole('menuitem', {name: suborganization.name})
+				.click();
+
+			await viewObjectEntriesPage.saveObjectEntryButton.click();
+
+			await waitForAlert(page);
+
+			await viewObjectEntriesPage.goto(objectDefinition.className);
+
+			await viewObjectEntriesPage.frontendDatasetItems.first().click();
+
+			await viewObjectEntriesPage.editObjectEntryForm.waitFor({
+				state: 'visible',
+			});
+
+			await expect(
+				viewObjectEntriesPage.editObjectEntryForm.getByPlaceholder(
+					'Search'
+				)
+			).toHaveValue(suborganization.name);
+		}
+	);
 
 	test('can order auto-generated table by entry', async ({
 		apiHelpers,
@@ -4101,12 +4582,8 @@ test.describe('Manage object entries through View Object Entries', () => {
 			.getByPlaceholder('Create an expression.')
 			.fill(textFieldName);
 
-		await objectFieldsPage.editFieldSaveButton.click();
-
-		await waitForAlert(
-			page,
-			'Success:The object field was updated successfully'
-		);
+		const {navigation} =
+			await objectFieldsPage.saveObjectFieldReturningNavigation();
 
 		const applicationName =
 			'c/' + objectDefinition.name.toLowerCase() + 's';
@@ -4117,6 +4594,8 @@ test.describe('Manage object entries through View Object Entries', () => {
 			{[textFieldName]: firstItemName},
 			applicationName
 		);
+
+		await navigation;
 
 		await viewObjectEntriesPage.goto(objectDefinition.className);
 
@@ -4182,6 +4661,66 @@ test.describe('Manage object entries through View Object Entries', () => {
 		await expect(autoIncrementInput).toHaveValue('HAT-1');
 	});
 
+	test(
+		'can verify conditional read only field keeps its value in object entries',
+		{tag: ['@LPD-103669']},
+		async ({apiHelpers, page, viewObjectEntriesPage}) => {
+			const objectFields = generateObjectFields({
+				objectFieldBusinessTypes: [
+					{businessType: 'Integer', name: 'age'},
+					{
+						businessType: 'Text',
+						name: 'employeeName',
+						readOnly: 'conditional',
+						readOnlyConditionExpression: 'age == 20',
+					},
+				],
+			});
+
+			const objectDefinition =
+				await apiHelpers.objectAdmin.postRandomObjectDefinition({
+					objectFields,
+					status: {code: 0},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			await apiHelpers.objectEntry.postObjectEntry(
+				{age: 20, employeeName: 'John'},
+				'c/' + objectDefinition.name.toLowerCase() + 's'
+			);
+
+			await viewObjectEntriesPage.goto(objectDefinition.className);
+
+			await viewObjectEntriesPage.frontendDatasetItems.first().click();
+
+			const ageInput = page.getByLabel(objectFields[0].label['en_US']);
+
+			const employeeNameInput = page.getByLabel(
+				objectFields[1].label['en_US']
+			);
+
+			await expect(employeeNameInput).toBeDisabled();
+
+			await expect(employeeNameInput).toHaveValue('John');
+
+			await ageInput.fill('21');
+
+			await viewObjectEntriesPage.saveObjectEntryButton.click();
+
+			await waitForAlert(page);
+
+			await viewObjectEntriesPage.backButton.click();
+
+			await viewObjectEntriesPage.frontendDatasetItems.first().click();
+
+			await expect(employeeNameInput).toHaveValue('John');
+		}
+	);
+
 	test('can view all entries related to an object in the relationship field using autocomplete', async ({
 		apiHelpers,
 		page,
@@ -4210,8 +4749,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		const objectRelationshipLabel =
 			'objectRelationshipLabel' + getRandomInt();
-		const objectRelationshipName =
-			'objectRelationshipName' + Math.floor(Math.random() * 99);
+		const objectRelationshipName = await getFreshObjectRelationshipName(
+			apiHelpers,
+			[
+				objectDefinition1.externalReferenceCode!,
+				objectDefinition2.externalReferenceCode!,
+			]
+		);
 
 		const objectRelationshipAPIClient = await apiHelpers.buildRestClient(
 			ObjectRelationshipAPI
@@ -4720,7 +5264,7 @@ test.describe('Manage object entries through View Object Entries', () => {
 		{tag: '@LPD-65249'},
 		async ({
 			apiHelpers,
-			commerceCatalogSystemSettingsPage,
+			commerceInstanceSettingsPage,
 			page,
 			viewObjectEntriesPage,
 		}) => {
@@ -4789,7 +5333,7 @@ test.describe('Manage object entries through View Object Entries', () => {
 					catalogId: catalog.id,
 				});
 
-			await commerceCatalogSystemSettingsPage.toggleProductVersioning();
+			await commerceInstanceSettingsPage.toggleProductVersioning();
 
 			await apiHelpers.headlessCommerceAdminCatalog.patchProduct(
 				productVersion1.productId.toString()
@@ -4815,13 +5359,21 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 			await expect(viewObjectEntriesPage.successMessage).toBeVisible();
 
+			await page.waitForURL(/externalReferenceCode=/);
+
+			await page.reload();
+
 			const fieldContainer = page.locator(
 				'[data-field-name="r_objectRelationshipName_CProductId"]'
 			);
 
-			const productVersion1Value = await fieldContainer
-				.locator('input[type="hidden"][name]:not([name$="_edited"])')
-				.inputValue();
+			const relationshipInput = fieldContainer.locator(
+				'input[type="hidden"][name]:not([name$="_edited"])'
+			);
+
+			await expect(relationshipInput).not.toHaveValue('');
+
+			const productVersion1Value = await relationshipInput.inputValue();
 
 			await viewObjectEntriesPage.selectDropdownItemWithSearch(
 				productVersion2.name['en_US']
@@ -4831,9 +5383,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 			await expect(viewObjectEntriesPage.successMessage).toBeVisible();
 
-			const productVersion2Value = await fieldContainer
-				.locator('input[type="hidden"][name]:not([name$="_edited"])')
-				.inputValue();
+			await page.waitForURL(/externalReferenceCode=/);
+
+			await page.reload();
+
+			await expect(relationshipInput).not.toHaveValue('');
+
+			const productVersion2Value = await relationshipInput.inputValue();
 
 			await expect(productVersion2Value).toEqual(productVersion1Value);
 
@@ -4847,7 +5403,7 @@ test.describe('Manage object entries through View Object Entries', () => {
 				1
 			);
 
-			await commerceCatalogSystemSettingsPage.toggleProductVersioning();
+			await commerceInstanceSettingsPage.toggleProductVersioning();
 		}
 	);
 
@@ -5353,6 +5909,118 @@ test.describe('Manage object entries through View Object Entries', () => {
 		}
 	);
 
+	test(
+		'shows an error when entering an email address with a blocked domain',
+		{tag: ['@LPD-70673']},
+		async ({apiHelpers, page, viewObjectEntriesPage}) => {
+			const blockedDomain = '@yahoo.com';
+
+			let objectDefinition: ObjectDefinition;
+			let objectFields: ObjectField[];
+
+			await test.step('Create an object definition with a blocked domain', async () => {
+				objectFields = generateObjectFields({
+					objectFieldBusinessTypes: [
+						{
+							businessType: 'EmailAddress',
+							objectFieldSettings: [
+								{
+									name: 'blockedDomains',
+									value: blockedDomain,
+								},
+							],
+						},
+					],
+				});
+
+				objectDefinition =
+					await apiHelpers.objectAdmin.postRandomObjectDefinition({
+						objectFields,
+						status: {code: 0},
+					});
+
+				apiHelpers.data.push({
+					id: objectDefinition.id,
+					type: 'objectDefinition',
+				});
+			});
+
+			await test.step('Navigate and attempt to save an entry with the blocked domain', async () => {
+				await viewObjectEntriesPage.goto(objectDefinition.className);
+
+				await viewObjectEntriesPage.clickAddObjectEntry(
+					objectDefinition.label['en_US']
+				);
+
+				await page
+					.getByLabel(objectFields[0].label.en_US)
+					.fill(`user${blockedDomain}`);
+
+				await viewObjectEntriesPage.saveObjectEntryButton.click();
+			});
+
+			await test.step('Verify the blocked domain error is shown', async () => {
+				await expect(
+					page.getByText(
+						'The email address domain is not allowed. Enter an email address with a different domain.'
+					)
+				).toBeVisible();
+			});
+		}
+	);
+
+	test(
+		'shows an error when entering an invalid email',
+		{tag: ['@LPD-70673']},
+		async ({apiHelpers, page, viewObjectEntriesPage}) => {
+			const invalidEmailAddress = 'user@liferay';
+
+			let objectDefinition: ObjectDefinition;
+			let objectFields: ObjectField[];
+
+			await test.step('Create an object definition with a blocked domain', async () => {
+				objectFields = generateObjectFields({
+					objectFieldBusinessTypes: [
+						{
+							businessType: 'EmailAddress',
+						},
+					],
+				});
+
+				objectDefinition =
+					await apiHelpers.objectAdmin.postRandomObjectDefinition({
+						objectFields,
+						status: {code: 0},
+					});
+
+				apiHelpers.data.push({
+					id: objectDefinition.id,
+					type: 'objectDefinition',
+				});
+			});
+
+			await test.step('Navigate and attempt to save an entry with the invalid email', async () => {
+				await viewObjectEntriesPage.goto(objectDefinition.className);
+
+				await viewObjectEntriesPage.clickAddObjectEntry(
+					objectDefinition.label['en_US']
+				);
+
+				await page
+					.getByLabel(objectFields[0].label.en_US)
+					.fill(invalidEmailAddress);
+
+				await viewObjectEntriesPage.saveObjectEntryButton.click();
+			});
+
+			await test.step('Verify the invalid email error is shown', async () => {
+				await expect(
+					page.getByText('Please enter a valid email address.')
+				).toBeVisible();
+			});
+		}
+	);
+
 	test('verify that relationship API is called only once and uses pagination when adding object entry', async ({
 		apiHelpers,
 		page,
@@ -5378,7 +6046,10 @@ test.describe('Manage object entries through View Object Entries', () => {
 				label: {
 					en_US: 'objectRelationshipLabel' + getRandomInt(),
 				},
-				name: 'objectRelationshipName' + getRandomInt(),
+				name: await getFreshObjectRelationshipName(apiHelpers, [
+					'L_ACCOUNT',
+					objectDefinition.externalReferenceCode!,
+				]),
 				objectDefinitionExternalReferenceCode1: 'L_ACCOUNT',
 				objectDefinitionExternalReferenceCode2:
 					objectDefinition.externalReferenceCode,
@@ -5403,17 +6074,19 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		await viewObjectEntriesPage.goto(objectDefinition.className);
 
-		await viewObjectEntriesPage.clickAddObjectEntry(
-			objectDefinition.label['en_US']
-		);
-
-		await page.waitForResponse(
+		const accountsResponsePromise = page.waitForResponse(
 			(response) =>
 				response
 					.url()
 					.includes('/o/headless-admin-user/v1.0/accounts') &&
 				response.request().method() === 'GET'
 		);
+
+		await viewObjectEntriesPage.clickAddObjectEntry(
+			objectDefinition.label['en_US']
+		);
+
+		await accountsResponsePromise;
 
 		expect(apiCalls).toBe(1);
 		expect(apiURL).not.toContain('pageSize=-1');
@@ -5504,9 +6177,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 			.getByRole('button', {name: 'astronaut.png'})
 			.waitFor({state: 'visible'});
 
-		expect(
-			await apiHelpers.headlessDelivery.getDocument(fileEntryId1)
-		).toEqual({status: 'NOT_FOUND'});
+		await expect
+			.poll(
+				async () =>
+					await apiHelpers.headlessDelivery.getDocument(fileEntryId1),
+				{timeout: 30 * 1000}
+			)
+			.toEqual({status: 'NOT_FOUND'});
 
 		const fileEntryId2 = await page.getAttribute(
 			'input[data-field-name^="testAttachment"]',
@@ -5525,9 +6202,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		await viewObjectEntriesPage.deleteFileButton.click();
 
-		expect(
-			await apiHelpers.headlessDelivery.getDocument(fileEntryId2)
-		).toEqual({status: 'NOT_FOUND'});
+		await expect
+			.poll(
+				async () =>
+					await apiHelpers.headlessDelivery.getDocument(fileEntryId2),
+				{timeout: 30 * 1000}
+			)
+			.toEqual({status: 'NOT_FOUND'});
 
 		// Verify that the file is removed after page reload
 
@@ -5547,9 +6228,13 @@ test.describe('Manage object entries through View Object Entries', () => {
 
 		await page.reload();
 
-		expect(
-			await apiHelpers.headlessDelivery.getDocument(fileEntryId3)
-		).toEqual({status: 'NOT_FOUND'});
+		await expect
+			.poll(
+				async () =>
+					await apiHelpers.headlessDelivery.getDocument(fileEntryId3),
+				{timeout: 30 * 1000}
+			)
+			.toEqual({status: 'NOT_FOUND'});
 
 		// Verify that the file is saved successfully when clicking submit
 
@@ -5757,7 +6442,9 @@ test.describe('Manage object entries through View Object Entries', () => {
 			await test.step('Select the "United States" prefix, fill the phone number field, and save the entry', async () => {
 				await fieldContainer.getByLabel('Country Code').click();
 
-				await page.getByRole('option', {name: /United States/}).click();
+				await page
+					.getByRole('option', {name: /United States/})
+					.dispatchEvent('click');
 
 				await expect(fieldContainer.getByText(prefix)).toBeVisible();
 
@@ -6081,7 +6768,7 @@ test.describe('Manage object entries through Workflow', () => {
 			applicationName
 		);
 
-		await globalMenuPage.goToApplications('Metrics');
+		await globalMenuPage.goToApplications('Workflow Metrics');
 
 		await metricsPage.chooseProcess(assetType);
 

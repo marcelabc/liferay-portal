@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.JAXRSWhiteboardTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -94,6 +95,8 @@ public abstract class BaseConnectedSiteResourceTestCase {
 	public static void setUpClass() throws Exception {
 		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		JAXRSWhiteboardTestUtil.ensureReady();
 	}
 
 	@Before
@@ -340,7 +343,8 @@ public abstract class BaseConnectedSiteResourceTestCase {
 				assetLibraryExternalReferenceCode, randomConnectedSite());
 
 		page = connectedSiteResource.getAssetLibraryConnectedSitesPage(
-			assetLibraryExternalReferenceCode, Pagination.of(1, 10));
+			assetLibraryExternalReferenceCode,
+			Pagination.of(1, (int)totalCount + 2));
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -732,6 +736,14 @@ public abstract class BaseConnectedSiteResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("stagingType", additionalAssertFieldName)) {
+				if (connectedSite.getStagingType() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("type", additionalAssertFieldName)) {
 				if (connectedSite.getType() == null) {
 					valid = false;
@@ -945,6 +957,17 @@ public abstract class BaseConnectedSiteResourceTestCase {
 				if (!Objects.deepEquals(
 						connectedSite1.getSearchable(),
 						connectedSite2.getSearchable())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("stagingType", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						connectedSite1.getStagingType(),
+						connectedSite2.getStagingType())) {
 
 					return false;
 				}
@@ -1273,6 +1296,11 @@ public abstract class BaseConnectedSiteResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("stagingType")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("type")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1585,4 +1613,4 @@ public abstract class BaseConnectedSiteResourceTestCase {
 			_connectedSiteResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-335932348
+// LIFERAY-REST-BUILDER-HASH:-1432969686

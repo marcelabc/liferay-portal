@@ -87,12 +87,41 @@ const mockUnconnectedSiteTemplate: SiteTemplate = {
 	siteExternalReferenceCode: '102-erc',
 };
 
+const mockAutocompleteFetch = ({
+	siteTemplates = [],
+	sites = [],
+}: {
+	siteTemplates?: SiteTemplate[];
+	sites?: Site[];
+} = {}) => {
+	const itemsByPathname: Record<string, Site[] | SiteTemplate[]> = {
+		'/o/headless-admin-site/v1.0/site-templates': siteTemplates,
+		'/o/headless-admin-site/v1.0/sites': sites,
+	};
+
+	mockFetch.mockImplementation(async (...args: unknown[]) => {
+		const url = String(args[0]);
+		const items = itemsByPathname[new URL(url).pathname];
+
+		if (!items) {
+			throw new Error(`Unexpected autocomplete request: ${url}`);
+		}
+
+		return {
+			headers: new Headers([['Content-Type', 'application/json']]),
+			json: async () => ({items}),
+		} as Response;
+	});
+};
+
 const DEFAULT_PROPS = {
 	externalReferenceCode: 'ERC',
 	hasConnectSitesPermission: true,
 };
 
 const errorMessage = 'Connection failed';
+
+const SPECIAL_CHARS_NAME = 'Marketing & Sales/EMEA';
 
 const renderComponent = (props = DEFAULT_PROPS) => {
 	return render(<SpaceConnectedSitesModal {...props} />);
@@ -139,6 +168,8 @@ describe('SpaceConnectedSitesModal', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+
+		mockAutocompleteFetch();
 
 		mockGetConnectedSitesFromSpace.mockResolvedValue({
 			data: {items: mockConnectedSites},
@@ -240,15 +271,8 @@ describe('SpaceConnectedSitesModal', () => {
 
 	describe('when hasConnectSitesPermission is true', () => {
 		it('allows connecting a new site', async () => {
-			mockFetch.mockImplementation(async () => {
-				return {
-					headers: new Headers([
-						['Content-Type', 'application/json'],
-					]),
-					json: async () => ({
-						items: [...mockConnectedSites, mockUnconnectedSite],
-					}),
-				} as Response;
+			mockAutocompleteFetch({
+				sites: [...mockConnectedSites, mockUnconnectedSite],
 			});
 
 			renderComponent();
@@ -290,16 +314,72 @@ describe('SpaceConnectedSitesModal', () => {
 			).toBeInTheDocument();
 		});
 
+		it('renders the site logo in the autocomplete options', async () => {
+			mockAutocompleteFetch({sites: [mockUnconnectedSite]});
+
+			renderComponent();
+			await waitForComponentRendering();
+
+			await userEvent.click(screen.getByPlaceholderText('select-a-site'));
+
+			const option = await screen.findByRole('option', {
+				name: mockUnconnectedSite.descriptiveName,
+			});
+
+			expect(option.querySelector('img')).toHaveAttribute(
+				'src',
+				mockUnconnectedSite.logo
+			);
+		});
+
+		it('renders a site name containing HTML characters as typed', async () => {
+			mockAutocompleteFetch({
+				sites: [
+					{
+						...mockUnconnectedSite,
+						descriptiveName: SPECIAL_CHARS_NAME,
+					},
+				],
+			});
+
+			renderComponent();
+			await waitForComponentRendering();
+
+			await userEvent.click(screen.getByPlaceholderText('select-a-site'));
+
+			expect(
+				await screen.findByRole('option', {name: SPECIAL_CHARS_NAME})
+			).toBeInTheDocument();
+		});
+
+		it('renders a site template name containing HTML characters as typed', async () => {
+			mockAutocompleteFetch({
+				siteTemplates: [
+					{...mockUnconnectedSiteTemplate, name: SPECIAL_CHARS_NAME},
+				],
+			});
+
+			renderComponent();
+			await waitForComponentRendering();
+
+			await userEvent.click(screen.getByLabelText('sites'));
+
+			await userEvent.click(
+				screen.getByRole('option', {name: 'site-templates'})
+			);
+
+			await userEvent.click(
+				screen.getByPlaceholderText('select-a-site-template')
+			);
+
+			expect(
+				await screen.findByRole('option', {name: SPECIAL_CHARS_NAME})
+			).toBeInTheDocument();
+		});
+
 		it('shows an error toast if connecting a site fails', async () => {
-			mockFetch.mockImplementation(async () => {
-				return {
-					headers: new Headers([
-						['Content-Type', 'application/json'],
-					]),
-					json: async () => ({
-						items: [...mockConnectedSites, mockUnconnectedSite],
-					}),
-				} as Response;
+			mockAutocompleteFetch({
+				sites: [...mockConnectedSites, mockUnconnectedSite],
 			});
 
 			mockConnectSiteToSpace.mockResolvedValue({
@@ -453,16 +533,7 @@ describe('SpaceConnectedSitesModal', () => {
 		});
 
 		it('disable connect to site button when site already selected', async () => {
-			mockFetch.mockImplementation(async () => {
-				return {
-					headers: new Headers([
-						['Content-Type', 'application/json'],
-					]),
-					json: async () => ({
-						items: [...mockConnectedSites],
-					}),
-				} as Response;
-			});
+			mockAutocompleteFetch({sites: [...mockConnectedSites]});
 
 			renderComponent();
 			await waitForComponentRendering();
@@ -488,6 +559,68 @@ describe('SpaceConnectedSitesModal', () => {
 			).toBeDisabled();
 		});
 
+		it('excludes already-connected sites from the autocomplete request', async () => {
+			mockAutocompleteFetch();
+
+			renderComponent();
+			await waitForComponentRendering();
+
+			await userEvent.click(screen.getByPlaceholderText('select-a-site'));
+
+			await waitFor(() => {
+				const sitesURLs = mockFetch.mock.calls
+					.map((call: unknown[]) => String(call[0]))
+					.filter((url) => url.includes('/sites'));
+
+				expect(
+					sitesURLs.some(
+						(url) =>
+							url.includes('excludedExternalReferenceCodes=1') &&
+							url.includes('excludedExternalReferenceCodes=2')
+					)
+				).toBe(true);
+			});
+		});
+
+		it('excludes already-connected site templates from the autocomplete request', async () => {
+			mockGetConnectedSitesFromSpace.mockResolvedValue({
+				data: {items: [mockConnectedSiteTemplate]},
+				error: null,
+			});
+
+			mockAutocompleteFetch();
+
+			renderComponent();
+
+			await screen.findByText(
+				`${mockConnectedSiteTemplate.descriptiveName} (site-template)`
+			);
+
+			await userEvent.click(screen.getByLabelText('sites'));
+
+			await userEvent.click(
+				screen.getByRole('option', {name: 'site-templates'})
+			);
+
+			await userEvent.click(
+				screen.getByPlaceholderText('select-a-site-template')
+			);
+
+			await waitFor(() => {
+				const siteTemplatesURLs = mockFetch.mock.calls
+					.map((call: unknown[]) => String(call[0]))
+					.filter((url) => url.includes('/site-templates'));
+
+				expect(
+					siteTemplatesURLs.some((url) =>
+						url.includes(
+							`excludedSiteExternalReferenceCodes=${mockConnectedSiteTemplate.externalReferenceCode}`
+						)
+					)
+				).toBe(true);
+			});
+		});
+
 		it('switches the autocomplete placeholder when toggled to site templates', async () => {
 			renderComponent();
 			await waitForComponentRendering();
@@ -496,9 +629,10 @@ describe('SpaceConnectedSitesModal', () => {
 				screen.getByPlaceholderText('select-a-site')
 			).toBeInTheDocument();
 
-			await userEvent.selectOptions(
-				screen.getByLabelText('sites'),
-				'site-templates'
+			await userEvent.click(screen.getByLabelText('sites'));
+
+			await userEvent.click(
+				screen.getByRole('option', {name: 'site-templates'})
 			);
 
 			expect(
@@ -510,15 +644,8 @@ describe('SpaceConnectedSitesModal', () => {
 		});
 
 		it('allows connecting a new site template', async () => {
-			mockFetch.mockImplementation(async () => {
-				return {
-					headers: new Headers([
-						['Content-Type', 'application/json'],
-					]),
-					json: async () => ({
-						items: [mockUnconnectedSiteTemplate],
-					}),
-				} as Response;
+			mockAutocompleteFetch({
+				siteTemplates: [mockUnconnectedSiteTemplate],
 			});
 
 			mockConnectSiteToSpace.mockResolvedValue({
@@ -538,9 +665,10 @@ describe('SpaceConnectedSitesModal', () => {
 			renderComponent();
 			await waitForComponentRendering();
 
-			await userEvent.selectOptions(
-				screen.getByLabelText('sites'),
-				'site-templates'
+			await userEvent.click(screen.getByLabelText('sites'));
+
+			await userEvent.click(
+				screen.getByRole('option', {name: 'site-templates'})
 			);
 
 			await userEvent.click(
@@ -585,15 +713,8 @@ describe('SpaceConnectedSitesModal', () => {
 		});
 
 		it('shows an error toast if connecting a site template fails', async () => {
-			mockFetch.mockImplementation(async () => {
-				return {
-					headers: new Headers([
-						['Content-Type', 'application/json'],
-					]),
-					json: async () => ({
-						items: [mockUnconnectedSiteTemplate],
-					}),
-				} as Response;
+			mockAutocompleteFetch({
+				siteTemplates: [mockUnconnectedSiteTemplate],
 			});
 
 			mockConnectSiteToSpace.mockResolvedValue({
@@ -604,9 +725,10 @@ describe('SpaceConnectedSitesModal', () => {
 			renderComponent();
 			await waitForComponentRendering();
 
-			await userEvent.selectOptions(
-				screen.getByLabelText('sites'),
-				'site-templates'
+			await userEvent.click(screen.getByLabelText('sites'));
+
+			await userEvent.click(
+				screen.getByRole('option', {name: 'site-templates'})
 			);
 
 			await userEvent.click(
@@ -647,15 +769,8 @@ describe('SpaceConnectedSitesModal', () => {
 					mockConnectedSiteTemplate.externalReferenceCode,
 			};
 
-			mockFetch.mockImplementation(async () => {
-				return {
-					headers: new Headers([
-						['Content-Type', 'application/json'],
-					]),
-					json: async () => ({
-						items: [alreadyConnectedTemplate],
-					}),
-				} as Response;
+			mockAutocompleteFetch({
+				siteTemplates: [alreadyConnectedTemplate],
 			});
 
 			renderComponent();
@@ -666,9 +781,10 @@ describe('SpaceConnectedSitesModal', () => {
 				)
 			).toBeInTheDocument();
 
-			await userEvent.selectOptions(
-				screen.getByLabelText('sites'),
-				'site-templates'
+			await userEvent.click(screen.getByLabelText('sites'));
+
+			await userEvent.click(
+				screen.getByRole('option', {name: 'site-templates'})
 			);
 
 			await userEvent.click(

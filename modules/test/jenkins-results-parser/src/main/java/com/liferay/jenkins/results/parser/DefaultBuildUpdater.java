@@ -45,11 +45,20 @@ public class DefaultBuildUpdater extends BaseBuildUpdater {
 	public void reinvoke(Map<String, String> reinvokeBuildParameters) {
 		Build build = getBuild();
 
+		JenkinsMaster currentJenkinsMaster = null;
+
+		Build.Invocation currentInvocation = build.getCurrentInvocation();
+
+		if (currentInvocation != null) {
+			currentJenkinsMaster = currentInvocation.getJenkinsMaster();
+		}
+
 		JenkinsCohort jenkinsCohort = build.getJenkinsCohort();
 
 		JenkinsMaster jenkinsMaster =
 			jenkinsCohort.getMostAvailableJenkinsMaster(
-				build.getInvokedBatchSize(), build.getJobName());
+				currentJenkinsMaster, build.getInvokedBatchSize(),
+				build.getJobName());
 
 		build.setJenkinsMaster(jenkinsMaster);
 
@@ -172,6 +181,8 @@ public class DefaultBuildUpdater extends BaseBuildUpdater {
 
 	@Override
 	protected boolean isBuildRunning() {
+		Build build = getBuild();
+
 		try {
 			JSONObject buildJSONObject = _getBuildJSONObject();
 
@@ -179,29 +190,35 @@ public class DefaultBuildUpdater extends BaseBuildUpdater {
 				return false;
 			}
 
-			Build build = getBuild();
-
 			build.setBuildURL(buildJSONObject.getString("url"));
-
-			build.saveBuildURLInBuildDatabase();
 
 			Build.Invocation buildInvocation = build.getCurrentInvocation();
 
 			buildInvocation.setQueueId(buildJSONObject.getLong("queueId"));
-
-			return true;
 		}
 		catch (Exception exception) {
 			exception.printStackTrace();
 
-			Build build = getBuild();
-
 			System.out.println(
 				JenkinsResultsParserUtil.combine(
 					"[", build.getBuildName(), "] Unable to get build item"));
+
+			return false;
 		}
 
-		return false;
+		try {
+			build.saveBuildURLInBuildDatabase();
+		}
+		catch (Exception exception) {
+			exception.printStackTrace();
+
+			System.out.println(
+				JenkinsResultsParserUtil.combine(
+					"[", build.getBuildName(),
+					"] Unable to save the running build URL"));
+		}
+
+		return true;
 	}
 
 	private JSONObject _getBuildJSONObject() {
@@ -350,6 +367,16 @@ public class DefaultBuildUpdater extends BaseBuildUpdater {
 		Map<String, String> reinvokeBuildParameters) {
 
 		Build build = getBuild();
+
+		Build parentBuild = build.getParentBuild();
+
+		if (parentBuild != null) {
+			String parentBuildURL = parentBuild.getBuildURL();
+
+			if (!JenkinsResultsParserUtil.isNullOrEmpty(parentBuildURL)) {
+				build.setParameterValue("PARENT_BUILD_URL", parentBuildURL);
+			}
+		}
 
 		Map<String, String> buildParameters = new HashMap<>(
 			build.getParameters());

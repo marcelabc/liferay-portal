@@ -6,9 +6,13 @@
 package com.liferay.layout.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.change.tracking.model.CTCollection;
+import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
@@ -22,11 +26,13 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -36,15 +42,20 @@ import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizer;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
+import java.io.ByteArrayInputStream;
+
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
@@ -307,6 +318,96 @@ public class LayoutServiceTest {
 	}
 
 	@Test
+	@TestInfo({"LPD-78893", "LPD-94951"})
+	public void testGetTempFileNames() throws Exception {
+
+		// Company group with control panel permission
+
+		Group companyGroup = _groupLocalService.getCompanyGroup(
+			TestPropsValues.getCompanyId());
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_addUserWithControlPanelPermission(
+					PortletKeys.COMPANY_IMPORT))) {
+
+			_layoutService.getTempFileNames(
+				companyGroup.getGroupId(), RandomTestUtil.randomString());
+		}
+
+		// Company group without permission
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				UserTestUtil.addUser())) {
+
+			Assert.assertThrows(
+				PrincipalException.class,
+				() -> _layoutService.getTempFileNames(
+					companyGroup.getGroupId(), RandomTestUtil.randomString()));
+		}
+
+		// Inside publication
+
+		CTCollection ctCollection = _ctCollectionLocalService.addCTCollection(
+			null, TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
+			0, RandomTestUtil.randomString(), null);
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					ctCollection.getCtCollectionId())) {
+
+			String folderName = RandomTestUtil.randomString();
+			String fileName = RandomTestUtil.randomString();
+
+			_layoutService.addTempFileEntry(
+				_group.getGroupId(), folderName, fileName,
+				new ByteArrayInputStream(RandomTestUtil.randomBytes()),
+				ContentTypes.APPLICATION_ZIP);
+
+			String[] tempFileNames = _layoutService.getTempFileNames(
+				_group.getGroupId(), folderName);
+
+			Assert.assertEquals(
+				Arrays.toString(tempFileNames), 1, tempFileNames.length);
+			Assert.assertEquals(fileName, tempFileNames[0]);
+		}
+		finally {
+			_ctCollectionLocalService.deleteCTCollection(ctCollection);
+		}
+
+		// Site group with control panel permission
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_addUserWithControlPanelPermission(
+					PortletKeys.COMPANY_IMPORT))) {
+
+			Assert.assertThrows(
+				PrincipalException.class,
+				() -> _layoutService.getTempFileNames(
+					_group.getGroupId(), RandomTestUtil.randomString()));
+		}
+
+		// Site group with export/import permission
+
+		User user = UserTestUtil.addUser();
+
+		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_roleLocalService.addUserRole(user.getUserId(), role.getRoleId());
+
+		RoleTestUtil.addResourcePermission(
+			role, Group.class.getName(), ResourceConstants.SCOPE_GROUP,
+			String.valueOf(_group.getGroupId()),
+			ActionKeys.EXPORT_IMPORT_LAYOUTS);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				user)) {
+
+			_layoutService.getTempFileNames(
+				_group.getGroupId(), RandomTestUtil.randomString());
+		}
+	}
+
+	@Test
 	public void testUpdateLayoutTemplate() throws Exception {
 		Layout layout = _addTypePortletLayout(
 			RandomTestUtil.randomString(), false, StringPool.BLANK);
@@ -396,6 +497,22 @@ public class LayoutServiceTest {
 			null,
 			ServiceContextTestUtil.getServiceContext(
 				_group, TestPropsValues.getUserId()));
+	}
+
+	private User _addUserWithControlPanelPermission(String portletId)
+		throws Exception {
+
+		User user = UserTestUtil.addUser();
+		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_roleLocalService.addUserRole(user.getUserId(), role.getRoleId());
+
+		RoleTestUtil.addResourcePermission(
+			role, portletId, ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()),
+			ActionKeys.ACCESS_IN_CONTROL_PANEL);
+
+		return user;
 	}
 
 	private void _assertAddLayout(boolean privateLayout) throws Exception {
@@ -516,10 +633,16 @@ public class LayoutServiceTest {
 	};
 
 	@Inject
+	private CTCollectionLocalService _ctCollectionLocalService;
+
+	@Inject
 	private FriendlyURLNormalizer _friendlyURLNormalizer;
 
 	@DeleteAfterTestRun
 	private Group _group;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;

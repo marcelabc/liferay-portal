@@ -7,21 +7,24 @@ package com.liferay.analytics.cms.rest.internal.depot.entry.util;
 
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.model.DepotEntryGroupRel;
+import com.liferay.depot.model.DepotEntryTable;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
-import com.liferay.depot.service.DepotEntryService;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.expression.Predicate;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.service.Snapshot;
-import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.util.SearchUtil;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.util.ArrayUtil;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Thiago Buarque
@@ -29,22 +32,33 @@ import java.util.List;
 public class DepotEntryUtil {
 
 	public static List<DepotEntry> getDepotEntries(
-			long companyId, Long depotEntryId)
-		throws Exception {
+			String actionId, long companyId, Long... depotEntryIds)
+		throws PortalException {
 
-		List<DepotEntry> depotEntries = new ArrayList<>();
+		DepotEntryLocalService depotEntryLocalService =
+			_depotEntryLocalServiceSnapshot.get();
 
-		DepotEntryService depotEntryService = _depotEntryServiceSnapshot.get();
+		Predicate predicate = DepotEntryTable.INSTANCE.companyId.eq(companyId);
 
-		if (depotEntryId == null) {
-			depotEntries.addAll(
-				_getViewableDepotEntries(companyId, depotEntryService));
+		Long[] filteredDepotEntryIds = ArrayUtil.filter(
+			depotEntryIds, Objects::nonNull);
+
+		if (ArrayUtil.isNotEmpty(filteredDepotEntryIds)) {
+			predicate = predicate.and(
+				DepotEntryTable.INSTANCE.depotEntryId.in(
+					filteredDepotEntryIds));
 		}
-		else {
-			depotEntries.add(depotEntryService.getDepotEntry(depotEntryId));
-		}
 
-		return depotEntries;
+		List<DepotEntry> depotEntries = depotEntryLocalService.dslQuery(
+			DSLQueryFactoryUtil.select(
+				DepotEntryTable.INSTANCE
+			).from(
+				DepotEntryTable.INSTANCE
+			).where(
+				predicate
+			));
+
+		return _filterDepotEntries(actionId, depotEntries);
 	}
 
 	public static Long[] getGroupIds(List<DepotEntry> depotEntries) {
@@ -68,41 +82,33 @@ public class DepotEntryUtil {
 		return groupIds.toArray(new Long[0]);
 	}
 
-	private static List<DepotEntry> _getViewableDepotEntries(
-			long companyId, DepotEntryService depotEntryService)
-		throws Exception {
+	private static List<DepotEntry> _filterDepotEntries(
+			String actionId, List<DepotEntry> depotEntries)
+		throws PortalException {
 
-		List<DepotEntry> depotEntries = new ArrayList<>();
+		List<DepotEntry> filteredDepotEntries = new ArrayList<>();
 
-		SearchUtil.search(
-			Collections.emptyMap(),
-			booleanQuery -> {
-			},
-			null, DepotEntry.class.getName(), null,
-			Pagination.of(QueryUtil.ALL_POS, QueryUtil.ALL_POS),
-			queryConfig -> {
-			},
-			searchContext -> searchContext.setCompanyId(companyId), null,
-			document -> {
-				try {
-					depotEntries.add(
-						depotEntryService.getDepotEntry(
-							GetterUtil.getLong(
-								document.get(Field.ENTRY_CLASS_PK))));
-				}
-				catch (PortalException portalException) {
-					if (_log.isInfoEnabled()) {
-						_log.info(
-							"User does not have access to view space " +
-								document.get(Field.ENTRY_CLASS_PK),
-							portalException);
-					}
-				}
+		ModelResourcePermission<DepotEntry> modelResourcePermission =
+			_depotEntryModelResourcePermissionSnapshot.get();
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
 
-				return null;
-			});
+		for (DepotEntry depotEntry : depotEntries) {
+			if (modelResourcePermission.contains(
+					permissionChecker, depotEntry, actionId)) {
 
-		return depotEntries;
+				filteredDepotEntries.add(depotEntry);
+			}
+			else if (_log.isInfoEnabled()) {
+				_log.info(
+					StringBundler.concat(
+						"User does not have the ", actionId,
+						" permission on depot entry ",
+						depotEntry.getDepotEntryId()));
+			}
+		}
+
+		return filteredDepotEntries;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(DepotEntryUtil.class);
@@ -110,8 +116,12 @@ public class DepotEntryUtil {
 	private static final Snapshot<DepotEntryGroupRelLocalService>
 		_depotEntryGroupRelLocalServiceSnapshot = new Snapshot<>(
 			DepotEntryUtil.class, DepotEntryGroupRelLocalService.class);
-	private static final Snapshot<DepotEntryService>
-		_depotEntryServiceSnapshot = new Snapshot<>(
-			DepotEntryUtil.class, DepotEntryService.class);
+	private static final Snapshot<DepotEntryLocalService>
+		_depotEntryLocalServiceSnapshot = new Snapshot<>(
+			DepotEntryUtil.class, DepotEntryLocalService.class);
+	private static final Snapshot<ModelResourcePermission<DepotEntry>>
+		_depotEntryModelResourcePermissionSnapshot = new Snapshot<>(
+			DepotEntryUtil.class, Snapshot.cast(ModelResourcePermission.class),
+			"(model.class.name=com.liferay.depot.model.DepotEntry)");
 
 }

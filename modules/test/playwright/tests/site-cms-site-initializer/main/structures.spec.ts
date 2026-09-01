@@ -25,9 +25,6 @@ const test = mergeTests(
 	cmsPagesTest,
 	structureBuilderPagesTest,
 	dataApiHelpersTest,
-	featureFlagsTest({
-		'LPD-17564': {enabled: true},
-	}),
 	loginTest()
 );
 
@@ -35,11 +32,20 @@ const testWithModalExportImport = mergeTests(
 	cmsPagesTest,
 	dataApiHelpersTest,
 	featureFlagsTest({
-		'LPD-17564': {enabled: true},
 		'LPD-57655': {enabled: false},
 	}),
 	loginTest(),
 	structureBuilderPagesTest
+);
+
+const testWithImportExport = mergeTests(
+	cmsPagesTest,
+	structureBuilderPagesTest,
+	dataApiHelpersTest,
+	featureFlagsTest({
+		'LPD-99758': {enabled: true},
+	}),
+	loginTest()
 );
 
 test(
@@ -86,6 +92,10 @@ test(
 			action: 'Delete',
 			filter: structureName,
 		});
+
+		await expect(page.locator('.liferay-modal .modal-dialog')).toHaveClass(
+			/modal-dialog-centered/
+		);
 
 		await page
 			.getByPlaceholder('Confirm Content Structure Name')
@@ -139,6 +149,10 @@ test(
 		await expect(
 			page.getByRole('heading', {name: 'Deletion Not Allowed'})
 		).toBeVisible();
+
+		await expect(page.locator('.liferay-modal .modal-dialog')).toHaveClass(
+			/modal-dialog-centered/
+		);
 
 		await clickAndExpectToBeHidden({
 			target: page.getByRole('button', {name: 'OK'}),
@@ -724,13 +738,13 @@ test(
 );
 
 test(
-	'Basic Web Content usages list includes assets that use the structure',
-	{tag: '@LPD-89302'},
+	'View Usages lists the assets using the structure and deletes them with the CMS confirmation modal',
+	{tag: ['@LPD-89302', '@LPD-89560']},
 	async ({apiHelpers, page, structuresPage}) => {
 		const applicationName = 'cms/basic-web-contents';
 		const title = `Content ${getRandomString()}`;
 
-		const objectEntry = await apiHelpers.objectEntry.postObjectEntry(
+		await apiHelpers.objectEntry.postObjectEntry(
 			{
 				objectEntryFolderExternalReferenceCode: 'L_CONTENTS',
 				title,
@@ -739,24 +753,48 @@ test(
 			'Default'
 		);
 
-		try {
-			await structuresPage.goto();
+		// Open the usages list of the structure
 
-			await structuresPage.execItemAction({
-				action: 'View Usages',
-				filter: 'Basic Web Content',
-			});
+		await structuresPage.goto();
 
+		await structuresPage.execItemAction({
+			action: 'View Usages',
+			filter: 'Basic Web Content',
+		});
+
+		await test.step('Usages list includes the asset', async () => {
 			await page.locator('.fds').waitFor();
 
 			await expect(page.getByRole('row', {name: title})).toBeVisible();
-		}
-		finally {
-			await apiHelpers.objectEntry.deleteObjectEntry(
-				applicationName,
-				String(objectEntry.id)
-			);
-		}
+		});
+
+		await test.step('Delete shows the CMS confirmation modal', async () => {
+
+			// Open the delete action of the usage entry
+
+			await structuresPage.dataSetFragmentPage.execItemAction({
+				action: 'Delete',
+				filter: title,
+			});
+
+			// The CMS confirmation modal must appear instead of a native
+			// confirm dialog
+
+			await expect(
+				page.getByText('Are you sure you want to delete this entry?')
+			).toBeVisible();
+
+			// Confirm the deletion
+
+			await page
+				.locator('.liferay-modal')
+				.getByRole('button', {exact: true, name: 'Delete'})
+				.click();
+
+			await waitForAlert(page, `${title} was successfully deleted`, {
+				type: 'success',
+			});
+		});
 	}
 );
 
@@ -930,3 +968,300 @@ test(
 		await expect(row).toBeVisible();
 	}
 );
+
+testWithImportExport.describe('Import and Export Structures', () => {
+	testWithImportExport(
+		'Content Structure can be exported as JSON and imported back',
+		{tag: '@LPD-99759'},
+		async ({apiHelpers, page, structureBuilderPage, structuresPage}) => {
+			const structureLabel = `Structure${getRandomInt()}`;
+
+			// Build a plain structure
+
+			const id = await structureBuilderPage.createStructureFromData({
+				autoDelete: false,
+				label: structureLabel,
+				name: structureLabel,
+				page: structureBuilderPage,
+				publish: false,
+			});
+
+			await structureBuilderPage.addField('Text');
+
+			await structureBuilderPage.publishStructure();
+
+			// Export it, then delete it so the import has to recreate it
+
+			const jsonFilePath =
+				await structuresPage.exportStructureAsJSON(structureLabel);
+
+			await apiHelpers.deleteObjectDefinition(id);
+
+			await structuresPage.goto();
+
+			await expect(
+				structuresPage.getItem(structureLabel)
+			).not.toBeVisible();
+
+			// Import the JSON back; the structure is created from scratch
+
+			await structuresPage.importStructureFromJSON(jsonFilePath, {
+				override: false,
+			});
+
+			// The structure and its field are restored
+
+			await expect(async () => {
+				await structuresPage.goto();
+
+				await expect(
+					structuresPage.getItem(structureLabel)
+				).toBeVisible({
+					timeout: 5000,
+				});
+			}).toPass();
+
+			await structuresPage.execItemAction({
+				action: 'Edit',
+				filter: structureLabel,
+			});
+
+			await expect(
+				page.locator('.treeview-link', {hasText: 'Text'})
+			).toBeVisible();
+		}
+	);
+
+	testWithImportExport(
+		'Content Structure with a repeatable field survives a JSON export and import round trip',
+		{tag: '@LPD-99759'},
+		async ({page, structureBuilderPage, structuresPage}) => {
+			const structureLabel = `Structure${getRandomInt()}`;
+			const repeatableGroupLabel = `Repeatable Group ${getRandomInt()}`;
+
+			// Build a structure with a repeatable field
+
+			const id = await structureBuilderPage.createStructureFromData({
+				label: structureLabel,
+				name: structureLabel,
+				page: structureBuilderPage,
+				publish: false,
+			});
+
+			await structureBuilderPage.addField('Text');
+
+			await structureBuilderPage.createRepeatableGroup({
+				fields: [{label: 'Text'}],
+				label: repeatableGroupLabel,
+			});
+
+			await structureBuilderPage.publishStructure();
+
+			// Export, then change the structure so the import has something to
+			// override
+
+			const jsonFilePath =
+				await structuresPage.exportStructureAsJSON(structureLabel);
+
+			await structureBuilderPage.editStructure(id);
+
+			await structureBuilderPage.addField('Long Text');
+
+			await structureBuilderPage.publishStructure();
+
+			// Import the JSON back and override the structure
+
+			await structuresPage.importStructureFromJSON(jsonFilePath);
+
+			await waitForAlert(page, 'successfully imported', {
+				type: 'success',
+			});
+
+			// The repeatable field is restored and the change is reverted
+
+			await structureBuilderPage.editStructure(id);
+
+			await expect(
+				page.locator('.treeview-link', {hasText: repeatableGroupLabel})
+			).toBeVisible();
+
+			await expect(
+				page.locator('.treeview-link', {hasText: 'Long Text'})
+			).not.toBeVisible();
+		}
+	);
+
+	testWithImportExport(
+		'Content Structure that references another survives a JSON export and import round trip',
+		{tag: '@LPD-99759'},
+		async ({page, structureBuilderPage, structuresPage}) => {
+			const referencedStructureLabel = `Referenced${getRandomInt()}`;
+			const structureLabel = `Structure${getRandomInt()}`;
+
+			// Build a structure and another one that references it
+
+			await structureBuilderPage.createStructureFromData({
+				label: referencedStructureLabel,
+				name: referencedStructureLabel,
+				page: structureBuilderPage,
+			});
+
+			const id = await structureBuilderPage.createStructureFromData({
+				label: structureLabel,
+				name: structureLabel,
+				page: structureBuilderPage,
+			});
+
+			await structureBuilderPage.addReferencedStructures([
+				referencedStructureLabel,
+			]);
+
+			await structureBuilderPage.publishStructure();
+
+			// Export, then change the structure so the import has something to
+			// override
+
+			const jsonFilePath =
+				await structuresPage.exportStructureAsJSON(structureLabel);
+
+			await structureBuilderPage.editStructure(id);
+
+			await structureBuilderPage.addField('Long Text');
+
+			await structureBuilderPage.publishStructure();
+
+			// Import the JSON back and override the structure
+
+			await structuresPage.importStructureFromJSON(jsonFilePath);
+
+			await waitForAlert(page, 'successfully imported', {
+				type: 'success',
+			});
+
+			// The referenced structure is still there and the change is reverted
+
+			await structureBuilderPage.editStructure(id);
+
+			await expect(
+				page.locator('.treeview-link', {
+					hasText: referencedStructureLabel,
+				})
+			).toBeVisible();
+
+			await expect(
+				page.locator('.treeview-link', {hasText: 'Long Text'})
+			).not.toBeVisible();
+		}
+	);
+
+	testWithImportExport(
+		'Importing a Content Structure overrides local changes',
+		{tag: '@LPD-99759'},
+		async ({page, structureBuilderPage, structuresPage}) => {
+			const structureLabel = `Structure${getRandomInt()}`;
+
+			// Build a plain structure and export it
+
+			const id = await structureBuilderPage.createStructureFromData({
+				label: structureLabel,
+				name: structureLabel,
+				page: structureBuilderPage,
+				publish: false,
+			});
+
+			await structureBuilderPage.addField('Boolean');
+
+			await structureBuilderPage.publishStructure();
+
+			const jsonFilePath =
+				await structuresPage.exportStructureAsJSON(structureLabel);
+
+			// Add a field after the export
+
+			await structureBuilderPage.editStructure(id);
+
+			await structureBuilderPage.addField('Long Text');
+
+			await expect(
+				page.locator('.treeview-link', {hasText: 'Long Text'})
+			).toBeVisible();
+
+			await structureBuilderPage.publishStructure();
+
+			// Importing the older JSON overrides the structure and drops the field
+
+			await structuresPage.importStructureFromJSON(jsonFilePath);
+
+			await waitForAlert(page, 'successfully imported', {
+				type: 'success',
+			});
+
+			await structureBuilderPage.editStructure(id);
+
+			await expect(
+				page.locator('.treeview-link', {hasText: 'Boolean'})
+			).toBeVisible();
+
+			await expect(
+				page.locator('.treeview-link', {hasText: 'Long Text'})
+			).not.toBeVisible();
+		}
+	);
+
+	testWithImportExport(
+		'Importing a Content Structure cannot drop a repeatable field the persisted structure still has',
+		{tag: '@LPD-99759'},
+		async ({page, structureBuilderPage, structuresPage}) => {
+			const structureLabel = `Structure${getRandomInt()}`;
+			const repeatableGroupLabel = `Repeatable Group ${getRandomInt()}`;
+
+			// Build a plain structure and export it (no repeatable field yet)
+
+			const id = await structureBuilderPage.createStructureFromData({
+				label: structureLabel,
+				name: structureLabel,
+				page: structureBuilderPage,
+				publish: false,
+			});
+
+			await structureBuilderPage.addField('Text');
+
+			await structureBuilderPage.publishStructure();
+
+			const jsonFilePath =
+				await structuresPage.exportStructureAsJSON(structureLabel);
+
+			// Add a repeatable field to the persisted structure after the export
+
+			await structureBuilderPage.editStructure(id);
+
+			await structureBuilderPage.addField('Numeric');
+
+			await structureBuilderPage.createRepeatableGroup({
+				fields: [{label: 'Numeric'}],
+				label: repeatableGroupLabel,
+			});
+
+			await structureBuilderPage.publishStructure();
+
+			// Importing the older JSON would drop the repeatable relationship, which
+			// is an edge relationship the import cannot delete, so it errors out and
+			// leaves the structure untouched
+
+			await structuresPage.importStructureFromJSON(jsonFilePath);
+
+			// The override cannot drop the repeatable relationship, so the modal
+			// shows an error and the structure is left untouched
+
+			await expect(
+				page.locator('.alert-danger', {hasText: 'cannot be deleted'})
+			).toBeVisible();
+
+			await structureBuilderPage.editStructure(id);
+
+			await expect(
+				page.locator('.treeview-link', {hasText: repeatableGroupLabel})
+			).toBeVisible();
+		}
+	);
+});

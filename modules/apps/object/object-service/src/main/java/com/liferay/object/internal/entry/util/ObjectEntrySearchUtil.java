@@ -6,6 +6,7 @@
 package com.liferay.object.internal.entry.util;
 
 import com.liferay.document.library.kernel.model.DLFileEntryTable;
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntryTable;
@@ -20,10 +21,12 @@ import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.Table;
 import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -35,6 +38,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * @author Carolina Barbosa
@@ -120,6 +124,91 @@ public class ObjectEntrySearchUtil {
 			).eq(
 				(languageId == null) ? getLanguageId() : languageId
 			)
+		);
+	}
+
+	public static Predicate getLocalizedObjectFieldPredicate(
+		Column<?, ?> column, String defaultLanguageId,
+		DynamicObjectDefinitionLocalizationTable
+			dynamicObjectDefinitionLocalizationTable,
+		ObjectField objectField, Predicate objectFieldPredicate,
+		String preferredLanguageId) {
+
+		Column<DynamicObjectDefinitionLocalizationTable, String>
+			languageIdColumn =
+				dynamicObjectDefinitionLocalizationTable.getLanguageIdColumn();
+
+		Predicate preferredLanguageObjectFieldPredicate =
+			_getInLocalizationTablePredicate(
+				dynamicObjectDefinitionLocalizationTable,
+				languageIdColumn.eq(
+					preferredLanguageId
+				).and(
+					objectFieldPredicate
+				));
+
+		String dbType = objectField.getDBType();
+
+		if ((!Objects.equals(dbType, ObjectFieldConstants.DB_TYPE_CLOB) &&
+			 !Objects.equals(dbType, ObjectFieldConstants.DB_TYPE_STRING)) ||
+			Objects.equals(preferredLanguageId, defaultLanguageId)) {
+
+			return preferredLanguageObjectFieldPredicate;
+		}
+
+		Column<?, String> stringColumn = (Column<?, String>)column;
+
+		Predicate hasPreferredLanguageValuePredicate =
+			_getInLocalizationTablePredicate(
+				dynamicObjectDefinitionLocalizationTable,
+				languageIdColumn.eq(
+					preferredLanguageId
+				).and(
+					stringColumn.neq(StringPool.BLANK)
+				));
+
+		Predicate defaultLanguageObjectFieldPredicate =
+			_getInLocalizationTablePredicate(
+				dynamicObjectDefinitionLocalizationTable,
+				languageIdColumn.eq(
+					defaultLanguageId
+				).and(
+					objectFieldPredicate
+				));
+
+		return preferredLanguageObjectFieldPredicate.or(
+			hasPreferredLanguageValuePredicate.not(
+			).and(
+				defaultLanguageObjectFieldPredicate
+			));
+	}
+
+	public static Predicate getObjectEntryIndexPredicate(
+		Long[] groupIds, ObjectDefinition objectDefinition,
+		Predicate predicate) {
+
+		return ObjectEntryTable.INSTANCE.companyId.eq(
+			objectDefinition.getCompanyId()
+		).and(
+			() -> {
+				if (StringUtil.equals(
+						objectDefinition.getScope(),
+						ObjectDefinitionConstants.SCOPE_COMPANY)) {
+
+					return ObjectEntryTable.INSTANCE.groupId.eq(0L);
+				}
+
+				if (ArrayUtil.isEmpty(groupIds)) {
+					return null;
+				}
+
+				return ObjectEntryTable.INSTANCE.groupId.in(groupIds);
+			}
+		).and(
+			ObjectEntryTable.INSTANCE.objectDefinitionId.eq(
+				objectDefinition.getObjectDefinitionId())
+		).and(
+			predicate
 		);
 	}
 
@@ -222,6 +311,34 @@ public class ObjectEntrySearchUtil {
 				titleObjectField.getName()),
 			titleObjectField.getDBType(), search);
 
+		// The user's full name is exposed as the UserAccount DTO's "name"
+		// property, which is computed by User.getFullName() rather than backed
+		// by a column in the User_ table, so search the first and last name
+		// columns instead
+
+		if ((objectFieldPredicate == null) &&
+			Objects.equals(
+				objectDefinition.getClassName(), User.class.getName()) &&
+			Objects.equals(titleObjectField.getName(), "name")) {
+
+			Predicate familyNamePredicate = getObjectFieldPredicate(
+				titleObjectField.getBusinessType(),
+				objectFieldLocalService.getColumn(
+					objectDefinition.getObjectDefinitionId(), "familyName"),
+				titleObjectField.getDBType(), search);
+			Predicate givenNamePredicate = getObjectFieldPredicate(
+				titleObjectField.getBusinessType(),
+				objectFieldLocalService.getColumn(
+					objectDefinition.getObjectDefinitionId(), "givenName"),
+				titleObjectField.getDBType(), search);
+
+			if ((familyNamePredicate != null) && (givenNamePredicate != null)) {
+				objectFieldPredicate = givenNamePredicate.or(
+					familyNamePredicate
+				).withParentheses();
+			}
+		}
+
 		long searchLong = GetterUtil.getLong(search);
 
 		if (searchLong == 0) {
@@ -259,6 +376,21 @@ public class ObjectEntrySearchUtil {
 		}
 
 		return null;
+	}
+
+	private static Predicate _getInLocalizationTablePredicate(
+		DynamicObjectDefinitionLocalizationTable
+			dynamicObjectDefinitionLocalizationTable,
+		Predicate wherePredicate) {
+
+		return ObjectEntryTable.INSTANCE.objectEntryId.in(
+			DSLQueryFactoryUtil.select(
+				dynamicObjectDefinitionLocalizationTable.getForeignKeyColumn()
+			).from(
+				dynamicObjectDefinitionLocalizationTable
+			).where(
+				wherePredicate
+			));
 	}
 
 }

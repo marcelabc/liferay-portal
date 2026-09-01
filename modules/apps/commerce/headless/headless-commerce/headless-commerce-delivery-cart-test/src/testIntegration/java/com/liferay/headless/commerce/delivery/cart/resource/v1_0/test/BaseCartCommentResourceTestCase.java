@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.JAXRSWhiteboardTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -119,6 +120,8 @@ public abstract class BaseCartCommentResourceTestCase {
 	public static void setUpClass() throws Exception {
 		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		JAXRSWhiteboardTestUtil.ensureReady();
 	}
 
 	@Before
@@ -217,6 +220,7 @@ public abstract class BaseCartCommentResourceTestCase {
 		cartComment.setAuthorPortraitURL(regex);
 		cartComment.setContent(regex);
 		cartComment.setExternalReferenceCode(regex);
+		cartComment.setOrderExternalReferenceCode(regex);
 
 		String json = CartCommentSerDes.toJSON(cartComment);
 
@@ -228,6 +232,7 @@ public abstract class BaseCartCommentResourceTestCase {
 		Assert.assertEquals(regex, cartComment.getAuthorPortraitURL());
 		Assert.assertEquals(regex, cartComment.getContent());
 		Assert.assertEquals(regex, cartComment.getExternalReferenceCode());
+		Assert.assertEquals(regex, cartComment.getOrderExternalReferenceCode());
 	}
 
 	@Test
@@ -585,7 +590,7 @@ public abstract class BaseCartCommentResourceTestCase {
 				externalReferenceCode, randomCartComment());
 
 		page = cartCommentResource.getCartByExternalReferenceCodeCommentsPage(
-			externalReferenceCode, Pagination.of(1, 10));
+			externalReferenceCode, Pagination.of(1, (int)totalCount + 2));
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -1207,7 +1212,7 @@ public abstract class BaseCartCommentResourceTestCase {
 			cartId, randomCartComment());
 
 		page = cartCommentResource.getCartCommentsPage(
-			cartId, Pagination.of(1, 10));
+			cartId, Pagination.of(1, (int)totalCount + 2));
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -1861,6 +1866,16 @@ public abstract class BaseCartCommentResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"orderExternalReferenceCode", additionalAssertFieldName)) {
+
+				if (cartComment.getOrderExternalReferenceCode() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("orderId", additionalAssertFieldName)) {
 				if (cartComment.getOrderId() == null) {
 					valid = false;
@@ -2071,6 +2086,19 @@ public abstract class BaseCartCommentResourceTestCase {
 				if (!Objects.deepEquals(
 						cartComment1.getModifiedDate(),
 						cartComment2.getModifiedDate())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"orderExternalReferenceCode", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						cartComment1.getOrderExternalReferenceCode(),
+						cartComment2.getOrderExternalReferenceCode())) {
 
 					return false;
 				}
@@ -2429,6 +2457,52 @@ public abstract class BaseCartCommentResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("orderExternalReferenceCode")) {
+			Object object = cartComment.getOrderExternalReferenceCode();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("orderId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -2495,6 +2569,8 @@ public abstract class BaseCartCommentResourceTestCase {
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				modifiedDate = RandomTestUtil.nextDate();
+				orderExternalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				orderId = RandomTestUtil.randomLong();
 				restricted = RandomTestUtil.randomBoolean();
 			}
@@ -2766,4 +2842,4 @@ public abstract class BaseCartCommentResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:972701390
+// LIFERAY-REST-BUILDER-HASH:1824240125

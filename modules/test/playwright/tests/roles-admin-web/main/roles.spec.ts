@@ -2110,14 +2110,16 @@ test(
 
 		const copyRole = async (roleName: string, roleType: string) => {
 			await expect(async () => {
-				await rolesPage.rolesLink(roleType).click();
+				await rolesPage.rolesLink(roleType).click({timeout: 1000});
 
 				await expect(rolesPage.rolesTable.searchInput).toBeEnabled({
 					timeout: 1000,
 				});
 
-				await (await rolesPage.rolesTable.rowActions(roleName)).click();
-			}).toPass();
+				await (
+					await rolesPage.rolesTable.rowActions(roleName)
+				).click({timeout: 1000});
+			}).toPass({timeout: 30000});
 
 			await rolesPage.duplicateMenuItem.click();
 
@@ -2157,10 +2159,10 @@ test(
 		await rolesPage.rolesTable.changeView('Table');
 
 		await copyRole('Account Administrator', 'Account');
-		await copyRole('Asset Library Member', 'Asset Library');
 		await copyRole('Guest', 'Regular');
 		await copyRole('Organization User', 'Organization');
 		await copyRole('Site Member', 'Site');
+		await copyRole('Space Member', 'Space');
 	}
 );
 
@@ -2288,5 +2290,34 @@ test(
 				timeout: 100,
 			});
 		}).toPass();
+	}
+);
+
+test(
+	'Cannot edit the key of the CMS Administrator role',
+	{tag: ['@LPD-83058']},
+	async ({apiHelpers, rolePage, rolesPage}) => {
+		const roleName = 'CMS Administrator';
+
+		const existingRole =
+			await apiHelpers.headlessAdminUser.getRoleByName(roleName);
+
+		if (!existingRole) {
+			await apiHelpers.headlessAdminUser.postRole({
+				name: roleName,
+				roleType: 'regular',
+			});
+		}
+
+		await rolesPage.goto();
+
+		await rolesPage.rolesTable.search(roleName);
+		await (await rolesPage.rolesTable.cellLink(roleName)).click();
+
+		await expect(rolePage.disabledKeyInput).toBeVisible();
+		await expect(rolePage.disabledKeyInput).toBeDisabled();
+		await expect(rolePage.disabledKeyInput).toHaveValue(roleName);
+		await expect(rolePage.keyInput).toBeHidden();
+		await expect(rolePage.keyInput).toHaveValue(roleName);
 	}
 );

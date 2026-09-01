@@ -9,7 +9,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 
 import com.liferay.petra.function.UnsafeConsumer;
-import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
@@ -794,12 +793,8 @@ public class RESTBuilder {
 				description, clientMessage, clientVersion, "'.");
 		}
 
-		String formattedDescription = _formatDescription(
-			StringPool.FOUR_SPACES + StringPool.FOUR_SPACES,
-			"\"" + description + "\"");
-
-		String descriptionBlock =
-			"    description:\n" + formattedDescription + "\n";
+		String descriptionBlock = StringBundler.concat(
+			"    description:\n", "        \"", description, "\"\n");
 
 		return StringUtil.replace(
 			yamlString,
@@ -1812,8 +1807,8 @@ public class RESTBuilder {
 
 			String text = CamelCaseUtil.fromCamelCase(selParameterName);
 
-			text = TextFormatter.formatPlural(
-				text.substring(0, text.length() - 3));
+			text = OpenAPIUtil.formatPlural(
+				_configYAML, text.substring(0, text.length() - 3));
 
 			StringBuilder sb = new StringBuilder();
 
@@ -1972,7 +1967,8 @@ public class RESTBuilder {
 				int z = yamlString.indexOf(':', y);
 
 				if (Objects.equals(propertySchema.getType(), "array")) {
-					String plural = TextFormatter.formatPlural(schemaVarName);
+					String plural = OpenAPIUtil.formatPlural(
+						_configYAML, schemaVarName);
 
 					if (propertyName.endsWith(
 							StringUtil.upperCaseFirstLetter(plural)) &&
@@ -2001,41 +1997,6 @@ public class RESTBuilder {
 		}
 
 		return yamlString;
-	}
-
-	private String _formatDescription(String indent, String description) {
-		if (Validator.isNull(description)) {
-			return StringPool.BLANK;
-		}
-
-		if ((indent.length() + description.length()) <=
-				_DESCRIPTION_MAX_LINE_LENGTH) {
-
-			return indent + description;
-		}
-
-		description = indent + description;
-
-		int x = description.indexOf(CharPool.SPACE, indent.length());
-
-		if (x == -1) {
-			return description;
-		}
-
-		if (x > _DESCRIPTION_MAX_LINE_LENGTH) {
-			String s = description.substring(x + 1);
-
-			return description.substring(0, x) + "\n" +
-				_formatDescription(indent, s);
-		}
-
-		x = description.lastIndexOf(
-			CharPool.SPACE, _DESCRIPTION_MAX_LINE_LENGTH);
-
-		String s = description.substring(x + 1);
-
-		return description.substring(0, x) + "\n" +
-			_formatDescription(indent, s);
 	}
 
 	private String _getClientMavenGroupId(String apiPackagePath) {
@@ -2158,7 +2119,8 @@ public class RESTBuilder {
 		}
 
 		context.put("schemaName", schemaName);
-		context.put("schemaNames", TextFormatter.formatPlural(schemaName));
+		context.put(
+			"schemaNames", OpenAPIUtil.formatPlural(_configYAML, schemaName));
 		context.put(
 			"schemaPath", TextFormatter.format(schemaName, TextFormatter.K));
 
@@ -2166,7 +2128,8 @@ public class RESTBuilder {
 
 		context.put("schemaVarName", schemaVarName);
 		context.put(
-			"schemaVarNames", TextFormatter.formatPlural(schemaVarName));
+			"schemaVarNames",
+			OpenAPIUtil.formatPlural(_configYAML, schemaVarName));
 
 		context.put("relatedSchemaNames", relatedSchemaNames);
 	}
@@ -2274,8 +2237,6 @@ public class RESTBuilder {
 			return false;
 		}
 	}
-
-	private static final int _DESCRIPTION_MAX_LINE_LENGTH = 120;
 
 	private static final Log _log = LogFactoryUtil.getLog(RESTBuilder.class);
 

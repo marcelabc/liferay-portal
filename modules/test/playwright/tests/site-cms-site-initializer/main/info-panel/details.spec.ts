@@ -16,8 +16,6 @@ const test = mergeTests(
 	dataApiHelpersTest,
 	featureFlagsTest({
 		'LPD-11235': {enabled: false},
-		'LPD-17564': {enabled: true},
-		'LPD-34594': {enabled: true},
 	}),
 	loginTest()
 );
@@ -53,7 +51,7 @@ test(
 		await test.step('Assert that all tabs are visible', async () => {
 			await expect(infoPanelPage.selectTab('Performance')).toBeVisible();
 
-			await expect(infoPanelPage.selectTab('More')).toBeVisible();
+			await expect(infoPanelPage.selectTab('Comments')).toBeVisible();
 
 			await infoPanelPage.selectTab('Categorization').click();
 

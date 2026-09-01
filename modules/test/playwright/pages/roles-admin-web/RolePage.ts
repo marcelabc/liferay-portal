@@ -15,10 +15,13 @@ export class RolePage {
 	readonly backButton: Locator;
 	readonly definePermissionsLink: Locator;
 	readonly descriptionInput: Locator;
+	readonly disabledKeyInput: Locator;
 	readonly keyInput: Locator;
 	readonly page: Page;
 	readonly saveButton: Locator;
+	readonly subtypeInput: Locator;
 	readonly titleInput: Locator;
+	readonly typeInput: Locator;
 	readonly uniqueNameError: Locator;
 
 	constructor(page: Page) {
@@ -30,12 +33,17 @@ export class RolePage {
 			name: 'Define Permissions',
 		});
 		this.descriptionInput = page.getByLabel('Description');
+		this.disabledKeyInput = page.locator(
+			'#_com_liferay_roles_admin_web_portlet_RolesAdminPortlet_viewNameField'
+		);
 		this.keyInput = page.locator(
 			'#_com_liferay_roles_admin_web_portlet_RolesAdminPortlet_name'
 		);
 		this.page = page;
 		this.saveButton = page.getByRole('button', {name: 'Save'});
+		this.subtypeInput = page.getByLabel('Subtype', {exact: true});
 		this.titleInput = page.getByLabel('Title').first();
+		this.typeInput = page.getByLabel('Type', {exact: true});
 		this.uniqueNameError = page.getByText('Please enter a unique name');
 	}
 

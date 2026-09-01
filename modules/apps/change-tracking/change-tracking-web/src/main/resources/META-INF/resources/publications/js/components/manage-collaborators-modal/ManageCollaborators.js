@@ -15,7 +15,7 @@ import ClayTable from '@clayui/table';
 import ClayTabs from '@clayui/tabs';
 import {openConfirmModal, openToast} from 'frontend-js-components-web';
 import {fetch, getOpener, objectToFormData, sub} from 'frontend-js-web';
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import CollaboratorRow from './CollaboratorRow';
 
@@ -45,6 +45,8 @@ const ManageCollaborators = ({
 	verifyEmailAddressURL,
 }) => {
 	const [active, setActive] = useState(false);
+	const [autocompleteActive, setAutocompleteActive] = useState(false);
+	const [autocompleteUsers, setAutocompleteUsers] = useState(null);
 	const [emailAddressErrorMessages, setEmailAddressErrorMessages] = useState(
 		[]
 	);
@@ -80,6 +82,28 @@ const ManageCollaborators = ({
 		},
 	});
 
+	const handleClose = () => {
+		if (
+			!Object.keys(selectedItems).length &&
+			!Object.keys(updatedRoles).length
+		) {
+			onClose();
+			resetForm();
+
+			return;
+		}
+
+		openConfirmModal({
+			message: Liferay.Language.get('discard-unsaved-changes'),
+			onConfirm: (isConfirmed) => {
+				if (isConfirmed) {
+					onClose();
+					resetForm();
+				}
+			},
+		});
+	};
+
 	const {refetch: collaboratorsRefetch, resource: collaboratorsResource} =
 		useResource({
 			fetchOptions: {
@@ -105,16 +129,33 @@ const ManageCollaborators = ({
 		fetchRetry: {
 			attempts: 0,
 		},
-		link: autocompleteUserURL,
+		link: multiSelectValue ? autocompleteUserURL : null,
 		onNetworkStatusChange: setNetworkStatus,
 		variables: {
 			[`${namespace}keywords`]: multiSelectValue,
 		},
 	});
 
-	const autocompleteUsers = autocompleteResource;
 	const collaborators = collaboratorsResource;
+
+	const autocompleteFetchRef = useRef(false);
 	const emailValidationInProgressRef = useRef(false);
+
+	useEffect(() => {
+		if (!multiSelectValue) {
+			autocompleteFetchRef.current = false;
+
+			setAutocompleteUsers(null);
+		}
+		else if (networkStatus === 1 || networkStatus === 2) {
+			autocompleteFetchRef.current = true;
+		}
+		else if (autocompleteFetchRef.current) {
+			autocompleteFetchRef.current = false;
+
+			setAutocompleteUsers(autocompleteResource);
+		}
+	}, [autocompleteResource, multiSelectValue, networkStatus]);
 
 	const copyToClipboard = async () => {
 		try {
@@ -637,28 +678,7 @@ const ManageCollaborators = ({
 								<ClayButton
 									aria-label={Liferay.Language.get('cancel')}
 									displayType="secondary"
-									onClick={() => {
-										if (
-											Object.keys(selectedItems) === 0 &&
-											Object.keys(updatedRoles) === 0
-										) {
-											onClose();
-											resetForm();
-										}
-										else {
-											openConfirmModal({
-												message: Liferay.Language.get(
-													'discard-unsaved-changes'
-												),
-												onConfirm: (isConfirmed) => {
-													if (isConfirmed) {
-														onClose();
-														resetForm();
-													}
-												},
-											});
-										}
-									}}
+									onClick={handleClose}
 								>
 									{Liferay.Language.get('cancel')}
 								</ClayButton>
@@ -708,14 +728,24 @@ const ManageCollaborators = ({
 		return (
 			<ClayModal
 				className="publications-invite-users-modal"
+				disableAutoClose
 				observer={observer}
 				size="lg"
 				spritemap={spritemap}
 			>
-				<ClayModal.Header
-					closeButtonAriaLabel={Liferay.Language.get('close')}
-				>
-					<div className="autofit-row">{headers}</div>
+				<ClayModal.Header withTitle={false}>
+					<ClayModal.Title>
+						<div className="autofit-row">{headers}</div>
+					</ClayModal.Title>
+
+					<ClayButtonWithIcon
+						aria-label={Liferay.Language.get('close')}
+						className="close"
+						displayType="unstyled"
+						onClick={handleClose}
+						spritemap={spritemap}
+						symbol="times"
+					/>
 				</ClayModal.Header>
 
 				{showShareLinkTab ? renderTabs() : ''}
@@ -760,9 +790,26 @@ const ManageCollaborators = ({
 						<ClayInput.Group>
 							<ClayInput.GroupItem>
 								<ClayMultiSelect
+									active={
+										!!multiSelectValue && autocompleteActive
+									}
 									inputName={`${namespace}userEmailAddress`}
 									items={[]}
 									loadingState={networkStatus}
+									messages={{
+										labelAdded: Liferay.Language.get(
+											'label-x-was-added-to-the-list'
+										),
+										labelRemoved: Liferay.Language.get(
+											'label-x-was-removed-from-the-list'
+										),
+										notFound: autocompleteUsers
+											? Liferay.Language.get(
+													'no-results-found'
+												)
+											: Liferay.Language.get('loading'),
+									}}
+									onActiveChange={setAutocompleteActive}
 									onChange={handleChange}
 									onItemsChange={handleItemsChange}
 									placeholder={Liferay.Language.get(

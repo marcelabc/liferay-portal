@@ -113,16 +113,7 @@ public class JUnitBatchBuildTestrayCaseResult
 				errorMessage = null; //buildReport.getFailureMessage();
 			}
 
-			if (JenkinsResultsParserUtil.isNullOrEmpty(errorMessage)) {
-				errorMessage = "Failed for unknown reason";
-			}
-
-			if (errorMessage.contains("\n")) {
-				errorMessage = errorMessage.substring(
-					0, errorMessage.indexOf("\n"));
-			}
-
-			errorMessage = errorMessage.trim();
+			errorMessage = formatErrorMessage(errorMessage);
 
 			if (JenkinsResultsParserUtil.isNullOrEmpty(errorMessage)) {
 				errorMessage = "Failed for unknown reason";
@@ -292,12 +283,12 @@ public class JUnitBatchBuildTestrayCaseResult
 
 	@Override
 	public List<TestrayAttachment> getTestrayAttachments() {
-		List<TestrayAttachment> testrayAttachments =
-			super.getTestrayAttachments();
+		List<TestrayAttachment> testrayAttachments = new ArrayList<>();
 
 		testrayAttachments.add(getFailureMessagesTestrayAttachment());
 		testrayAttachments.addAll(getLiferayLogTestrayAttachments());
 		testrayAttachments.addAll(getLiferayOSGiLogTestrayAttachments());
+		testrayAttachments.add(getParentTestrayCaseResultTestrayAttachment());
 
 		testrayAttachments.removeAll(Collections.singleton(null));
 

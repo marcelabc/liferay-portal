@@ -15,10 +15,12 @@ if (liveGroup == null) {
 	liveGroupId = groupId;
 }
 
-ExportImportPreviewDisplayContext exportImportPreviewDisplayContext = new ExportImportPreviewDisplayContext("/export_import/view_import_layouts", request, liferayPortletResponse, liveGroup, groupId, liveGroupId, privateLayout, stagingGroupHelper);
+ExportImportProcessDisplayContext exportImportProcessDisplayContext = new ExportImportProcessDisplayContext("/export_import/view_import_layouts", liveGroup, groupId, request, liferayPortletResponse, liveGroupId, privateLayout);
 
 portletDisplay.setShowBackIcon(true);
-portletDisplay.setURLBack(exportImportPreviewDisplayContext.getBackURL());
+portletDisplay.setURLBack(exportImportProcessDisplayContext.getBackURL());
+
+renderResponse.setTitle(exportImportProcessDisplayContext.getImportTitle());
 %>
 
 <clay:container-fluid
@@ -32,11 +34,17 @@ portletDisplay.setURLBack(exportImportPreviewDisplayContext.getBackURL());
 		module="{NewImport} from exportimport-web"
 		props='<%=
 			HashMapBuilder.<String, Object>put(
-				"backURL", exportImportPreviewDisplayContext.getBackURL()
+				"backURL", exportImportProcessDisplayContext.getBackURL()
 			).put(
-				"importPreviewAPIURL", exportImportPreviewDisplayContext.getImportPreviewAPIURL()
+				"commentsAndRatingsEnabled", exportImportProcessDisplayContext.isCommentsAndRatingsEnabled()
 			).put(
-				"importProcessAPIURL", exportImportPreviewDisplayContext.getImportProcessAPIURL()
+				"importPreviewAPIURL", exportImportProcessDisplayContext.getImportPreviewAPIURL()
+			).put(
+				"importProcessAPIURL", exportImportProcessDisplayContext.getImportProcessAPIURL()
+			).put(
+				"lookAndFeelEnabled", exportImportProcessDisplayContext.isLookAndFeelEnabled()
+			).put(
+				"scope", exportImportProcessDisplayContext.getScope()
 			).build()
 		%>'
 	/>

@@ -285,7 +285,19 @@ public class PublicationsDisplayContext {
 			"sharePublicationLink",
 			() -> _publicationHelper.getShareURL(ctCollectionId, _renderRequest)
 		).put(
-			"showShareLinkTab", !publicationTemplate
+			"showShareLinkTab",
+			() -> {
+				if ((ctCollectionId ==
+						CTConstants.CT_COLLECTION_ID_PRODUCTION) ||
+					publicationTemplate) {
+
+					return false;
+				}
+
+				return CTCollectionPermission.contains(
+					_themeDisplay.getPermissionChecker(), ctCollectionId,
+					CTActionKeys.INVITE_USERS);
+			}
 		).put(
 			"spritemap", _themeDisplay.getPathThemeSpritemap()
 		).put(
@@ -470,7 +482,7 @@ public class PublicationsDisplayContext {
 					"schedule", Boolean.TRUE
 				).buildString(),
 				"calendar", "schedule",
-				_language.get(_httpServletRequest, "schedule"), "get",
+				_language.get(_httpServletRequest, "schedule[verb]"), "get",
 				"schedule", null),
 			new FDSActionDropdownItem(
 				PortletURLBuilder.createRenderURL(

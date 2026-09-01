@@ -17,14 +17,20 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.license.util.App;
+import com.liferay.portal.kernel.license.util.LicenseManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.LayoutSetPrototypeLocalServiceUtil;
+import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
+import com.liferay.portal.kernel.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.site.dsr.site.initializer.internal.constants.DSRConstants;
@@ -64,11 +70,31 @@ public class ViewRoomsSectionDisplayContextTest {
 
 	@Before
 	public void setUp() throws PortalException {
+		_licenseManagerUtilMockedStatic.when(
+			() -> LicenseManagerUtil.isAppEnabled(App.DSR)
+		).thenReturn(
+			true
+		);
+
+		_languageUtilMockedStatic.when(
+			() -> LanguageUtil.get(
+				Mockito.any(HttpServletRequest.class), Mockito.eq("archive"))
+		).thenReturn(
+			"Archive"
+		);
+
 		_languageUtilMockedStatic.when(
 			() -> LanguageUtil.get(
 				Mockito.any(HttpServletRequest.class), Mockito.eq("delete"))
 		).thenReturn(
 			"Delete"
+		);
+
+		_languageUtilMockedStatic.when(
+			() -> LanguageUtil.get(
+				Mockito.any(HttpServletRequest.class), Mockito.eq("duplicate"))
+		).thenReturn(
+			"Duplicate"
 		);
 
 		_languageUtilMockedStatic.when(
@@ -84,6 +110,21 @@ public class ViewRoomsSectionDisplayContextTest {
 				Mockito.eq("new-digital-sales-room"))
 		).thenReturn(
 			"New Digital Sales Room"
+		);
+
+		_languageUtilMockedStatic.when(
+			() -> LanguageUtil.get(
+				Mockito.any(HttpServletRequest.class), Mockito.eq("restore"))
+		).thenReturn(
+			"Restore"
+		);
+
+		_languageUtilMockedStatic.when(
+			() -> LanguageUtil.get(
+				Mockito.any(HttpServletRequest.class),
+				Mockito.eq("room-settings"))
+		).thenReturn(
+			"Room Settings"
 		);
 
 		_languageUtilMockedStatic.when(
@@ -138,6 +179,12 @@ public class ViewRoomsSectionDisplayContextTest {
 		);
 
 		Mockito.when(
+			_objectDefinition.getClassName()
+		).thenReturn(
+			_CLASS_NAME
+		);
+
+		Mockito.when(
 			_objectDefinition.getLabel(Mockito.any(Locale.class))
 		).thenReturn(
 			RandomTestUtil.randomString()
@@ -149,10 +196,28 @@ public class ViewRoomsSectionDisplayContextTest {
 			RandomTestUtil.randomLong()
 		);
 
+		_portalUtilMockedStatic.when(
+			() -> PortalUtil.getClassNameId(_CLASS_NAME)
+		).thenReturn(
+			_CLASS_NAME_ID
+		);
+
 		Mockito.when(
 			_themeDisplay.getLocale()
 		).thenReturn(
 			LocaleUtil.ENGLISH
+		);
+
+		Mockito.when(
+			_themeDisplay.getPermissionChecker()
+		).thenReturn(
+			_permissionChecker
+		);
+
+		Mockito.when(
+			_themeDisplay.getPathFriendlyURLPublic()
+		).thenReturn(
+			StringPool.BLANK
 		);
 
 		Mockito.when(
@@ -166,12 +231,22 @@ public class ViewRoomsSectionDisplayContextTest {
 		).thenReturn(
 			StringPool.BLANK
 		);
+
+		Mockito.when(
+			_themeDisplay.getURLCurrent()
+		).thenReturn(
+			_URL_CURRENT
+		);
 	}
 
 	@After
 	public void tearDown() {
 		_languageUtilMockedStatic.close();
 		_layoutSetPrototypeLocalServiceUtilMockedStatic.close();
+		_licenseManagerUtilMockedStatic.close();
+		_portalUtilMockedStatic.close();
+		_roleLocalServiceUtilMockedStatic.close();
+		_userGroupRoleLocalServiceUtilMockedStatic.close();
 	}
 
 	@Test
@@ -184,9 +259,13 @@ public class ViewRoomsSectionDisplayContextTest {
 		_assertEquals(
 			viewRoomsSectionDisplayContext.getAdditionalProps(),
 			HashMapBuilder.<String, Object>put(
+				"companyAdmin", false
+			).put(
 				"createRedirectURL",
 				DSRConstants.DSR_FRIENDLY_URL +
 					"/view_room?mode=edit&siteId={siteId}"
+			).put(
+				"ownedSiteIds", Collections.emptyList()
 			).put(
 				"siteTemplates",
 				ListUtil.fromCollection(
@@ -211,11 +290,8 @@ public class ViewRoomsSectionDisplayContextTest {
 				_objectDefinition, Mockito.mock(ObjectEntryService.class));
 
 		Assert.assertEquals(
-			StringBundler.concat(
-				"/o/search/v1.0/search?emptySearch=true&",
-				"filter=objectDefinitionId eq ",
-				_objectDefinition.getObjectDefinitionId(),
-				"&nestedFields=embedded,r_accountToDSRRooms_accountEntryId"),
+			"/o/digital-sales-room/rooms?nestedFields=creator," +
+				"r_accountToDSRRooms_accountEntryId",
 			viewRoomsSectionDisplayContext.getAPIURL());
 	}
 
@@ -230,86 +306,17 @@ public class ViewRoomsSectionDisplayContextTest {
 				Mockito.mock(ObjectEntryService.class));
 
 		Assert.assertEquals(
-			StringBundler.concat(
-				"/o/search/v1.0/search?emptySearch=true&",
-				"filter=objectDefinitionId eq ",
-				_objectDefinition.getObjectDefinitionId(),
-				"&nestedFields=embedded,r_accountToDSRRooms_accountEntryId",
-				"&pageSize=5&sort=dateModified:desc"),
+			"/o/digital-sales-room/rooms?nestedFields=creator," +
+				"r_accountToDSRRooms_accountEntryId&pageSize=5&sort" +
+					"=dateModified:desc",
 			viewRoomsSectionDisplayContext.getAPIURL());
 	}
 
 	@Test
 	public void testGetCreationMenu() throws Exception {
-		ObjectEntryService objectEntryService = Mockito.mock(
-			ObjectEntryService.class);
-
-		Mockito.when(
-			objectEntryService.hasPortletResourcePermission(
-				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyString())
-		).thenReturn(
-			false
-		).thenReturn(
-			true
-		);
-
-		ViewRoomsSectionDisplayContext viewRoomsSectionDisplayContext =
-			new ViewRoomsSectionDisplayContext(
-				new HashMap<>(), _getMockHttpServletRequest(),
-				_objectDefinition, objectEntryService);
-
-		Assert.assertNull(viewRoomsSectionDisplayContext.getCreationMenu());
-
-		CreationMenu creationMenu =
-			viewRoomsSectionDisplayContext.getCreationMenu();
-
-		Assert.assertNotNull(creationMenu);
-
-		List<DropdownItem> dropdownItems = (List<DropdownItem>)creationMenu.get(
-			"primaryItems");
-
-		Assert.assertEquals(dropdownItems.toString(), 1, dropdownItems.size());
-
-		DropdownItem dropdownItem = dropdownItems.get(0);
-
-		Assert.assertEquals("forms", dropdownItem.get("icon"));
-		Assert.assertEquals(
-			"New Digital Sales Room", dropdownItem.get("label"));
-
-		HashMap<String, Object> dropdownItemData =
-			(HashMap<String, Object>)dropdownItem.get("data");
-
-		Assert.assertEquals(
-			"createDigitalSalesRoom", dropdownItemData.get("action"));
-		Assert.assertEquals(
-			String.valueOf(_objectDefinition.getObjectDefinitionId()),
-			dropdownItemData.get("objectDefinitionId"));
-		Assert.assertEquals(
-			_objectDefinition.getLabel(LocaleUtil.ENGLISH),
-			dropdownItemData.get("title"));
-	}
-
-	@Test
-	public void testGetCreationMenuWithConfiguration() throws Exception {
-		ObjectEntryService objectEntryService = Mockito.mock(
-			ObjectEntryService.class);
-
-		Mockito.when(
-			objectEntryService.hasPortletResourcePermission(
-				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyString())
-		).thenReturn(
-			true
-		);
-
-		ViewRoomsSectionDisplayContext viewRoomsSectionDisplayContext =
-			new ViewRoomsSectionDisplayContext(
-				HashMapBuilder.<String, Object>put(
-					"isHomePage", true
-				).build(),
-				_getMockHttpServletRequest(), _objectDefinition,
-				objectEntryService);
-
-		Assert.assertNull(viewRoomsSectionDisplayContext.getCreationMenu());
+		_testGetCreationMenu();
+		_testGetCreationMenuWithConfiguration();
+		_testGetCreationMenuWhenLicenseIsExpired();
 	}
 
 	@Test
@@ -323,27 +330,64 @@ public class ViewRoomsSectionDisplayContextTest {
 			viewRoomsSectionDisplayContext.getFDSActionDropdownItems();
 
 		Assert.assertEquals(
-			fdsActionDropdownItems.toString(), 4,
+			fdsActionDropdownItems.toString(), 7,
 			fdsActionDropdownItems.size());
 
 		_assertFDSActionDropdownItem(
 			StringBundler.concat(
 				DSRConstants.DSR_FRIENDLY_URL, "/view_room?siteId=",
-				"{embedded.siteId}"),
+				"{siteId}"),
 			"view", "view", "View", null, "get", null,
 			fdsActionDropdownItems.get(0));
 		_assertFDSActionDropdownItem(
 			StringBundler.concat(
 				DSRConstants.DSR_FRIENDLY_URL, "/view_room?mode=edit&siteId=",
-				"{embedded.siteId}"),
+				"{siteId}"),
 			"pencil", "edit", "Edit", null, "update", null,
 			fdsActionDropdownItems.get(1));
 		_assertFDSActionDropdownItem(
 			"#", "share", "share", "Share", null, "update", null,
 			fdsActionDropdownItems.get(2));
 		_assertFDSActionDropdownItem(
-			"#", "trash", "delete", "Delete", "delete", "delete", null,
+			StringBundler.concat(
+				DSRConstants.DSR_FRIENDLY_URL, "/e/room-settings/",
+				_CLASS_NAME_ID, "/{id}?redirect=", _URL_CURRENT),
+			"cog", "settings", "Room Settings", null, "update", null,
 			fdsActionDropdownItems.get(3));
+		_assertFDSActionDropdownItem(
+			"#", "archive", "archive", "Archive", null, "update", null,
+			fdsActionDropdownItems.get(4));
+		_assertFDSActionDropdownItem(
+			"#", "restore", "restore", "Restore", null, "update", null,
+			fdsActionDropdownItems.get(5));
+		_assertFDSActionDropdownItem(
+			"#", "trash", "delete", "Delete", "delete", "delete", null,
+			fdsActionDropdownItems.get(6));
+
+		ObjectEntryService objectEntryService = Mockito.mock(
+			ObjectEntryService.class);
+
+		Mockito.when(
+			objectEntryService.hasPortletResourcePermission(
+				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyString())
+		).thenReturn(
+			true
+		);
+
+		viewRoomsSectionDisplayContext = new ViewRoomsSectionDisplayContext(
+			new HashMap<>(), _getMockHttpServletRequest(), _objectDefinition,
+			objectEntryService);
+
+		fdsActionDropdownItems =
+			viewRoomsSectionDisplayContext.getFDSActionDropdownItems();
+
+		Assert.assertEquals(
+			fdsActionDropdownItems.toString(), 8,
+			fdsActionDropdownItems.size());
+
+		_assertFDSActionDropdownItem(
+			"#", "copy", "duplicate", "Duplicate", null, "update", null,
+			fdsActionDropdownItems.get(2));
 	}
 
 	@Test
@@ -416,7 +460,110 @@ public class ViewRoomsSectionDisplayContextTest {
 		return mockHttpServletRequest;
 	}
 
+	private void _testGetCreationMenu() throws Exception {
+		ObjectEntryService objectEntryService = Mockito.mock(
+			ObjectEntryService.class);
+
+		Mockito.when(
+			objectEntryService.hasPortletResourcePermission(
+				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyString())
+		).thenReturn(
+			false
+		).thenReturn(
+			true
+		);
+
+		ViewRoomsSectionDisplayContext viewRoomsSectionDisplayContext =
+			new ViewRoomsSectionDisplayContext(
+				new HashMap<>(), _getMockHttpServletRequest(),
+				_objectDefinition, objectEntryService);
+
+		Assert.assertNull(viewRoomsSectionDisplayContext.getCreationMenu());
+
+		CreationMenu creationMenu =
+			viewRoomsSectionDisplayContext.getCreationMenu();
+
+		Assert.assertNotNull(creationMenu);
+
+		List<DropdownItem> dropdownItems = (List<DropdownItem>)creationMenu.get(
+			"primaryItems");
+
+		Assert.assertEquals(dropdownItems.toString(), 1, dropdownItems.size());
+
+		DropdownItem dropdownItem = dropdownItems.get(0);
+
+		Assert.assertEquals("forms", dropdownItem.get("icon"));
+		Assert.assertEquals(
+			"New Digital Sales Room", dropdownItem.get("label"));
+
+		HashMap<String, Object> dropdownItemData =
+			(HashMap<String, Object>)dropdownItem.get("data");
+
+		Assert.assertEquals(
+			"createDigitalSalesRoom", dropdownItemData.get("action"));
+		Assert.assertEquals(
+			String.valueOf(_objectDefinition.getObjectDefinitionId()),
+			dropdownItemData.get("objectDefinitionId"));
+		Assert.assertEquals(
+			_objectDefinition.getLabel(LocaleUtil.ENGLISH),
+			dropdownItemData.get("title"));
+	}
+
+	private void _testGetCreationMenuWhenLicenseIsExpired() throws Exception {
+		ObjectEntryService objectEntryService = Mockito.mock(
+			ObjectEntryService.class);
+
+		Mockito.when(
+			objectEntryService.hasPortletResourcePermission(
+				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyString())
+		).thenReturn(
+			true
+		);
+
+		_licenseManagerUtilMockedStatic.when(
+			() -> LicenseManagerUtil.isAppEnabled(App.DSR)
+		).thenReturn(
+			false
+		);
+
+		ViewRoomsSectionDisplayContext viewRoomsSectionDisplayContext =
+			new ViewRoomsSectionDisplayContext(
+				new HashMap<>(), _getMockHttpServletRequest(),
+				_objectDefinition, objectEntryService);
+
+		Assert.assertNull(viewRoomsSectionDisplayContext.getCreationMenu());
+	}
+
+	private void _testGetCreationMenuWithConfiguration() throws Exception {
+		ObjectEntryService objectEntryService = Mockito.mock(
+			ObjectEntryService.class);
+
+		Mockito.when(
+			objectEntryService.hasPortletResourcePermission(
+				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyString())
+		).thenReturn(
+			true
+		);
+
+		ViewRoomsSectionDisplayContext viewRoomsSectionDisplayContext =
+			new ViewRoomsSectionDisplayContext(
+				HashMapBuilder.<String, Object>put(
+					"isHomePage", true
+				).build(),
+				_getMockHttpServletRequest(), _objectDefinition,
+				objectEntryService);
+
+		Assert.assertNull(viewRoomsSectionDisplayContext.getCreationMenu());
+	}
+
+	private static final String _CLASS_NAME =
+		"com.liferay.object.model.ObjectDefinition#D1S2";
+
+	private static final long _CLASS_NAME_ID = RandomTestUtil.randomLong();
+
 	private static final String _GROUP_DISPLAY_URL = "groupDisplayURL";
+
+	private static final String _URL_CURRENT = "currentURL";
 
 	private final Group _group = Mockito.mock(Group.class);
 	private final MockedStatic<LanguageUtil> _languageUtilMockedStatic =
@@ -426,8 +573,21 @@ public class ViewRoomsSectionDisplayContextTest {
 	private final MockedStatic<LayoutSetPrototypeLocalServiceUtil>
 		_layoutSetPrototypeLocalServiceUtilMockedStatic = Mockito.mockStatic(
 			LayoutSetPrototypeLocalServiceUtil.class);
+	private final MockedStatic<LicenseManagerUtil>
+		_licenseManagerUtilMockedStatic = Mockito.mockStatic(
+			LicenseManagerUtil.class);
 	private final ObjectDefinition _objectDefinition = Mockito.mock(
 		ObjectDefinition.class);
+	private final PermissionChecker _permissionChecker = Mockito.mock(
+		PermissionChecker.class);
+	private final MockedStatic<PortalUtil> _portalUtilMockedStatic =
+		Mockito.mockStatic(PortalUtil.class);
+	private final MockedStatic<RoleLocalServiceUtil>
+		_roleLocalServiceUtilMockedStatic = Mockito.mockStatic(
+			RoleLocalServiceUtil.class);
 	private final ThemeDisplay _themeDisplay = Mockito.mock(ThemeDisplay.class);
+	private final MockedStatic<UserGroupRoleLocalServiceUtil>
+		_userGroupRoleLocalServiceUtilMockedStatic = Mockito.mockStatic(
+			UserGroupRoleLocalServiceUtil.class);
 
 }

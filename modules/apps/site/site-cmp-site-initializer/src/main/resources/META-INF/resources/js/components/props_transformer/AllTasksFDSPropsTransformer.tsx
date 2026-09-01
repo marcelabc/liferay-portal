@@ -5,6 +5,7 @@
 
 import {
 	DateRenderer,
+	FDS_EVENT,
 	IInternalRenderer,
 	IView,
 } from '@liferay/frontend-data-set-web';
@@ -18,7 +19,13 @@ import {sub} from 'frontend-js-web';
 import React from 'react';
 
 import {styleActions, styleBulkActions} from '../../utils/actionStyles';
+import {
+	installCMPTabPersistence,
+	registerTabFDS,
+} from '../../utils/cmpTabPersistence';
 import {WORKFLOW_TASK_ACTION_LINK_ID} from '../../utils/constants';
+import getCMPProjectObjectEntryIds from '../../utils/getCMPProjectObjectEntryIds';
+import {getFormattedLabel} from '../../utils/getFormattedText';
 import {openCMPModal} from '../../utils/openCMPModal';
 import {
 	ProjectTaskItemData,
@@ -30,6 +37,8 @@ import StateLabel from '../StateLabel';
 import BulkEditAssigneeModalContent from '../modal/BulkEditAssigneeModalContent';
 import BulkEditDueDateModalContent from '../modal/BulkEditDueDateModalContent';
 import BulkEditStateModalContent from '../modal/BulkEditStateModalContent';
+import BulkEditWorkflowAssigneeModalContent from '../modal/BulkEditWorkflowAssigneeModalContent';
+import BulkEditWorkflowDueDateModalContent from '../modal/BulkEditWorkflowDueDateModalContent';
 import EditAssigneeModalContent from '../modal/EditAssigneeModalContent';
 import ACTIONS from './actions/creationMenuActions';
 import AssigneeRenderer from './cell_renderers/AssigneeRenderer';
@@ -43,6 +52,20 @@ const isWorkflowTask = (
 	itemData: ProjectTaskItemData | WorkflowTaskItemData
 ): itemData is WorkflowTaskItemData =>
 	itemData.entryClassName === _CLASS_NAME_KALEO_TASK_INSTANCE_TOKEN;
+
+type BulkModalProps = {
+	closeModal: () => void;
+	loadData: () => void;
+	selectedData: any;
+};
+
+const WORKFLOW_BULK_ACTION_MODALS: Record<
+	string,
+	React.ComponentType<BulkModalProps>
+> = {
+	'assign-to': BulkEditWorkflowAssigneeModalContent,
+	'update-due-date': BulkEditWorkflowDueDateModalContent,
+};
 
 export default function AllTasksFDSPropsTransformer({
 	additionalProps,
@@ -68,6 +91,9 @@ export default function AllTasksFDSPropsTransformer({
 		initialPaginationDelta: 20,
 	}));
 
+	registerTabFDS(id, 0);
+	installCMPTabPersistence();
+
 	return {
 		...otherProps,
 		bulkActions: styleBulkActions(bulkActions).map((action) => ({
@@ -79,6 +105,18 @@ export default function AllTasksFDSPropsTransformer({
 				allItemsSelectedActive: boolean;
 				selectedItems: any[];
 			}) => {
+				const actionId = action?.data?.id;
+
+				if (actionId === 'update-state' || actionId === 'delete') {
+					if (allItemsSelectedActive) {
+						return true;
+					}
+
+					if (selectedItems?.some(isWorkflowTask)) {
+						return true;
+					}
+				}
+
 				if (allItemsSelectedActive || !selectedItems?.length) {
 					return false;
 				}
@@ -88,6 +126,33 @@ export default function AllTasksFDSPropsTransformer({
 				return selectedItems.some(
 					(item) => item?.entryClassName !== firstType
 				);
+			},
+			isVisible: ({
+				allItemsSelectedActive,
+				selectedItems,
+			}: {
+				allItemsSelectedActive: boolean;
+				selectedItems: any[];
+			}) => {
+				if (action?.data?.id !== 'assign-to') {
+					return true;
+				}
+
+				if (allItemsSelectedActive) {
+					return false;
+				}
+
+				if (
+					!selectedItems?.length ||
+					selectedItems.every(isWorkflowTask)
+				) {
+					return true;
+				}
+
+				const cmpProjectObjectEntryIds =
+					getCMPProjectObjectEntryIds(selectedItems);
+
+				return cmpProjectObjectEntryIds.size === 1;
 			},
 		})),
 		creationMenu: {
@@ -227,7 +292,7 @@ export default function AllTasksFDSPropsTransformer({
 				await deleteItemAction(
 					sub(
 						Liferay.Language.get('delete-task-confirmation-body'),
-						itemData.embedded.title
+						getFormattedLabel(itemData.embedded.title)
 					),
 					itemData,
 					loadData
@@ -243,9 +308,13 @@ export default function AllTasksFDSPropsTransformer({
 					}) => (
 						<EditAssigneeModalContent
 							closeModal={closeModal}
+							cmpProjectObjectEntryId={
+								itemData.embedded
+									.r_cmpProjectToCMPTasks_c_cmpProjectId
+							}
+							cmpTaskObjectEntryId={String(itemData.embedded.id)}
+							cmpTaskObjectEntryTitle={itemData.embedded.title}
 							loadData={loadData}
-							taskId={String(itemData.embedded.id)}
-							taskTitle={itemData.embedded.title}
 							value={itemData.embedded.assignTo}
 						/>
 					),
@@ -260,7 +329,46 @@ export default function AllTasksFDSPropsTransformer({
 			action: any;
 			selectedData: any;
 		}) => {
+			const selectedItems = selectedData?.items ?? [];
+
+			if (
+				!selectedData?.selectAll &&
+				selectedItems.length &&
+				selectedItems.every(isWorkflowTask)
+			) {
+				const ContentComponent =
+					WORKFLOW_BULK_ACTION_MODALS[action?.data?.id];
+
+				if (!ContentComponent) {
+					return;
+				}
+
+				const loadData = () =>
+					Liferay.fire(FDS_EVENT.UPDATE_DISPLAY, {id});
+
+				await openCMPModal({
+					center: true,
+					contentComponent: ({
+						closeModal,
+					}: {
+						closeModal: () => void;
+					}) => (
+						<ContentComponent
+							closeModal={closeModal}
+							loadData={loadData}
+							selectedData={selectedData}
+						/>
+					),
+					size: 'md',
+				});
+
+				return;
+			}
+
 			if (action?.data?.id === 'assign-to') {
+				const [cmpProjectObjectEntryId] =
+					getCMPProjectObjectEntryIds(selectedItems);
+
 				await openCMPModal({
 					center: true,
 					contentComponent: ({
@@ -271,6 +379,7 @@ export default function AllTasksFDSPropsTransformer({
 						<BulkEditAssigneeModalContent
 							apiURL={otherProps.apiURL}
 							closeModal={closeModal}
+							cmpProjectObjectEntryId={cmpProjectObjectEntryId}
 							dataSetId={id}
 							selectedData={selectedData}
 							value={{name: null}}
@@ -286,17 +395,21 @@ export default function AllTasksFDSPropsTransformer({
 					getCustomBulkDeleteMessage: (selectedData) => {
 						if (selectedData.selectAll) {
 							return {
-								confirmationMessage: Liferay.Language.get(
-									'delete-tasks-confirmation'
-								),
+								messages: [
+									Liferay.Language.get(
+										'delete-tasks-confirmation'
+									),
+								],
 								title: Liferay.Language.get('delete-all-tasks'),
 							};
 						}
 						else if (selectedData.items.length > 1) {
 							return {
-								confirmationMessage: Liferay.Language.get(
-									'delete-tasks-confirmation'
-								),
+								messages: [
+									Liferay.Language.get(
+										'delete-tasks-confirmation'
+									),
+								],
 								title: sub(
 									Liferay.Language.get('delete-x-tasks'),
 									[selectedData.items.length]
@@ -305,9 +418,11 @@ export default function AllTasksFDSPropsTransformer({
 						}
 
 						return {
-							confirmationMessage: Liferay.Language.get(
-								'delete-tasks-confirmation'
-							),
+							messages: [
+								Liferay.Language.get(
+									'delete-tasks-confirmation'
+								),
+							],
 							title: Liferay.Language.get('delete-task'),
 						};
 					},

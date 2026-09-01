@@ -11,6 +11,7 @@ import com.liferay.jenkins.results.parser.Job;
 import com.liferay.jenkins.results.parser.JobFactory;
 import com.liferay.jenkins.results.parser.PortalAcceptancePullRequestJob;
 import com.liferay.jenkins.results.parser.PortalGitWorkingDirectory;
+import com.liferay.jenkins.results.parser.Test;
 
 import java.io.File;
 
@@ -23,10 +24,13 @@ import org.junit.After;
 /**
  * @author Kenji Heigel
  */
-public abstract class BaseRelevantRuleTestCase {
+public abstract class BaseRelevantRuleTestCase extends Test {
 
 	@After
+	@Override
 	public void tearDown() {
+		super.tearDown();
+
 		RelevantRuleEngine.clear();
 	}
 
@@ -93,20 +97,21 @@ public abstract class BaseRelevantRuleTestCase {
 			file = JenkinsResultsParserUtil.getCanonicalFile(file);
 		}
 
-		String fileName = file.getName();
+		File gitFile = new File(file, ".git");
+		File portalImplDir = new File(file, "portal-impl");
 
-		if (fileName.equals("liferay-portal")) {
+		if (gitFile.exists() && portalImplDir.exists()) {
 			return file;
 		}
 
-		file = file.getParentFile();
+		File parentFile = file.getParentFile();
 
-		if (file == null) {
+		if (parentFile == null) {
 			throw new RuntimeException(
 				"Unable to find portal directory from: " + file);
 		}
 
-		return getPortalDir(file);
+		return getPortalDir(parentFile);
 	}
 
 	protected RelevantRuleEngine getRelevantRuleEngine() {

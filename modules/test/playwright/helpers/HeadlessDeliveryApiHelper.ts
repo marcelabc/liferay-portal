@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 
 import getRandomString from '../utils/getRandomString';
-import {ApiHelpers} from './ApiHelpers';
+import {ApiHelpers, DataApiHelpers} from './ApiHelpers';
 
 interface createSitePageProps {
 	pageDefinition?: PageDefinition;
@@ -42,6 +42,15 @@ type TDocumentShortcut = {
 	externalReferenceCode?: string;
 	folderId?: number;
 	targetDocumentId?: number;
+	viewableBy?: string;
+};
+
+type TStructuredContentFolder = {
+	description?: string;
+	externalReferenceCode?: string;
+	id?: number;
+	name?: string;
+	parentStructuredContentFolderId?: number;
 	viewableBy?: string;
 };
 
@@ -108,11 +117,15 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
-	async deleteSiteDocumentsFolderByExternalReferenceCode(
-		externalReferenceCode: string
-	) {
+	async deleteDocumentDataDefinitionType(id: string) {
 		return this.apiHelpers.delete(
-			`${this.apiHelpers.baseUrl}${this.basePath}/sites/Guest/documents-folder/by-external-reference-code/${externalReferenceCode}`
+			`${this.apiHelpers.baseUrl}${this.basePath}/document-data-definition-types/${id}`
+		);
+	}
+
+	async deleteMessageBoardSection(messageBoardSectionId: string) {
+		return this.apiHelpers.delete(
+			`${this.apiHelpers.baseUrl}${this.basePath}/message-board-sections/${messageBoardSectionId}`
 		);
 	}
 
@@ -128,6 +141,14 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
+	async getMessageBoardThread(
+		messageBoardThreadId: string
+	): Promise<MessageBoardThread> {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/message-board-threads/${messageBoardThreadId}`
+		);
+	}
+
 	async getSiteDocumentsPage(siteId: string, sort: string = 'id') {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/documents?sort=${sort}`
@@ -140,9 +161,29 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
+	async getSiteMessageBoardSectionsPage(
+		siteId: string
+	): Promise<{items: MessageBoardSection[]}> {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/message-board-sections`
+		);
+	}
+
 	async getSitePages(siteId: string) {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/site-pages`
+		);
+	}
+
+	async postAssetLibraryDocument(
+		assetLibraryId: number | string,
+		file: fs.ReadStream,
+		document?: TDocument
+	) {
+		return this._postDocument(
+			`asset-libraries/${assetLibraryId}`,
+			file,
+			document
 		);
 	}
 
@@ -169,17 +210,64 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
+	async postSiteDocumentDataDefinitionType(siteId: string, name: string) {
+		const documentDataDefinitionType = await this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/document-data-definition-types`,
+			{
+				data: {
+					availableLanguages: ['en-US'],
+					dataDefinitionFields: [],
+					dataLayout: {},
+					name,
+				},
+			}
+		);
+
+		if (this.apiHelpers instanceof DataApiHelpers) {
+			this.apiHelpers.data.push({
+				id: documentDataDefinitionType.id,
+				type: 'documentDataDefinitionType',
+			});
+		}
+
+		return documentDataDefinitionType;
+	}
+
 	async postSiteKnowledgeBaseArticle({
 		articleBody,
 		siteId,
 		title,
+		viewableBy,
 	}: {
 		articleBody: string;
 		siteId: string;
 		title: string;
+		viewableBy?: string;
 	}): Promise<KnowledgeBaseArticle> {
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/knowledge-base-articles`,
+			{
+				data: {
+					articleBody,
+					title,
+					viewableBy,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
+	async postKnowledgeBaseArticleKnowledgeBaseArticle({
+		articleBody,
+		parentKnowledgeBaseArticleId,
+		title,
+	}: {
+		articleBody: string;
+		parentKnowledgeBaseArticleId: string;
+		title: string;
+	}): Promise<KnowledgeBaseArticle> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/knowledge-base-articles/${parentKnowledgeBaseArticleId}/knowledge-base-articles`,
 			{
 				data: {
 					articleBody,
@@ -190,14 +278,40 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
+	async postMessageBoardSectionMessageBoardThread({
+		articleBody,
+		headline,
+		keywords,
+		messageBoardSectionId,
+	}: {
+		articleBody: string;
+		headline: string;
+		keywords?: string[];
+		messageBoardSectionId: string;
+	}): Promise<MessageBoardThread> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/message-board-sections/${messageBoardSectionId}/message-board-threads`,
+			{
+				data: {
+					articleBody,
+					headline,
+					keywords,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
 	async postMessageBoardThread({
 		articleBody,
 		headline,
 		siteId,
+		taxonomyCategoryIds,
 	}: {
 		articleBody: string;
 		headline: string;
 		siteId: string;
+		taxonomyCategoryIds?: number[];
 	}): Promise<MessageBoardThread> {
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/message-board-threads`,
@@ -205,6 +319,7 @@ export class HeadlessDeliveryApiHelper {
 				data: {
 					articleBody,
 					headline,
+					taxonomyCategoryIds,
 				},
 				failOnStatusCode: true,
 			}
@@ -229,8 +344,45 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
+	async postMessageBoardSectionMessageBoardSection({
+		parentMessageBoardSectionId,
+		title,
+	}: {
+		parentMessageBoardSectionId: string;
+		title: string;
+	}): Promise<MessageBoardSection> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/message-board-sections/${parentMessageBoardSectionId}/message-board-sections`,
+			{
+				data: {
+					title,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
+	async postSiteMessageBoardSection({
+		siteId,
+		title,
+	}: {
+		siteId: string;
+		title: string;
+	}): Promise<MessageBoardSection> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/message-board-sections`,
+			{
+				data: {
+					title,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
 	async postStructuredContent({
 		categoryIds,
+		contentFields,
 		contentStructureId,
 		datePublished,
 		description = '',
@@ -241,6 +393,7 @@ export class HeadlessDeliveryApiHelper {
 		viewableBy = '',
 	}: {
 		categoryIds?: number[];
+		contentFields?: {contentFieldValue: {data: string}; name: string}[];
 		contentStructureId: number;
 		datePublished: string;
 		description?: string;
@@ -254,6 +407,7 @@ export class HeadlessDeliveryApiHelper {
 			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/structured-contents`,
 			{
 				data: {
+					contentFields,
 					contentStructureId,
 					datePublished,
 					description,
@@ -262,6 +416,54 @@ export class HeadlessDeliveryApiHelper {
 					taxonomyCategoryIds: categoryIds,
 					title,
 					viewableBy,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
+	async postStructuredContentFolder(
+		siteId: number | string,
+		structuredContentFolder?: TStructuredContentFolder
+	) {
+		structuredContentFolder = {
+			description: getRandomString(),
+			externalReferenceCode: getRandomString(),
+			name: getRandomString(),
+			viewableBy: 'Anyone',
+			...(structuredContentFolder || {}),
+		};
+
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/structured-content-folders`,
+			{
+				data: structuredContentFolder,
+				failOnStatusCode: true,
+				headers: {
+					...(await this.apiHelpers.getCSRFTokenHeader()),
+				},
+			}
+		);
+	}
+
+	async postStructuredContentFolderStructuredContent({
+		contentStructureId,
+		datePublished,
+		structuredContentFolderId,
+		title,
+	}: {
+		contentStructureId: number;
+		datePublished: string;
+		structuredContentFolderId: number;
+		title: string;
+	}): Promise<StructuredContent> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/structured-content-folders/${structuredContentFolderId}/structured-contents`,
+			{
+				data: {
+					contentStructureId,
+					datePublished,
+					title,
 				},
 				failOnStatusCode: true,
 			}
@@ -327,28 +529,7 @@ export class HeadlessDeliveryApiHelper {
 		file: fs.ReadStream,
 		document?: TDocument
 	) {
-		document = {
-			description: getRandomString(),
-			externalReferenceCode: getRandomString(),
-			fileName: getRandomString(),
-			title: getRandomString(),
-			viewableBy: 'Anyone',
-			...(document || {}),
-		};
-
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/documents`,
-			{
-				failOnStatusCode: true,
-				headers: {
-					...(await this.apiHelpers.getCSRFTokenHeader()),
-				},
-				multipart: {
-					document: JSON.stringify(document),
-					file,
-				},
-			}
-		);
+		return this._postDocument(`sites/${siteId}`, file, document);
 	}
 
 	async postDocumentFolder(
@@ -372,6 +553,18 @@ export class HeadlessDeliveryApiHelper {
 					...(await this.apiHelpers.getCSRFTokenHeader()),
 				},
 			}
+		);
+	}
+
+	async postDocumentFolderDocument(
+		documentFolderId: number | string,
+		file: fs.ReadStream,
+		document?: TDocument
+	) {
+		return this._postDocument(
+			`document-folders/${documentFolderId}`,
+			file,
+			document
 		);
 	}
 
@@ -426,6 +619,24 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
+	async patchMessageBoardSection({
+		messageBoardSectionId,
+		title,
+	}: {
+		messageBoardSectionId: string;
+		title: string;
+	}): Promise<MessageBoardSection> {
+		return this.apiHelpers.patchRequestOptions(
+			`${this.apiHelpers.baseUrl}${this.basePath}/message-board-sections/${messageBoardSectionId}`,
+			{
+				data: {
+					title,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
 	async putBlog(
 		blogPostingId: number | string,
 		blog?: {
@@ -444,6 +655,35 @@ export class HeadlessDeliveryApiHelper {
 			{
 				data: blog,
 				failOnStatusCode: true,
+			}
+		);
+	}
+
+	private async _postDocument(
+		scopePath: string,
+		file: fs.ReadStream,
+		document?: TDocument
+	) {
+		document = {
+			description: getRandomString(),
+			externalReferenceCode: getRandomString(),
+			fileName: getRandomString(),
+			title: getRandomString(),
+			viewableBy: 'Anyone',
+			...(document || {}),
+		};
+
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/${scopePath}/documents`,
+			{
+				failOnStatusCode: true,
+				headers: {
+					...(await this.apiHelpers.getCSRFTokenHeader()),
+				},
+				multipart: {
+					document: JSON.stringify(document),
+					file,
+				},
 			}
 		);
 	}

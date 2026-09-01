@@ -6,6 +6,7 @@
 package com.liferay.commerce.product.service.persistence.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.commerce.product.exception.DuplicateCPDefinitionOptionRelExternalReferenceCodeException;
 import com.liferay.commerce.product.exception.NoSuchCPDefinitionOptionRelException;
 import com.liferay.commerce.product.model.CPDefinitionOptionRel;
 import com.liferay.commerce.product.service.CPDefinitionOptionRelLocalServiceUtil;
@@ -115,16 +116,15 @@ public class CPDefinitionOptionRelPersistenceTest {
 
 	@Test
 	public void testUpdateExisting() throws Exception {
-		long pk = RandomTestUtil.nextLong();
-
-		CPDefinitionOptionRel newCPDefinitionOptionRel = _persistence.create(
-			pk);
-
-		newCPDefinitionOptionRel.setMvccVersion(RandomTestUtil.nextLong());
+		CPDefinitionOptionRel newCPDefinitionOptionRel =
+			addCPDefinitionOptionRel();
 
 		newCPDefinitionOptionRel.setCtCollectionId(RandomTestUtil.nextLong());
 
 		newCPDefinitionOptionRel.setUuid(RandomTestUtil.randomString());
+
+		newCPDefinitionOptionRel.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		newCPDefinitionOptionRel.setGroupId(RandomTestUtil.nextLong());
 
@@ -170,8 +170,10 @@ public class CPDefinitionOptionRelPersistenceTest {
 
 		newCPDefinitionOptionRel.setTypeSettings(RandomTestUtil.randomString());
 
-		_cpDefinitionOptionRels.add(
-			_persistence.update(newCPDefinitionOptionRel));
+		newCPDefinitionOptionRel = _persistence.update(
+			newCPDefinitionOptionRel);
+
+		_cpDefinitionOptionRels.add(newCPDefinitionOptionRel);
 
 		CPDefinitionOptionRel existingCPDefinitionOptionRel =
 			_persistence.findByPrimaryKey(
@@ -186,6 +188,9 @@ public class CPDefinitionOptionRelPersistenceTest {
 		Assert.assertEquals(
 			existingCPDefinitionOptionRel.getUuid(),
 			newCPDefinitionOptionRel.getUuid());
+		Assert.assertEquals(
+			existingCPDefinitionOptionRel.getExternalReferenceCode(),
+			newCPDefinitionOptionRel.getExternalReferenceCode());
 		Assert.assertEquals(
 			existingCPDefinitionOptionRel.getCPDefinitionOptionRelId(),
 			newCPDefinitionOptionRel.getCPDefinitionOptionRelId());
@@ -251,6 +256,32 @@ public class CPDefinitionOptionRelPersistenceTest {
 		Assert.assertEquals(
 			existingCPDefinitionOptionRel.getTypeSettings(),
 			newCPDefinitionOptionRel.getTypeSettings());
+	}
+
+	@Test(
+		expected = DuplicateCPDefinitionOptionRelExternalReferenceCodeException.class
+	)
+	public void testUpdateWithExistingExternalReferenceCode() throws Exception {
+		CPDefinitionOptionRel cpDefinitionOptionRel =
+			addCPDefinitionOptionRel();
+
+		CPDefinitionOptionRel newCPDefinitionOptionRel =
+			addCPDefinitionOptionRel();
+
+		newCPDefinitionOptionRel.setCompanyId(
+			cpDefinitionOptionRel.getCompanyId());
+
+		newCPDefinitionOptionRel = _persistence.update(
+			newCPDefinitionOptionRel);
+
+		Session session = _persistence.getCurrentSession();
+
+		session.evict(newCPDefinitionOptionRel);
+
+		newCPDefinitionOptionRel.setExternalReferenceCode(
+			cpDefinitionOptionRel.getExternalReferenceCode());
+
+		_persistence.update(newCPDefinitionOptionRel);
 	}
 
 	@Test
@@ -342,6 +373,15 @@ public class CPDefinitionOptionRelPersistenceTest {
 	}
 
 	@Test
+	public void testCountByERC_C() throws Exception {
+		_persistence.countByERC_C("", RandomTestUtil.nextLong());
+
+		_persistence.countByERC_C("null", 0L);
+
+		_persistence.countByERC_C((String)null, 0L);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		CPDefinitionOptionRel newCPDefinitionOptionRel =
 			addCPDefinitionOptionRel();
@@ -370,14 +410,14 @@ public class CPDefinitionOptionRelPersistenceTest {
 	protected OrderByComparator<CPDefinitionOptionRel> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
 			"CPDefinitionOptionRel", "mvccVersion", true, "ctCollectionId",
-			true, "uuid", true, "CPDefinitionOptionRelId", true, "groupId",
-			true, "companyId", true, "userId", true, "userName", true,
-			"createDate", true, "modifiedDate", true, "CPDefinitionId", true,
-			"CPOptionId", true, "name", true, "description", true,
-			"commerceOptionTypeKey", true, "infoItemServiceKey", true,
-			"priority", true, "definedExternally", true, "facetable", true,
-			"required", true, "skuContributor", true, "key", true, "priceType",
-			true);
+			true, "uuid", true, "externalReferenceCode", true,
+			"CPDefinitionOptionRelId", true, "groupId", true, "companyId", true,
+			"userId", true, "userName", true, "createDate", true,
+			"modifiedDate", true, "CPDefinitionId", true, "CPOptionId", true,
+			"name", true, "description", true, "commerceOptionTypeKey", true,
+			"infoItemServiceKey", true, "priority", true, "definedExternally",
+			true, "facetable", true, "required", true, "skuContributor", true,
+			"key", true, "priceType", true);
 	}
 
 	@Test
@@ -705,6 +745,17 @@ public class CPDefinitionOptionRelPersistenceTest {
 			ReflectionTestUtil.invoke(
 				cpDefinitionOptionRel, "getColumnOriginalValue",
 				new Class<?>[] {String.class}, "key_"));
+
+		Assert.assertEquals(
+			cpDefinitionOptionRel.getExternalReferenceCode(),
+			ReflectionTestUtil.invoke(
+				cpDefinitionOptionRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "externalReferenceCode"));
+		Assert.assertEquals(
+			Long.valueOf(cpDefinitionOptionRel.getCompanyId()),
+			ReflectionTestUtil.<Long>invoke(
+				cpDefinitionOptionRel, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
 	}
 
 	protected CPDefinitionOptionRel addCPDefinitionOptionRel()
@@ -714,11 +765,12 @@ public class CPDefinitionOptionRelPersistenceTest {
 
 		CPDefinitionOptionRel cpDefinitionOptionRel = _persistence.create(pk);
 
-		cpDefinitionOptionRel.setMvccVersion(RandomTestUtil.nextLong());
-
 		cpDefinitionOptionRel.setCtCollectionId(RandomTestUtil.nextLong());
 
 		cpDefinitionOptionRel.setUuid(RandomTestUtil.randomString());
+
+		cpDefinitionOptionRel.setExternalReferenceCode(
+			RandomTestUtil.randomString());
 
 		cpDefinitionOptionRel.setGroupId(RandomTestUtil.nextLong());
 
@@ -774,4 +826,4 @@ public class CPDefinitionOptionRelPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-549211530
+// LIFERAY-SERVICE-BUILDER-HASH:-1107974855

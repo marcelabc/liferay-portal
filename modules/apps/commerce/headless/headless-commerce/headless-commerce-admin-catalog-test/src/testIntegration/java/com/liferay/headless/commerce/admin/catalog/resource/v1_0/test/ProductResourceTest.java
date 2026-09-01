@@ -9,9 +9,9 @@ import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountGroup;
 import com.liferay.account.service.AccountGroupLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.service.CommerceCurrencyLocalService;
-import com.liferay.commerce.price.list.service.CommercePriceListLocalService;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CPOptionCategory;
@@ -39,14 +39,31 @@ import com.liferay.headless.commerce.admin.catalog.client.pagination.Pagination;
 import com.liferay.headless.commerce.admin.catalog.client.problem.Problem;
 import com.liferay.headless.commerce.admin.catalog.client.resource.v1_0.ProductResource;
 import com.liferay.headless.commerce.core.util.LanguageUtils;
+import com.liferay.journal.constants.JournalFolderConstants;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.service.JournalArticleLocalService;
+import com.liferay.journal.test.util.JournalTestUtil;
+import com.liferay.object.field.builder.TextObjectFieldBuilder;
+import com.liferay.object.field.util.ObjectFieldUtil;
+import com.liferay.object.model.ObjectDefinition;
+import com.liferay.object.model.ObjectField;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.HTTPTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -55,13 +72,17 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.math.BigDecimal;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -103,12 +124,14 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 			_accountGroup);
 
 		_commerceCatalog = CommerceCatalogLocalServiceUtil.addCommerceCatalog(
-			null, RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			LocaleUtil.US.getDisplayLanguage(), serviceContext);
+			RandomTestUtil.randomString(), 0, RandomTestUtil.randomString(),
+			"USD", LocaleUtil.toLanguageId(LocaleUtil.US), false,
+			serviceContext);
 
 		CommerceCurrency commerceCurrency =
 			_commerceCurrencyLocalService.addCommerceCurrency(
-				null, user.getUserId(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), user.getUserId(),
+				RandomTestUtil.randomString(),
 				RandomTestUtil.randomLocaleStringMap(),
 				RandomTestUtil.randomString(), BigDecimal.ONE,
 				RandomTestUtil.randomLocaleStringMap(), 2, 2, "HALF_EVEN",
@@ -116,16 +139,6 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 
 		_commerceChannel = CommerceTestUtil.addCommerceChannel(
 			testGroup.getGroupId(), commerceCurrency.getCode());
-
-		_commercePriceListLocalService.addCatalogBaseCommercePriceList(
-			user.getUserId(), _commerceCatalog.getGroupId(),
-			commerceCurrency.getCode(), RandomTestUtil.randomString(),
-			"price-list", serviceContext);
-
-		_commercePriceListLocalService.addCatalogBaseCommercePriceList(
-			user.getUserId(), _commerceCatalog.getGroupId(),
-			commerceCurrency.getCode(), RandomTestUtil.randomString(),
-			"promotion", serviceContext);
 
 		_cpOptionCategory = CPTestUtil.addCPOptionCategory(
 			testGroup.getGroupId());
@@ -202,8 +215,9 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	@Test
 	public void testGetProductsPage() throws Exception {
 		_testGetProductsPage();
-		_testGetProductsPageWithSearch();
+		_testGetProductsPageWithChannelFilter();
 		_testGetProductsPageWithFilter();
+		_testGetProductsPageWithSearch();
 	}
 
 	@Ignore
@@ -336,6 +350,7 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		_testPatchProductWithNegativeValue("promo price");
 		_testPatchProductWithNegativeValue("weight");
 		_testPatchProductWithNegativeValue("width");
+		_testPatchProductWithObjectField();
 	}
 
 	@Ignore
@@ -374,6 +389,8 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		_testPostProductVirtual();
 		_testPostProductWithProductAccountGroupExternalReferenceCode();
 		_testPostProductWithProductChannelExternalReferenceCode();
+		_testPostProductWithTermsOfUseJournalArticleExternalReferenceCode();
+		_testPostProductWithTermsOfUseJournalArticleGroupExternalReferenceCode();
 		_testPostProductWithWorkflowSingleApprover();
 	}
 
@@ -477,6 +494,68 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		throws Exception {
 
 		return productResource.postProduct(product);
+	}
+
+	private ProductVirtualSettings _postProductWithTermsOfUse(
+			String groupExternalReferenceCode, JournalArticle journalArticle)
+		throws Exception {
+
+		User adminUser = UserTestUtil.getAdminUser(testCompany.getCompanyId());
+
+		ProductResource productResource = ProductResource.builder(
+		).authentication(
+			adminUser.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
+		).locale(
+			LocaleUtil.getDefault()
+		).parameters(
+			"nestedFields", "productVirtualSettings"
+		).build();
+
+		Product product = productResource.postProduct(
+			new Product() {
+				{
+					active = true;
+					catalogId = _commerceCatalog.getCommerceCatalogId();
+					externalReferenceCode = StringUtil.toLowerCase(
+						RandomTestUtil.randomString());
+					name = LanguageUtils.getLanguageIdMap(
+						RandomTestUtil.randomLocaleStringMap());
+					productType = VirtualCPTypeConstants.NAME;
+					productVirtualSettings = new ProductVirtualSettings() {
+						{
+							duration = RandomTestUtil.randomLong();
+							maxUsages = RandomTestUtil.randomInt();
+							termsOfUseJournalArticleExternalReferenceCode =
+								journalArticle.getExternalReferenceCode();
+							termsOfUseJournalArticleGroupExternalReferenceCode =
+								groupExternalReferenceCode;
+							termsOfUseRequired = true;
+							url = "http://www.example.com/download";
+						}
+					};
+				}
+			});
+
+		return product.getProductVirtualSettings();
+	}
+
+	private Product _randomProductWithChannel(CommerceChannel commerceChannel)
+		throws Exception {
+
+		Product product = randomProduct();
+
+		product.setProductChannelFilter(true);
+		product.setProductChannels(
+			new ProductChannel[] {
+				new ProductChannel() {
+					{
+						externalReferenceCode =
+							commerceChannel.getExternalReferenceCode();
+					}
+				}
+			});
+
+		return product;
 	}
 
 	private Product _randomProductWithProductConfiguration() {
@@ -636,6 +715,32 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		productResource.deleteProduct(product2.getProductId());
 	}
 
+	private void _testGetProductsPageWithChannelFilter() throws Exception {
+		CommerceChannel commerceChannel = CommerceTestUtil.addCommerceChannel(
+			testGroup.getGroupId(), _commerceChannel.getCommerceCurrencyCode());
+
+		_commerceChannels.add(commerceChannel);
+
+		Product product1 = testGetProductsPage_addProduct(
+			_randomProductWithChannel(_commerceChannel));
+		Product product2 = testGetProductsPage_addProduct(
+			_randomProductWithChannel(commerceChannel));
+
+		Page<Product> page = productResource.getProductsPage(
+			null,
+			String.format(
+				"(channelId/any(x:(x eq %s)))",
+				_commerceChannel.getCommerceChannelId()),
+			Pagination.of(1, 10), null);
+
+		assertEquals(
+			Collections.singletonList(product1),
+			(List<Product>)page.getItems());
+
+		productResource.deleteProduct(product1.getProductId());
+		productResource.deleteProduct(product2.getProductId());
+	}
+
 	private void _testGetProductsPageWithFilter() throws Exception {
 		Page<Product> page = productResource.getProductsPage(
 			null, null, Pagination.of(1, 10), null);
@@ -657,6 +762,44 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		assertValid(page, testGetProductsPage_getExpectedActions());
 
 		page = productResource.getProductsPage(
+			null,
+			String.format(
+				"(catalogId eq %s)", _commerceCatalog.getCommerceCatalogId()),
+			Pagination.of(1, 10), null);
+
+		Assert.assertEquals(2, page.getTotalCount());
+
+		assertContains(product1, (List<Product>)page.getItems());
+		assertContains(product2, (List<Product>)page.getItems());
+
+		CPDefinition cpDefinition =
+			_cpDefinitionLocalService.fetchCPDefinitionByCProductId(
+				product1.getProductId(), false);
+
+		AssetCategory assetCategory = CPTestUtil.addCategoryToCPDefinitions(
+			testGroup.getGroupId(), cpDefinition.getCPDefinitionId());
+
+		cpDefinition = _cpDefinitionLocalService.fetchCPDefinitionByCProductId(
+			product1.getProductId(), false);
+
+		Indexer<CPDefinition> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			CPDefinition.class);
+
+		indexer.reindex(
+			CPDefinition.class.getName(), cpDefinition.getCPDefinitionId());
+
+		page = productResource.getProductsPage(
+			null,
+			String.format(
+				"(categoryIds/any(x:(x eq '%s')))",
+				assetCategory.getCategoryId()),
+			Pagination.of(1, 10), null);
+
+		Assert.assertEquals(1, page.getTotalCount());
+
+		assertContains(product1, (List<Product>)page.getItems());
+
+		page = productResource.getProductsPage(
 			null, "(gtins/any(x:contains(x, 'test')))", Pagination.of(1, 10),
 			null);
 
@@ -673,6 +816,21 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 
 		assertContains(product1, (List<Product>)page.getItems());
 		assertValid(page, testGetProductsPage_getExpectedActions());
+
+		page = productResource.getProductsPage(
+			null,
+			String.format("(productType eq '%s')", SimpleCPTypeConstants.NAME),
+			Pagination.of(1, 10), null);
+
+		assertContains(product1, (List<Product>)page.getItems());
+
+		page = productResource.getProductsPage(
+			null,
+			String.format(
+				"(productType eq '%s')", RandomTestUtil.randomString()),
+			Pagination.of(1, 10), null);
+
+		Assert.assertEquals(0, page.getTotalCount());
 
 		page = productResource.getProductsPage(
 			null, "(specificationValues/any(x:contains(x, 'test')))",
@@ -810,6 +968,45 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		}
 	}
 
+	private void _testPatchProductWithObjectField() throws Exception {
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
+				testCompany.getCompanyId(), CPDefinition.class.getName());
+
+		ObjectField objectField = ObjectFieldUtil.addCustomObjectField(
+			new TextObjectFieldBuilder(
+			).userId(
+				TestPropsValues.getUserId()
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				"a" + RandomTestUtil.randomString()
+			).objectDefinitionId(
+				objectDefinition.getObjectDefinitionId()
+			).build());
+
+		Product product = productResource.postProduct(randomProduct());
+
+		String value = RandomTestUtil.randomString();
+
+		String endpoint =
+			"headless-commerce-admin-catalog/v1.0/products/" +
+				product.getProductId();
+
+		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				objectField.getName(), value
+			).toString(),
+			endpoint, Http.Method.PATCH);
+
+		Assert.assertEquals(value, jsonObject.getString(objectField.getName()));
+
+		jsonObject = HTTPTestUtil.invokeToJSONObject(
+			null, endpoint, Http.Method.GET);
+
+		Assert.assertEquals(value, jsonObject.getString(objectField.getName()));
+	}
+
 	private void _testPostProductProductShippingConfigurationFromProductConfiguration()
 		throws Exception {
 
@@ -843,16 +1040,11 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	}
 
 	private void _testPostProductVirtual() throws Exception {
-		User omniadminUser = UserTestUtil.addOmniadminUser();
-
-		String password = RandomTestUtil.randomString();
-
-		_userLocalService.updatePassword(
-			omniadminUser.getUserId(), password, password, false, true);
+		User adminUser = UserTestUtil.getAdminUser(testCompany.getCompanyId());
 
 		ProductResource productResource = ProductResource.builder(
 		).authentication(
-			omniadminUser.getEmailAddress(), password
+			adminUser.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
 		).locale(
 			LocaleUtil.getDefault()
 		).parameters(
@@ -903,16 +1095,11 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	private void _testPostProductWithProductAccountGroupExternalReferenceCode()
 		throws Exception {
 
-		User omniadminUser = UserTestUtil.addOmniadminUser();
-
-		String password = RandomTestUtil.randomString();
-
-		_userLocalService.updatePassword(
-			omniadminUser.getUserId(), password, password, false, true);
+		User adminUser = UserTestUtil.getAdminUser(testCompany.getCompanyId());
 
 		ProductResource productResource = ProductResource.builder(
 		).authentication(
-			omniadminUser.getEmailAddress(), password
+			adminUser.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
 		).locale(
 			LocaleUtil.getDefault()
 		).parameters(
@@ -948,16 +1135,11 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	private void _testPostProductWithProductChannelExternalReferenceCode()
 		throws Exception {
 
-		User omniadminUser = UserTestUtil.addOmniadminUser();
-
-		String password = RandomTestUtil.randomString();
-
-		_userLocalService.updatePassword(
-			omniadminUser.getUserId(), password, password, false, true);
+		User adminUser = UserTestUtil.getAdminUser(testCompany.getCompanyId());
 
 		ProductResource productResource = ProductResource.builder(
 		).authentication(
-			omniadminUser.getEmailAddress(), password
+			adminUser.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
 		).locale(
 			LocaleUtil.getDefault()
 		).parameters(
@@ -986,6 +1168,65 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		Assert.assertEquals(
 			_commerceChannel.getExternalReferenceCode(),
 			productChannel.getExternalReferenceCode());
+	}
+
+	private void _testPostProductWithTermsOfUseJournalArticleExternalReferenceCode()
+		throws Exception {
+
+		JournalArticle journalArticle = JournalTestUtil.addArticle(
+			_commerceCatalog.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		ProductVirtualSettings productVirtualSettings =
+			_postProductWithTermsOfUse(null, journalArticle);
+
+		Assert.assertEquals(
+			(Long)journalArticle.getResourcePrimKey(),
+			productVirtualSettings.getTermsOfUseJournalArticleId());
+		Assert.assertEquals(
+			journalArticle.getExternalReferenceCode(),
+			productVirtualSettings.
+				getTermsOfUseJournalArticleExternalReferenceCode());
+	}
+
+	private void _testPostProductWithTermsOfUseJournalArticleGroupExternalReferenceCode()
+		throws Exception {
+
+		_group = GroupTestUtil.addGroup();
+
+		_group.setExternalReferenceCode(RandomTestUtil.randomString());
+
+		_group = _groupLocalService.updateGroup(_group);
+
+		JournalArticle journalArticle = JournalTestUtil.addArticle(
+			_group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		JournalArticle catalogJournalArticle = JournalTestUtil.addArticle(
+			_commerceCatalog.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		catalogJournalArticle.setExternalReferenceCode(
+			journalArticle.getExternalReferenceCode());
+
+		catalogJournalArticle =
+			_journalArticleLocalService.updateJournalArticle(
+				catalogJournalArticle);
+
+		ProductVirtualSettings productVirtualSettings =
+			_postProductWithTermsOfUse(
+				_group.getExternalReferenceCode(), journalArticle);
+
+		Assert.assertEquals(
+			(Long)journalArticle.getResourcePrimKey(),
+			productVirtualSettings.getTermsOfUseJournalArticleId());
+		Assert.assertEquals(
+			_group.getExternalReferenceCode(),
+			productVirtualSettings.
+				getTermsOfUseJournalArticleGroupExternalReferenceCode());
+		Assert.assertNotEquals(
+			(Long)catalogJournalArticle.getResourcePrimKey(),
+			productVirtualSettings.getTermsOfUseJournalArticleId());
 	}
 
 	private void _testPostProductWithWorkflowSingleApprover() throws Exception {
@@ -1055,11 +1296,11 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	@DeleteAfterTestRun
 	private CommerceChannel _commerceChannel;
 
-	@Inject
-	private CommerceCurrencyLocalService _commerceCurrencyLocalService;
+	@DeleteAfterTestRun
+	private List<CommerceChannel> _commerceChannels = new ArrayList<>();
 
 	@Inject
-	private CommercePriceListLocalService _commercePriceListLocalService;
+	private CommerceCurrencyLocalService _commerceCurrencyLocalService;
 
 	@Inject
 	private CPDefinitionLocalService _cpDefinitionLocalService;
@@ -1069,6 +1310,18 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 
 	@DeleteAfterTestRun
 	private CPSpecificationOption _cpSpecificationOption;
+
+	@DeleteAfterTestRun
+	private Group _group;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private JournalArticleLocalService _journalArticleLocalService;
+
+	@Inject
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Inject
 	private UserLocalService _userLocalService;

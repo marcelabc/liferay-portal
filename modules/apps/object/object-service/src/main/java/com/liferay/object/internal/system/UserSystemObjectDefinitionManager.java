@@ -190,6 +190,20 @@ public class UserSystemObjectDefinitionManager
 			).system(
 				true
 			).build(),
+
+			// The UserAccount DTO's "name" property is computed by
+			// User.getFullName() and is not backed by a column in the User_
+			// table. See ObjectEntryLocalServiceImpl#getTitleValue and
+			// ObjectEntrySearchUtil#getRelatedModelsPredicate.
+
+			new TextObjectFieldBuilder(
+			).labelMap(
+				createLabelMap("full-name")
+			).name(
+				"name"
+			).system(
+				true
+			).build(),
 			new TextObjectFieldBuilder(
 			).dbColumnName(
 				"uuid_"
@@ -243,20 +257,28 @@ public class UserSystemObjectDefinitionManager
 		Map<String, Object> variables = super.getVariables(
 			contentType, objectDefinition, oldValues, payloadJSONObject);
 
-		if (variables.containsKey("firstName")) {
-			variables.put("givenName", variables.get("firstName"));
+		Object firstName = variables.get("firstName");
+
+		if (firstName != null) {
+			variables.put("givenName", firstName);
 		}
 
-		if (variables.containsKey("lastName")) {
-			variables.put("familyName", variables.get("lastName"));
+		Object lastName = variables.get("lastName");
+
+		if (lastName != null) {
+			variables.put("familyName", lastName);
 		}
 
-		if (variables.containsKey("middleName")) {
-			variables.put("additionalName", variables.get("middleName"));
+		Object middleName = variables.get("middleName");
+
+		if (middleName != null) {
+			variables.put("additionalName", middleName);
 		}
 
-		if (variables.containsKey("screenName")) {
-			variables.put("alternateName", variables.get("screenName"));
+		Object screenName = variables.get("screenName");
+
+		if (screenName != null) {
+			variables.put("alternateName", screenName);
 		}
 
 		return variables;
@@ -264,7 +286,7 @@ public class UserSystemObjectDefinitionManager
 
 	@Override
 	public int getVersion() {
-		return 4;
+		return 5;
 	}
 
 	@Override

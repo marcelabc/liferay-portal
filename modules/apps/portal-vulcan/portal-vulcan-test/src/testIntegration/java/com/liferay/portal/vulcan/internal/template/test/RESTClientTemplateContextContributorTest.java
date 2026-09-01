@@ -6,12 +6,21 @@
 package com.liferay.portal.vulcan.internal.template.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.HTTPTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.ZipFileTestUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -42,6 +51,7 @@ public class RESTClientTemplateContextContributorTest {
 		new LiferayIntegrationTestRule();
 
 	@Test
+	@TestInfo("LPD-102690")
 	public void test() throws Exception {
 		Bundle bundle = FrameworkUtil.getBundle(
 			RESTClientTemplateContextContributorTest.class);
@@ -68,17 +78,39 @@ public class RESTClientTemplateContextContributorTest {
 				"friendlyUrlPath"
 			);
 
+			boolean termsOfUseRequired = PropsValues.TERMS_OF_USE_REQUIRED;
+
+			PropsValues.TERMS_OF_USE_REQUIRED = false;
+
+			try (SafeCloseable safeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"USERS_REMINDER_QUERIES_ENABLED", false)) {
+
+				HTTPTestUtil.customize(
+				).withoutModulePath(
+				).apply(
+					() -> _test(friendlyUrlPath, TestPropsValues.getUser())
+				);
+			}
+			finally {
+				PropsValues.TERMS_OF_USE_REQUIRED = termsOfUseRequired;
+			}
+
 			HTTPTestUtil.customize(
 			).withoutModulePath(
 			).apply(
-				() -> _test(friendlyUrlPath)
+				() -> HTTPTestUtil.invokeToString(
+					null, "c/portal/logout", Http.Method.GET)
 			);
 
 			HTTPTestUtil.customize(
 			).withoutModulePath(
 			).withGuest(
 			).apply(
-				() -> _test(friendlyUrlPath)
+				() -> _test(
+					friendlyUrlPath,
+					_userLocalService.getGuestUser(
+						TestPropsValues.getCompanyId()))
 			);
 		}
 		finally {
@@ -86,16 +118,39 @@ public class RESTClientTemplateContextContributorTest {
 		}
 	}
 
-	private void _test(String friendlyUrlPath) throws Exception {
-		Assert.assertThat(
-			HTTPTestUtil.invokeToString(
-				null,
-				"web" + friendlyUrlPath + "/portal-vulcan-test?pageSize=2",
-				Http.Method.GET),
-			CoreMatchers.allOf(
-				CoreMatchers.containsString("Name: spain."),
-				CoreMatchers.containsString("Page Size (default): 20."),
-				CoreMatchers.containsString("Page Size (query): 1.")));
+	private void _test(String friendlyUrlPath, User user) throws Exception {
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						TestPropsValues.getCompanyId(),
+						"com.liferay.portal.security.auto.login.basic.auth." +
+							"header",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"enabled", true
+						).build())) {
+
+			Assert.assertThat(
+				HTTPTestUtil.invokeToString(
+					null, "de/web" + friendlyUrlPath + "/portal-vulcan-test",
+					Http.Method.GET),
+				CoreMatchers.allOf(
+					CoreMatchers.containsString(
+						"Site Page (1st call): Portal Vulcan Test DE."),
+					CoreMatchers.containsString(
+						"Site Page (2nd call): Portal Vulcan Test DE.")));
+
+			Assert.assertThat(
+				HTTPTestUtil.invokeToString(
+					null,
+					"web" + friendlyUrlPath + "/portal-vulcan-test?pageSize=2",
+					Http.Method.GET),
+				CoreMatchers.allOf(
+					CoreMatchers.containsString("Name: spain."),
+					CoreMatchers.containsString("Page Size (default): 20."),
+					CoreMatchers.containsString("Page Size (query): 1."),
+					CoreMatchers.containsString(
+						"User: " + user.getScreenName() + ".")));
+		}
 	}
 
 	private InputStream _toInputStream() throws Exception {
@@ -109,6 +164,9 @@ public class RESTClientTemplateContextContributorTest {
 				RESTClientTemplateContextContributorTest.class),
 			_zipWriterFactory.getZipWriter());
 	}
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 	@Inject
 	private ZipWriterFactory _zipWriterFactory;

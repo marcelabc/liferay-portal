@@ -75,11 +75,12 @@ public abstract class BaseDiagramResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/by-externalReferenceCode/{externalReferenceCode}/diagrams'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Returns the diagram setting attached to the product identified by external reference code. Calls CPDefinitionService.fetchCPDefinitionByCProductExternalReferenceCode + CSDiagramSettingService.getCSDiagramSettingByCPDefinitionId. Validation -- NoSuchCPDefinitionException -> 404 when product ERC not found; NoSuchCSDiagramSettingException -> 404 when no diagram setting exists."
+		description = "Returns the diagram setting attached to the product identified by external reference code. Returns 404 when the product external reference code is not found, and 404 when no diagram setting exists."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -110,11 +111,12 @@ public abstract class BaseDiagramResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/{id}/diagrams'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Returns the diagram setting attached to the product identified by product id. Calls CPDefinitionService.fetchCPDefinitionByCProductId + CSDiagramSettingService.getCSDiagramSettingByCPDefinitionId. Validation -- NoSuchCPDefinitionException -> 404 when product id not found; NoSuchCSDiagramSettingException -> 404 when no diagram setting exists."
+		description = "Returns the diagram setting attached to the product identified by product ID. Returns 404 when the product ID is not found, and 404 when no diagram setting exists."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -143,11 +145,12 @@ public abstract class BaseDiagramResourceImpl
 	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/diagrams/{diagramId}' -d $'{"attachmentBase64": ___, "color": ___, "id": ___, "imageId": ___, "radius": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Partially updates the diagram setting identified by diagramId. Calls CSDiagramSettingService.getCSDiagramSetting + DiagramUtil.updateCSDiagramSetting. Validation -- NoSuchCSDiagramSettingException -> 404 when diagramId not found. Side effects -- Updates the diagram's image attachment and may replace the linked DL file entry."
+		description = "Partially updates the diagram setting identified by diagramId. Returns 404 when `diagramId` is not found. Side effects -- Updates the diagram's image attachment and may replace the linked DL file entry."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Identifier of the diagram setting attached to a product. Addresses a single CSDiagramSetting that owns the hotspot map for shop-by-diagram navigation.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "diagramId"
 			)
@@ -178,11 +181,12 @@ public abstract class BaseDiagramResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/by-externalReferenceCode/{externalReferenceCode}/diagrams' -d $'{"attachmentBase64": ___, "color": ___, "id": ___, "imageId": ___, "radius": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates a diagram setting under the product identified by external reference code. Calls CPDefinitionService.fetchCPDefinitionByCProductExternalReferenceCode + DiagramUtil.addCSDiagramSetting. Validation -- NoSuchCPDefinitionException -> 404 when product ERC not found. Side effects -- Creates the diagram setting and links an attachment as the diagram image."
+		description = "Creates a diagram setting under the product identified by external reference code. Returns 404 when the product external reference code is not found. Side effects -- Creates the diagram setting and links an attachment as the diagram image."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "External reference code that addresses the target resource on the `by-externalReferenceCode` paths. The code is the integration-supplied idempotency key, unique within the resource scope; POST against this path is upsert (create when absent, replace when present).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "externalReferenceCode"
 			)
@@ -215,11 +219,12 @@ public abstract class BaseDiagramResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/products/{id}/diagrams' -d $'{"attachmentBase64": ___, "color": ___, "id": ___, "imageId": ___, "radius": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates a diagram setting under the product identified by product id. Calls CPDefinitionService.fetchCPDefinitionByCProductId + DiagramUtil.addCSDiagramSetting. Validation -- NoSuchCPDefinitionException -> 404 when product id not found. Side effects -- Creates the diagram setting and links an attachment as the diagram image."
+		description = "Creates a diagram setting under the product identified by product ID. Returns 404 when the product ID is not found. Side effects -- Creates the diagram setting and links an attachment as the diagram image."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "Internal numeric identifier of the target resource. Counterpart to the `by-externalReferenceCode` path variant; identifiers are server-assigned and stable across the resource's lifetime.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
 				name = "id"
 			)
@@ -1006,4 +1011,4 @@ public abstract class BaseDiagramResourceImpl
 		LogFactoryUtil.getLog(BaseDiagramResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1750204335
+// LIFERAY-REST-BUILDER-HASH:-1838598847

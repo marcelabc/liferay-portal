@@ -506,32 +506,46 @@ test(
 
 		// Check the label in the dropdown at the Product Menu
 
-		await productMenuPage.openProductMenuButton.click();
-
-		await productMenuPage.contentAndDataButton.click();
+		await productMenuPage.openProductMenuIfClosed();
 
 		// Open the dropdown to select the scope
 
 		const dropdownButton = page.getByLabel('Choose Scope');
 
+		await clickAndExpectToBeVisible({
+			target: dropdownButton,
+			timeout: 5000,
+			trigger: productMenuPage.contentAndDataButton,
+		});
+
+		// The Product Menu slides in with a CSS transition and the dropdown
+		// closes itself once the transition ends, so open it only after the
+		// Product Menu has settled
+
+		await expect(productMenuPage.productMenuWrapper).not.toHaveClass(
+			/sidenav-transition/
+		);
+
+		await dropdownButton.click({timeout: 5000});
+
 		const dropdownOption = page
 			.locator('.dropdown-menu')
 			.getByRole('menuitem', {name: layoutTitle});
 
-		await expect(async () => {
-			await dropdownButton.click({timeout: 2000});
+		await expect(dropdownOption).toBeVisible({timeout: 5000});
 
-			await expect(dropdownOption).toBeVisible({timeout: 1000});
-			await expect(dropdownOption).toContainText('deprecated');
-
-			await dropdownOption.click({timeout: 2000});
-
-			await expect(
-				page.getByText(`${layoutTitle} (Scope) deprecated`)
-			).toBeVisible({timeout: 2000});
-		}).toPass();
+		await expect(dropdownOption).toContainText(/deprecated/i);
 
 		// Check that the page is set as scope
 
+		await dropdownOption.click({timeout: 5000});
+
+		const scopeName = page.locator('.scope-name', {
+			hasText: `${layoutTitle} (Scope)`,
+		});
+
+		await expect(scopeName).toBeVisible({timeout: 5000});
+
+		await expect(scopeName).toContainText(/deprecated/i);
 	}
 );

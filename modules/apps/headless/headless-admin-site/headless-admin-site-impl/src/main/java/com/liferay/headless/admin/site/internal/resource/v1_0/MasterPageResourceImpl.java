@@ -23,6 +23,7 @@ import com.liferay.headless.admin.site.resource.v1_0.MasterPageResource;
 import com.liferay.headless.common.spi.util.GroupUtil;
 import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
+import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminPortletKeys;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateConstants;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
@@ -45,9 +46,6 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.SearchUtil;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.tags.Tags;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 
@@ -75,7 +73,6 @@ public class MasterPageResourceImpl
 	implements ExportImportVulcanBatchEngineTaskItemDelegate<MasterPage> {
 
 	@Override
-	@Tags({@Tag(description = "[BETA]", name = "MasterPage")})
 	public void deleteSiteMasterPage(
 			String siteExternalReferenceCode,
 			String masterPageExternalReferenceCode)
@@ -132,7 +129,7 @@ public class MasterPageResourceImpl
 
 			@Override
 			public String getPortletId() {
-				return LayoutAdminPortletKeys.GROUP_PAGES;
+				return LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES;
 			}
 
 			@Override
@@ -142,7 +139,7 @@ public class MasterPageResourceImpl
 
 			@Override
 			public String getSectionKey() {
-				return ExportImportConstants.SECTION_KEY_SITE_BUILDER;
+				return ExportImportConstants.SECTION_KEY_DESIGN;
 			}
 
 			@Override
@@ -307,8 +304,8 @@ public class MasterPageResourceImpl
 		ServiceContext serviceContext = _getServiceContext(groupId, masterPage);
 
 		long previewFileEntryId = FileEntryUtil.getPreviewFileEntryId(
-			groupId, LayoutAdminPortletKeys.GROUP_PAGES, getResourceName(),
-			serviceContext, masterPage.getThumbnailURLReference());
+			groupId, LayoutAdminPortletKeys.GROUP_PAGES,
+			masterPage.getThumbnailURLReference(), contextUser.getUserId());
 
 		if (previewFileEntryId !=
 				layoutPageTemplateEntry.getPreviewFileEntryId()) {
@@ -431,8 +428,8 @@ public class MasterPageResourceImpl
 				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT,
 				FileEntryUtil.getPreviewFileEntryId(
 					groupId, LayoutAdminPortletKeys.GROUP_PAGES,
-					getResourceName(), serviceContext,
-					masterPage.getThumbnailURLReference()),
+					masterPage.getThumbnailURLReference(),
+					contextUser.getUserId()),
 				defaultTemplate, 0,
 				_getLayoutPlid(groupId, masterPage, serviceContext), 0,
 				PageSpecificationUtil.getPublishedStatus(

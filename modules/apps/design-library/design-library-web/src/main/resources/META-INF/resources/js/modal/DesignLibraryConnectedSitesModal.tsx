@@ -28,8 +28,10 @@ const showSuccessMessage = (message: string) => {
 
 export default function DesignLibraryConnectedSitesModal({
 	externalReferenceCode,
+	onChange,
 }: {
 	externalReferenceCode: string;
+	onChange?: () => void;
 }) {
 	const [connectedSites, setConnectedSites] = useState<Site[]>([]);
 	const listLabelId = useId();
@@ -71,15 +73,7 @@ export default function DesignLibraryConnectedSitesModal({
 		);
 	};
 
-	const connectSite = async ({
-		setDisableConnectButton,
-		setSite,
-		site,
-	}: {
-		setDisableConnectButton: React.Dispatch<React.SetStateAction<boolean>>;
-		setSite: React.Dispatch<React.SetStateAction<Site | undefined>>;
-		site?: Site;
-	}) => {
+	const connectSite = async ({site}: {site?: Site}) => {
 		if (site) {
 			try {
 				const data =
@@ -88,6 +82,7 @@ export default function DesignLibraryConnectedSitesModal({
 						site.externalReferenceCode
 					);
 				onSiteConnected(data);
+				onChange?.();
 				showSuccessMessage(
 					sub(
 						Liferay.Language.get(
@@ -106,9 +101,6 @@ export default function DesignLibraryConnectedSitesModal({
 						)
 				);
 			}
-
-			setDisableConnectButton(true);
-			setSite(undefined);
 		}
 	};
 
@@ -119,6 +111,7 @@ export default function DesignLibraryConnectedSitesModal({
 				site.externalReferenceCode
 			);
 			onSiteDisconnected?.(site);
+			onChange?.();
 			showSuccessMessage(
 				sub(
 					Liferay.Language.get(

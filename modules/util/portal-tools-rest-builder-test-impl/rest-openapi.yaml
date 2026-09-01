@@ -27,6 +27,8 @@ components:
                     items:
                         type: customField
                     type: array
+                embeddedNestedField:
+                    type: object
                 externalReferenceCode:
                     type: string
                 id:
@@ -35,7 +37,9 @@ components:
                     type: integer
                 name:
                     type: string
-                nestedField:
+                nestedField1:
+                    type: string
+                nestedField2:
                     type: string
                 relatedCompanyTestEntity:
                     $ref: "#/components/schemas/CompanyTestEntity"
@@ -153,8 +157,7 @@ components:
             type: object
         EntityModelResourceTestEntity2:
             description:
-                "A EntityModelResource test entity (`implements EntityModelResource` in the
-                EntityModelResourceTestEntity2ResourceImpl class) with filterable fields."
+                "A EntityModelResource test entity (`implements EntityModelResource` in the EntityModelResourceTestEntity2ResourceImpl class) with filterable fields."
             properties:
                 id:
                     format: int64
@@ -179,8 +182,7 @@ components:
             type: object
         JSONMapAttributeTestEntity:
             description:
-                Test Component to test the generation of getValue method on Entities when one or multiple JSON Maps are
-                present.
+                Test Component to test the generation of getValue method on Entities when one or multiple JSON Maps are present.
             properties:
                 description:
                     type: string
@@ -1020,6 +1022,8 @@ paths:
                     application/xml:
                         schema:
                             $ref: "#/components/schemas/BatchTestEntity"
+                description:
+                    "The Batch Test Entity to create. Supply the entity fields directly in the body; the server assigns the identifier."
             responses:
                 "200":
                     content:
@@ -1100,6 +1104,8 @@ paths:
             operationId: getBatchTestEntity
             parameters:
                 -   in: path
+                    description:
+                        "Numeric identifier of the Batch Test Entity to act on. Obtain the value from the `id` field of any entity returned by `GET /batch-test-entities` or by a prior create call. The value is a 64-bit signed integer, unique within the portal instance."
                     name: batchTestEntityId
                     required: true
                     schema:
@@ -1364,9 +1370,8 @@ paths:
     "/entity-model-resource-test-entities2/{entityModelResourceTestEntity2Id}":
         get:
             description:
-                "Retrieve a EntityModelResourceTestEntity2 item. (EntityModelResource and
-                VulcanBatchEngineTaskItemDelegate interfaces will not be implemented automatically)"
-            operationId: getEntityModelResourceTestEntities2EntityModelResourceTestEntity2
+                "Retrieve a EntityModelResourceTestEntity2 item. (EntityModelResource and VulcanBatchEngineTaskItemDelegate interfaces will not be implemented automatically)"
+            operationId: getEntityModelResourceTestEntity2
             parameters:
                 -   in: path
                     name: entityModelResourceTestEntity2Id
@@ -2262,6 +2267,8 @@ paths:
                                     format: binary
                                     type: string
                             type: object
+                description:
+                    "The multipart Test Entity to update. This exercises a multipart request body that also declares a description."
             responses:
                 200:
                     content:

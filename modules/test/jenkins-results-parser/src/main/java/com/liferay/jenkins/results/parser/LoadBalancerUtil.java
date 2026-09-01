@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -38,7 +37,7 @@ public class LoadBalancerUtil {
 				masterPrefix,
 				key -> JenkinsResultsParserUtil.getJenkinsMasters(
 					properties, JenkinsMaster.getSlaveRAMMinimumDefault(),
-					JenkinsMaster.getSlavesPerHostDefault(), key));
+					JenkinsMaster.getSlavesPerHostDefault(), masterPrefix));
 
 		List<String> blacklist = _getBlacklist(
 			properties, blacklistString, verbose);
@@ -94,11 +93,9 @@ public class LoadBalancerUtil {
 
 		AtomicInteger counter = _roundRobinCounters.computeIfAbsent(
 			masterPrefix,
-			key -> {
-				Random random = new Random();
-
-				return new AtomicInteger(random.nextInt());
-			});
+			key -> new AtomicInteger(
+				JenkinsResultsParserUtil.getRandomValue(
+					0, availableJenkinsMasters.size() - 1)));
 
 		int index = Math.floorMod(
 			counter.getAndIncrement(), availableJenkinsMasters.size());

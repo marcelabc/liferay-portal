@@ -6,40 +6,52 @@
 import ClayAlert from '@clayui/alert';
 import React from 'react';
 
-import {PageTreeModalConfiguration} from '../../../pages/export/components/PageTreeModal';
+import {ExportImportProcess} from '../../../types/exportImportProcess';
 import {PreviewPortletDataHandlerSection} from '../../../types/portletDataHandler';
-import {updateSelection} from '../../../utils/contentSelection';
+import {
+	getVisibleSections,
+	updateSelection,
+} from '../../../utils/contentSelection';
+import {PageTreeModalConfiguration} from '../../PageTreeModal';
 import ContentSection, {SectionSelection} from './ContentSection';
 
 export type ContentSelection = Record<string, SectionSelection>;
 
 interface ContentSelectorProps {
 	'aria-labelledby'?: string;
+	'commentsAndRatingsEnabled'?: boolean;
+	'contentSelection': ContentSelection | undefined;
 	'errorMessage'?: string;
+	'lookAndFeelEnabled'?: boolean;
 	'name': string;
 	'onChange': (value: ContentSelection | undefined) => void;
 	'pageTreeModalConfiguration'?: PageTreeModalConfiguration;
-	'sections': PreviewPortletDataHandlerSection[];
+	'previewPortletDataHandlerSections': PreviewPortletDataHandlerSection[];
+	'process'?: ExportImportProcess;
 	'showDeletions'?: boolean;
-	'value': ContentSelection | undefined;
 }
 
 export default function ContentSelector({
 	'aria-labelledby': ariaLabelledby,
+	commentsAndRatingsEnabled = false,
+	contentSelection = {},
 	errorMessage,
+	lookAndFeelEnabled = false,
 	name,
 	onChange,
 	pageTreeModalConfiguration,
-	sections,
+	process = 'export',
+	previewPortletDataHandlerSections,
 	showDeletions,
-	value,
 }: ContentSelectorProps) {
-	const currentValue = value || {};
 	const errorId = errorMessage ? `${name}-error-message` : undefined;
 
-	const visibleSections = sections.filter(
-		(section) =>
-			showDeletions || !!section.additionCount || !section.deletionCount
+	const visibleSections = getVisibleSections(
+		previewPortletDataHandlerSections,
+		{
+			lookAndFeelEnabled,
+			showDeletions,
+		}
 	);
 
 	return (
@@ -51,22 +63,33 @@ export default function ContentSelector({
 			role="group"
 		>
 			{visibleSections.map(
-				(section: PreviewPortletDataHandlerSection) => (
+				(
+					previewPortletDataHandlerSection: PreviewPortletDataHandlerSection
+				) => (
 					<ContentSection
-						key={section.name}
-						onChange={(sectionValue) =>
+						commentsAndRatingsEnabled={commentsAndRatingsEnabled}
+						key={previewPortletDataHandlerSection.name}
+						lookAndFeelEnabled={lookAndFeelEnabled}
+						onChange={(sectionSelection) =>
 							onChange(
 								updateSelection(
-									currentValue,
-									section.name,
-									sectionValue
+									contentSelection,
+									previewPortletDataHandlerSection.name,
+									sectionSelection
 								)
 							)
 						}
 						pageTreeModalConfiguration={pageTreeModalConfiguration}
-						section={section}
+						previewPortletDataHandlerSection={
+							previewPortletDataHandlerSection
+						}
+						process={process}
+						sectionSelection={
+							contentSelection[
+								previewPortletDataHandlerSection.name
+							]
+						}
 						showDeletions={showDeletions}
-						value={currentValue[section.name]}
 					/>
 				)
 			)}

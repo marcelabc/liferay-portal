@@ -13,7 +13,6 @@ import com.liferay.layout.content.page.editor.web.internal.util.layout.structure
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutRevision;
-import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.search.IndexStatusManagerThreadLocal;
 import com.liferay.portal.kernel.service.LayoutLocalService;
@@ -32,7 +31,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
-import com.liferay.sites.kernel.util.Sites;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
@@ -185,56 +183,34 @@ public class PublishLayoutMVCActionCommand
 
 			draftLayout = _layoutLocalService.updateLayout(draftLayout);
 
-			LayoutSet layoutSet = layout.getLayoutSet();
-
 			UnicodeProperties updatedTypeSettingsUnicodeProperties =
 				layout.getTypeSettingsProperties();
 
-			if (originalTypeSettingsUnicodeProperties.containsKey(
-					LayoutTypePortletConstants.SITEMAP_CHANGEFREQ)) {
+			String sitemapChangefreq =
+				originalTypeSettingsUnicodeProperties.get(
+					LayoutTypePortletConstants.SITEMAP_CHANGEFREQ);
 
+			if (sitemapChangefreq != null) {
 				updatedTypeSettingsUnicodeProperties.put(
 					LayoutTypePortletConstants.SITEMAP_CHANGEFREQ,
-					originalTypeSettingsUnicodeProperties.get(
-						LayoutTypePortletConstants.SITEMAP_CHANGEFREQ));
+					sitemapChangefreq);
 			}
 
-			if (originalTypeSettingsUnicodeProperties.containsKey(
-					LayoutTypePortletConstants.SITEMAP_INCLUDE)) {
+			String sitemapInclude = originalTypeSettingsUnicodeProperties.get(
+				LayoutTypePortletConstants.SITEMAP_INCLUDE);
 
+			if (sitemapInclude != null) {
 				updatedTypeSettingsUnicodeProperties.put(
-					LayoutTypePortletConstants.SITEMAP_INCLUDE,
-					originalTypeSettingsUnicodeProperties.get(
-						LayoutTypePortletConstants.SITEMAP_INCLUDE));
+					LayoutTypePortletConstants.SITEMAP_INCLUDE, sitemapInclude);
 			}
 
-			if (originalTypeSettingsUnicodeProperties.containsKey(
-					LayoutTypePortletConstants.SITEMAP_PRIORITY)) {
+			String sitemapPriority = originalTypeSettingsUnicodeProperties.get(
+				LayoutTypePortletConstants.SITEMAP_PRIORITY);
 
+			if (sitemapPriority != null) {
 				updatedTypeSettingsUnicodeProperties.put(
 					LayoutTypePortletConstants.SITEMAP_PRIORITY,
-					originalTypeSettingsUnicodeProperties.get(
-						LayoutTypePortletConstants.SITEMAP_PRIORITY));
-			}
-
-			if (layoutSet.isLayoutSetPrototypeLinkActive()) {
-				if (originalTypeSettingsUnicodeProperties.containsKey(
-						Sites.LAST_MERGE_LAYOUT_MODIFIED_TIME)) {
-
-					updatedTypeSettingsUnicodeProperties.put(
-						Sites.LAST_MERGE_LAYOUT_MODIFIED_TIME,
-						originalTypeSettingsUnicodeProperties.getProperty(
-							Sites.LAST_MERGE_LAYOUT_MODIFIED_TIME));
-				}
-
-				if (originalTypeSettingsUnicodeProperties.containsKey(
-						Sites.LAST_MERGE_TIME)) {
-
-					updatedTypeSettingsUnicodeProperties.put(
-						Sites.LAST_MERGE_TIME,
-						originalTypeSettingsUnicodeProperties.getProperty(
-							Sites.LAST_MERGE_TIME));
-				}
+					sitemapPriority);
 			}
 
 			_cleanWidgetLayoutTypeSettings(

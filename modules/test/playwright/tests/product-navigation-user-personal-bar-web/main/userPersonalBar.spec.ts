@@ -35,12 +35,12 @@ test(
 				catalogId: catalog.id,
 			});
 
-		const response =
+		const patchedProduct =
 			await apiHelpers.headlessCommerceAdminCatalog.patchProduct(
 				String(product.productId)
 			);
 
-		expect(response.ok()).toBe(true);
+		expect(patchedProduct.productId).toBe(product.productId);
 
 		await expect(userPersonalBarPage.notificationBadge).not.toBeVisible();
 
@@ -51,5 +51,25 @@ test(
 		await expect(userPersonalBarPage.notificationBadge).toBeVisible();
 
 		await userPersonalBarPage.disableSingleApproverWorkflowProduct();
+	}
+);
+
+test(
+	'Personal menu loads its styles from a stylesheet',
+	{tag: ['@LPD-103065']},
+	async ({page}) => {
+		await page.goto('/');
+
+		await expect(page.locator('.user-avatar-link')).toBeVisible();
+		await expect(page.locator('.control-menu-nav').first()).toBeAttached();
+
+		await expect(page.locator('.user-avatar-link style')).toHaveCount(0);
+		await expect(page.locator('.control-menu-nav style')).toHaveCount(0);
+
+		await expect(
+			page
+				.locator('link[href*="product-navigation-taglib/css/main"]')
+				.first()
+		).toBeAttached();
 	}
 );

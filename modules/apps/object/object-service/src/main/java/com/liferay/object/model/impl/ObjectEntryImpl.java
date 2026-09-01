@@ -9,6 +9,7 @@ import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.friendly.url.model.FriendlyURLEntry;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalServiceUtil;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
+import com.liferay.object.entry.util.ObjectEntryThreadLocal;
 import com.liferay.object.entry.util.ObjectEntryValuesUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -34,6 +35,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.io.Serializable;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -126,6 +128,13 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 
 	@Override
 	public ObjectDefinition getObjectDefinition() {
+		if (ObjectEntryThreadLocal.isSkipObjectDefinitionCache()) {
+			_objectDefinition = null;
+
+			return ObjectDefinitionLocalServiceUtil.fetchObjectDefinition(
+				getObjectDefinitionId());
+		}
+
 		if (_objectDefinition == null) {
 			_objectDefinition =
 				ObjectDefinitionLocalServiceUtil.fetchObjectDefinition(
@@ -133,6 +142,15 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 		}
 
 		return _objectDefinition;
+	}
+
+	@Override
+	public Date getPublishDate() {
+		if (!isApproved()) {
+			return null;
+		}
+
+		return getDisplayDate();
 	}
 
 	@Override

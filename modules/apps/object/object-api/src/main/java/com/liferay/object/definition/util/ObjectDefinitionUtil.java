@@ -16,7 +16,6 @@ import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.portlet.FriendlyURLResolver;
 import com.liferay.portal.kernel.portlet.FriendlyURLResolverRegistryUtil;
 import com.liferay.portal.kernel.portlet.constants.FriendlyURLResolverConstants;
-import com.liferay.portal.kernel.security.RandomUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PortalRunMode;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -28,20 +27,6 @@ import java.util.Map;
  * @author Alejandro Tardín
  */
 public class ObjectDefinitionUtil {
-
-	public static String generateRandomClassName() {
-		StringBuilder sb = new StringBuilder();
-
-		sb.append(
-			ObjectDefinitionConstants.
-				CLASS_NAME_PREFIX_CUSTOM_OBJECT_DEFINITION);
-		sb.append(StringUtil.toUpperCase(StringUtil.randomId(1)));
-		sb.append(RandomUtil.nextInt(10));
-		sb.append(StringUtil.toUpperCase(StringUtil.randomId(1)));
-		sb.append(RandomUtil.nextInt(10));
-
-		return sb.toString();
-	}
 
 	public static String getItemClassName(ObjectDefinition objectDefinition) {
 		if (objectDefinition.isSystem()) {
@@ -170,11 +155,13 @@ public class ObjectDefinitionUtil {
 		"com.liferay.content.site.generator.impl", "com.liferay.cookies.impl",
 		"com.liferay.frontend.data.set.admin.web",
 		"com.liferay.frontend.data.set.impl",
-		"com.liferay.headless.builder.impl", "com.liferay.list.type.service",
-		"com.liferay.mcp.server.rest.impl", "com.liferay.notification.service",
-		"com.liferay.object.service", "com.liferay.seo.studio.site.initializer",
+		"com.liferay.headless.builder.impl",
+		"com.liferay.headless.data.mask.impl", "com.liferay.launch.impl",
+		"com.liferay.list.type.service", "com.liferay.mcp.server.rest.impl",
+		"com.liferay.notification.service", "com.liferay.object.service",
+		"com.liferay.seo.studio.site.initializer",
 		"com.liferay.site.initializer.cmp", "com.liferay.site.initializer.cms",
-		"com.liferay.site.initializer.dsr"
+		"com.liferay.site.initializer.dsr", "com.liferay.site.initializer.pim"
 	};
 
 	private static final Map<String, String>
@@ -185,15 +172,19 @@ public class ObjectDefinitionUtil {
 		).put(
 			"AIHubChatbot", "/ai-hub/chatbots"
 		).put(
+			"AIHubConfiguration", "/ai-hub/configurations"
+		).put(
 			"AIHubContentRetriever", "/ai-hub/content-retrievers"
 		).put(
 			"AIHubCrawlerJob", "/ai-hub/crawler-jobs"
+		).put(
+			"AIHubGuardrail", "/ai-hub/guardrails"
 		).put(
 			"AIHubInstructionDefinition", "/ai-hub/instruction-definitions"
 		).put(
 			"AIHubMCPServer", "/ai-hub/mcp-servers"
 		).put(
-			"AIHubModelArmorTemplate", "/ai-hub/model-armor-templates"
+			"AIHubReport", "/ai-hub/reports"
 		).put(
 			"APIApplication", "/headless-builder/applications"
 		).put(
@@ -211,7 +202,11 @@ public class ObjectDefinitionUtil {
 		).put(
 			"CMPProject", "/cmp/projects"
 		).put(
+			"CMPProjectLink", "/cmp/project-links"
+		).put(
 			"CMPTask", "/cmp/tasks"
+		).put(
+			"CMPTaskLink", "/cmp/task-links"
 		).put(
 			"CMSBasicDocument", "/cms/basic-documents"
 		).put(
@@ -232,6 +227,8 @@ public class ObjectDefinitionUtil {
 			"CSGGeneration", "/content-site-generator/generations"
 		).put(
 			"CSGGenerationItem", "/content-site-generator/generation-items"
+		).put(
+			"DataMask", "/data-masks"
 		).put(
 			"DataSet", "/data-set-admin/data-sets"
 		).put(
@@ -256,13 +253,13 @@ public class ObjectDefinitionUtil {
 		).put(
 			"DSRRoom", "/digital-sales-room/rooms"
 		).put(
-			"DSRTemplate", "/digital-sales-room/templates"
-		).put(
 			"FunctionalCookieEntry", "/functional-cookies-entries"
 		).put(
 			"KnowledgeBase", "/cms/knowledge-bases"
 		).put(
-			"MCPServerDataMask", "/mcp/server-data-masks"
+			"LaunchEntry", "/launch-entries"
+		).put(
+			"LaunchSet", "/launch-sets"
 		).put(
 			"MCPServerProfile", "/mcp/server-profiles"
 		).put(
@@ -276,13 +273,35 @@ public class ObjectDefinitionUtil {
 		).put(
 			"PersonalizationCookieEntry", "/personalization-cookies-entries"
 		).put(
+			"PIMBaseSku", "/pim/base-skus"
+		).put(
+			"PIMCatalog", "/pim/catalogs"
+		).put(
+			"PIMConnector", "/pim/connectors"
+		).put(
+			"PIMLink", "/pim/links"
+		).put(
 			"SEOStudioDomain", "/seo-studio/domains"
 		).put(
+			"SEOStudioGSCCredentials", "/seo-studio/gsc-credentials"
+		).put(
+			"SEOStudioInsightType", "/seo-studio/insight-types"
+		).put(
 			"SEOStudioInstance", "/seo-studio/instances"
+		).put(
+			"SEOStudioIntegration", "/seo-studio/integrations"
+		).put(
+			"SEOStudioPage", "/seo-studio/pages"
+		).put(
+			"SEOStudioPageSpeedResult", "/seo-studio/pagespeed-results"
 		).put(
 			"SEOStudioScan", "/seo-studio/scans"
 		).put(
 			"SEOStudioScanInsight", "/seo-studio/scan-insights"
+		).put(
+			"SEOStudioScanMetric", "/seo-studio/scan-metrics"
+		).put(
+			"SEOStudioScanRun", "/seo-studio/scan-runs"
 		).build();
 
 }

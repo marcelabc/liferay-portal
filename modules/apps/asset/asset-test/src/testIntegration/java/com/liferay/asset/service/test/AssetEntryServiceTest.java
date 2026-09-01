@@ -17,29 +17,39 @@ import com.liferay.asset.test.util.AssetTestUtil;
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.search.Document;
+import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.Hits;
+import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.view.count.ViewCountManager;
-import com.liferay.portal.test.rule.FeatureFlag;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.ratings.test.util.RatingsTestUtil;
-import com.liferay.site.cms.site.initializer.test.util.CMSTestUtil;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -247,6 +257,33 @@ public class AssetEntryServiceTest {
 			topViewedAssetEntries.toString(), 1, topViewedAssetEntries.size());
 	}
 
+	@Test
+	public void testSearch() throws Exception {
+		JournalArticle journalArticle1 = JournalTestUtil.addArticle(
+			_group.getGroupId(), 0);
+		JournalArticle journalArticle2 = JournalTestUtil.addArticle(
+			_group.getGroupId(), 0);
+
+		Hits hits = _assetEntryLocalService.search(
+			_group.getCompanyId(), new long[] {_group.getGroupId()},
+			TestPropsValues.getUserId(),
+			new long[] {_portal.getClassNameId(JournalArticle.class.getName())},
+			-1L, StringPool.BLANK, false,
+			new int[] {WorkflowConstants.STATUS_APPROVED}, 0, 50,
+			new Sort[] {new Sort(Field.MODIFIED_DATE, Sort.LONG_TYPE, true)});
+
+		Assert.assertTrue(hits.toString(), hits.getLength() >= 2);
+
+		Document[] documents = hits.getDocs();
+
+		Assert.assertEquals(
+			journalArticle2.getResourcePrimKey(),
+			GetterUtil.getLong(documents[0].get(Field.ENTRY_CLASS_PK)));
+		Assert.assertEquals(
+			journalArticle1.getResourcePrimKey(),
+			GetterUtil.getLong(documents[1].get(Field.ENTRY_CLASS_PK)));
+	}
+
 	@Test(expected = AssetCategoryException.class)
 	public void testValidate() throws Exception {
 		AssetTestUtil.addVocabulary(
@@ -261,13 +298,13 @@ public class AssetEntryServiceTest {
 			new long[0], new String[0]);
 	}
 
-	@FeatureFlag("LPD-17564")
 	@Test(expected = AssetCategoryException.class)
 	public void testValidateCMS() throws Exception {
 		ObjectDefinition objectDefinition =
 			ObjectDefinitionTestUtil.publishObjectDefinition();
 
-		Group cmsGroup = CMSTestUtil.getOrAddGroup(AssetEntryServiceTest.class);
+		Group cmsGroup = _groupLocalService.getGroup(
+			TestPropsValues.getCompanyId(), GroupConstants.CMS);
 
 		_depotEntry = _depotEntryLocalService.addDepotEntry(
 			HashMapBuilder.put(
@@ -288,7 +325,8 @@ public class AssetEntryServiceTest {
 			AssetCategoryConstants.ALL_CLASS_TYPE_PK, true);
 
 		_assetVocabularyGroupRelLocalService.addAssetVocabularyGroupRel(
-			_depotEntry.getGroupId(), assetVocabulary.getVocabularyId());
+			_depotEntry.getGroupId(), assetVocabulary.getVocabularyId(),
+			_depotEntry.getType());
 
 		_assetEntryLocalService.validate(
 			_depotEntry.getGroupId(), assetEntry.getClassName(),
@@ -380,6 +418,9 @@ public class AssetEntryServiceTest {
 
 	@DeleteAfterTestRun
 	private Group _group;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
 
 	@Inject
 	private Portal _portal;

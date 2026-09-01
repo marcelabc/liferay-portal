@@ -4,6 +4,7 @@
  */
 
 export const PRODUCT_TYPES = {
+	aiHub: 'AI Hub',
 	analyticsCloud: 'Analytics Cloud',
 	cloudNative: 'Cloud Native',
 	commerce: 'Commerce',
@@ -12,6 +13,7 @@ export const PRODUCT_TYPES = {
 	dxpCloud: 'Liferay PaaS',
 	enterpriseSearch: 'Enterprise Search',
 	liferayCloud: 'Liferay Cloud',
+	liferayDataPlatform: 'Liferay Data Platform',
 	liferayExperienceCloud: 'Liferay SaaS',
 	other: 'Other',
 	partnership: 'Partnership',

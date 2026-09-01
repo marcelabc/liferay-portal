@@ -115,11 +115,7 @@ public class CommerceCurrencyPersistenceTest {
 
 	@Test
 	public void testUpdateExisting() throws Exception {
-		long pk = RandomTestUtil.nextLong();
-
-		CommerceCurrency newCommerceCurrency = _persistence.create(pk);
-
-		newCommerceCurrency.setMvccVersion(RandomTestUtil.nextLong());
+		CommerceCurrency newCommerceCurrency = addCommerceCurrency();
 
 		newCommerceCurrency.setUuid(RandomTestUtil.randomString());
 
@@ -161,7 +157,11 @@ public class CommerceCurrencyPersistenceTest {
 
 		newCommerceCurrency.setLastPublishDate(RandomTestUtil.nextDate());
 
-		_commerceCurrencies.add(_persistence.update(newCommerceCurrency));
+		newCommerceCurrency.setStatus(RandomTestUtil.nextInt());
+
+		newCommerceCurrency = _persistence.update(newCommerceCurrency);
+
+		_commerceCurrencies.add(newCommerceCurrency);
 
 		CommerceCurrency existingCommerceCurrency =
 			_persistence.findByPrimaryKey(newCommerceCurrency.getPrimaryKey());
@@ -226,6 +226,9 @@ public class CommerceCurrencyPersistenceTest {
 			Time.getShortTimestamp(
 				existingCommerceCurrency.getLastPublishDate()),
 			Time.getShortTimestamp(newCommerceCurrency.getLastPublishDate()));
+		Assert.assertEquals(
+			existingCommerceCurrency.getStatus(),
+			newCommerceCurrency.getStatus());
 	}
 
 	@Test(
@@ -350,7 +353,8 @@ public class CommerceCurrencyPersistenceTest {
 			true, "modifiedDate", true, "code", true, "name", true, "symbol",
 			true, "rate", true, "formatPattern", true, "maxFractionDigits",
 			true, "minFractionDigits", true, "roundingMode", true, "primary",
-			true, "priority", true, "active", true, "lastPublishDate", true);
+			true, "priority", true, "active", true, "lastPublishDate", true,
+			"status", true);
 	}
 
 	@Test
@@ -650,8 +654,6 @@ public class CommerceCurrencyPersistenceTest {
 
 		CommerceCurrency commerceCurrency = _persistence.create(pk);
 
-		commerceCurrency.setMvccVersion(RandomTestUtil.nextLong());
-
 		commerceCurrency.setUuid(RandomTestUtil.randomString());
 
 		commerceCurrency.setExternalReferenceCode(
@@ -691,6 +693,8 @@ public class CommerceCurrencyPersistenceTest {
 
 		commerceCurrency.setLastPublishDate(RandomTestUtil.nextDate());
 
+		commerceCurrency.setStatus(RandomTestUtil.nextInt());
+
 		_commerceCurrencies.add(_persistence.update(commerceCurrency));
 
 		return commerceCurrency;
@@ -702,4 +706,4 @@ public class CommerceCurrencyPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1390789473
+// LIFERAY-SERVICE-BUILDER-HASH:1955398181

@@ -40,6 +40,7 @@ export class JSONWebServicesLayoutApiHelper {
 		parentLayoutId = '0',
 		privateLayout = 'false',
 		title,
+		typeSettings = '',
 	}: {
 		externalReferenceCode?: string;
 		groupId: string;
@@ -48,6 +49,7 @@ export class JSONWebServicesLayoutApiHelper {
 		parentLayoutId?: string;
 		privateLayout?: string;
 		title: string;
+		typeSettings?: string;
 	}): Promise<Layout> {
 		if (options.publish && options.type !== 'content') {
 			throw new TypeError(
@@ -75,7 +77,7 @@ export class JSONWebServicesLayoutApiHelper {
 		urlSearchParams.append('keywordsMap', JSON.stringify({en_US: ''}));
 		urlSearchParams.append('robotsMap', JSON.stringify({en_US: ''}));
 		urlSearchParams.append('type', options.type);
-		urlSearchParams.append('typeSettings', '');
+		urlSearchParams.append('typeSettings', typeSettings);
 		urlSearchParams.append('hidden', 'false');
 		urlSearchParams.append(
 			'friendlyURLMap',
@@ -96,6 +98,12 @@ export class JSONWebServicesLayoutApiHelper {
 				headers: await this.apiHelpers.getJSONWebServicesHeaders(),
 			}
 		);
+
+		// Content layouts are edited through their draft layout
+
+		if (options.type === 'content') {
+			layout.draftLayout = await this.getDraftLayout(layout);
+		}
 
 		// Publish content layouts using UI (since there's no headless method available yet)
 
@@ -131,10 +139,34 @@ export class JSONWebServicesLayoutApiHelper {
 		);
 	}
 
+	/**
+	 * Returns the draft layout of the given content layout, which is the one
+	 * serving the page editor. The draft layout carries the external reference
+	 * code of its live layout with a '-draft' suffix.
+	 */
+	async getDraftLayout(layout: Layout): Promise<Layout> {
+		const urlSearchParams = new URLSearchParams();
+
+		urlSearchParams.append(
+			'externalReferenceCode',
+			`${layout.externalReferenceCode}-draft`
+		);
+		urlSearchParams.append('groupId', layout.groupId);
+
+		return this.apiHelpers.post(
+			`${liferayConfig.environment.baseUrl}${this.basePath}/get-layout-by-external-reference-code`,
+			{
+				data: urlSearchParams.toString(),
+				failOnStatusCode: true,
+				headers: await this.apiHelpers.getJSONWebServicesHeaders(),
+			}
+		);
+	}
+
 	async getLayoutsCount(
 		groupId: number,
 		privateLayout: boolean
-	): Promise<void> {
+	): Promise<number> {
 		const urlSearchParams = new URLSearchParams();
 
 		// @ts-ignore

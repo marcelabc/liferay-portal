@@ -6,10 +6,12 @@
 package com.liferay.oauth.client.admin.web.internal.servlet.filter.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -73,8 +75,7 @@ public class OAuth2WellKnownAuthorizationServerMetadataFilterTest {
 
 		String urlString = StringBundler.concat(
 			Http.HTTP_WITH_SLASH, company.getVirtualHostname(), ":",
-			PortalUtil.getPortalServerPort(false),
-			"/.well-known/oauth-authorization-server");
+			PortalUtil.getPortalServerPort(false), _WELL_KNOWN_PATH);
 
 		HttpResponse<String> httpResponse = _send(urlString, "GET");
 
@@ -130,8 +131,8 @@ public class OAuth2WellKnownAuthorizationServerMetadataFilterTest {
 		httpResponse = _send(urlString, "OPTIONS");
 
 		_assertHeader(
-			"Authorization, Content-Type", "Access-Control-Allow-Headers",
-			httpResponse.headers());
+			"Authorization, Content-Type, MCP-Protocol-Version",
+			"Access-Control-Allow-Headers", httpResponse.headers());
 		_assertHeader(
 			"GET, HEAD, OPTIONS", "Access-Control-Allow-Methods",
 			httpResponse.headers());
@@ -150,6 +151,59 @@ public class OAuth2WellKnownAuthorizationServerMetadataFilterTest {
 		Assert.assertEquals(
 			HttpServletResponse.SC_METHOD_NOT_ALLOWED,
 			httpResponse.statusCode());
+	}
+
+	@Test
+	public void testProcessFilterIssuerPath() throws Exception {
+		Company company = _companyLocalService.getCompany(
+			TestPropsValues.getCompanyId());
+
+		String portalURL = StringBundler.concat(
+			Http.HTTP_WITH_SLASH, company.getVirtualHostname(), ":",
+			PortalUtil.getPortalServerPort(false));
+
+		String path = StringBundler.concat(
+			StringPool.SLASH, RandomTestUtil.randomString(), StringPool.SLASH,
+			RandomTestUtil.randomString());
+
+		String oAuthASLocalWellKnownURI = StringBundler.concat(
+			portalURL, _WELL_KNOWN_PATH, path);
+
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+			_addOAuthClientASLocalMetadata(
+				portalURL + path, oAuthASLocalWellKnownURI);
+
+		HttpResponse<String> httpResponse = _send(
+			oAuthASLocalWellKnownURI, "GET");
+
+		Assert.assertEquals(
+			HttpServletResponse.SC_OK, httpResponse.statusCode());
+		Assert.assertEquals(
+			oAuthClientASLocalMetadata.getOAuthASMetadataJSON(),
+			httpResponse.body());
+	}
+
+	private OAuthClientASLocalMetadata _addOAuthClientASLocalMetadata(
+			String issuer, String oAuthASLocalWellKnownURI)
+		throws Exception {
+
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+			_oAuthClientASLocalMetadataLocalService.
+				createOAuthClientASLocalMetadata(
+					_counterLocalService.increment());
+
+		oAuthClientASLocalMetadata.setCompanyId(TestPropsValues.getCompanyId());
+		oAuthClientASLocalMetadata.setIssuer(issuer);
+		oAuthClientASLocalMetadata.setLocalWellKnownEnabled(true);
+		oAuthClientASLocalMetadata.setOAuthASLocalWellKnownURI(
+			oAuthASLocalWellKnownURI);
+		oAuthClientASLocalMetadata.setOAuthASMetadataJSON(
+			JSONUtil.put(
+				"issuer", issuer
+			).toString());
+
+		return _oAuthClientASLocalMetadataLocalService.
+			updateOAuthClientASLocalMetadata(oAuthClientASLocalMetadata);
 	}
 
 	private void _assertHeader(
@@ -176,8 +230,14 @@ public class OAuth2WellKnownAuthorizationServerMetadataFilterTest {
 			HttpResponse.BodyHandlers.ofString());
 	}
 
+	private static final String _WELL_KNOWN_PATH =
+		"/.well-known/oauth-authorization-server";
+
 	@Inject
 	private CompanyLocalService _companyLocalService;
+
+	@Inject
+	private CounterLocalService _counterLocalService;
 
 	private final HttpClient _httpClient = HttpClient.newBuilder(
 	).followRedirects(

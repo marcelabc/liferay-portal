@@ -4,16 +4,29 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+function docker_compose {
+	local compose_files
+
+	compose_files=(--file "$(dirname "${BASH_SOURCE[0]}")/../docker-compose.yaml")
+
+	if [[ -f "$(dirname "${BASH_SOURCE[0]}")/../docker-compose-env.yaml" ]]
+	then
+		compose_files+=(--file "$(dirname "${BASH_SOURCE[0]}")/../docker-compose-env.yaml")
+	fi
+
+	docker compose "${compose_files[@]}" "${@}"
+}
+
 function get_gradle_property {
-	local key="${1}"
+	local key=${1}
 
 	local value
 
-	value=$(_read_property "${key}" ../gradle-local.properties)
+	value=$(_read_property "${key}" "$(dirname "${BASH_SOURCE[0]}")/../gradle-local.properties")
 
 	if [[ -z ${value} ]]
 	then
-		value=$(_read_property "${key}" ../gradle.properties)
+		value=$(_read_property "${key}" "$(dirname "${BASH_SOURCE[0]}")/../gradle.properties")
 	fi
 
 	if [[ -z ${value} ]]
@@ -27,11 +40,13 @@ function get_gradle_property {
 }
 
 function _read_property {
-	local key="${1}"
-	local file="${2}"
+	local key=${1}
+	local file=${2}
 
 	if [[ -f ${file} ]]
 	then
-		grep "^${key}=" "${file}" | cut --delimiter "=" --fields 2- | tr --delete "[:space:]"
+		grep "^${key}=" "${file}" | \
+			cut --delimiter "=" --fields 2- | \
+			tr --delete "[:space:]"
 	fi
 }

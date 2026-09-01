@@ -35,14 +35,16 @@ List<Map<String, Object>> classTypesList = new ArrayList<>();
 
 			<%
 			for (long classNameId : editAssetListDisplayContext.getAvailableClassNameIds()) {
-				String label = _getLabel(ClassNameLocalServiceUtil.getClassName(classNameId), locale, company);
+				ClassName className = ClassNameLocalServiceUtil.getClassName(classNameId);
+
+				String label = _getLabel(className, locale, company);
 
 				if (Arrays.binarySearch(classNameIds, classNameId) < 0) {
 					typesLeftList.add(new KeyValuePair(String.valueOf(classNameId), label));
 				}
 			%>
 
-				<aui:option label="<%= label %>" selected="<%= (classNameIds.length == 1) && (classNameId == classNameIds[0]) %>" value="<%= classNameId %>" />
+				<aui:option data-cms="<%= _isCMS(className, company) %>" label="<%= label %>" selected="<%= (classNameIds.length == 1) && (classNameId == classNameIds[0]) %>" value="<%= classNameId %>" />
 
 			<%
 			}
@@ -121,6 +123,10 @@ List<Map<String, Object>> classTypesList = new ArrayList<>();
 		Long[] assetSelectedClassTypeIds = ArrayUtil.clone(editAssetListDisplayContext.getClassTypeIds(unicodeProperties, className, classTypes));
 
 		Arrays.sort(assetSelectedClassTypeIds);
+
+		long[] availableClassTypeIds = ListUtil.toLongArray(classTypes, ClassType::getClassTypeId);
+
+		Arrays.sort(availableClassTypeIds);
 	%>
 
 		<div class='asset-subtype <%= (assetSelectedClassTypeIds.length < 1) ? StringPool.BLANK : "hide" %>' data-class-name="<%= className %>" id="<portlet:namespace /><%= className %>Options">
@@ -137,6 +143,17 @@ List<Map<String, Object>> classTypesList = new ArrayList<>();
 					%>
 
 						<aui:option label="<%= HtmlUtil.escapeAttribute(classType.getName()) %>" selected="<%= !anyAssetSubtype && (assetSelectedClassTypeIds.length == 1) && (assetSelectedClassTypeIds[0]).equals(classType.getClassTypeId()) && !noAssetSubtypeSelected %>" value="<%= classType.getClassTypeId() %>" />
+
+					<%
+					}
+
+					for (Long assetSelectedClassTypeId : assetSelectedClassTypeIds) {
+						if (Arrays.binarySearch(availableClassTypeIds, assetSelectedClassTypeId) >= 0) {
+							continue;
+						}
+					%>
+
+						<aui:option label='<%= LanguageUtil.format(request, "id-x", String.valueOf(assetSelectedClassTypeId)) %>' selected="<%= !anyAssetSubtype && (assetSelectedClassTypeIds.length == 1) && !noAssetSubtypeSelected %>" value="<%= assetSelectedClassTypeId %>" />
 
 					<%
 					}
@@ -213,7 +230,10 @@ List<Map<String, Object>> classTypesList = new ArrayList<>();
 
 					subtypesRightList.add(new KeyValuePair(String.valueOf(subtypeId), HtmlUtil.escape(classType.getName())));
 				}
-				catch (NoSuchModelException nsme) {
+				catch (NoSuchModelException noSuchModelException) {
+				}
+				catch (PortalException portalException) {
+					subtypesRightList.add(new KeyValuePair(String.valueOf(subtypeId), String.valueOf(subtypeId)));
 				}
 			}
 			%>
@@ -317,6 +337,10 @@ List<Map<String, Object>> classTypesList = new ArrayList<>();
 	context='<%=
 		HashMapBuilder.<String, Object>put(
 			"classTypes", classTypesList
+		).put(
+			"initialProperties", editAssetListDisplayContext.getTypePropertiesJSONArray()
+		).put(
+			"propertiesURL", editAssetListDisplayContext.getTypePropertiesURL()
 		).build()
 	%>'
 	module="{Source} from asset-list-web"
@@ -326,12 +350,16 @@ List<Map<String, Object>> classTypesList = new ArrayList<>();
 private String _getLabel(ClassName className, Locale locale, Company company) {
 	String label = ResourceActionsUtil.getModelResource(locale, className.getValue());
 
-	ObjectDefinition objectDefinition = ObjectDefinitionLocalServiceUtil.fetchObjectDefinitionByClassName(company.getCompanyId(), className.getValue());
-
-	if ((objectDefinition != null) && objectDefinition.isCMS()) {
+	if (_isCMS(className, company)) {
 		label = StringUtil.appendParentheticalSuffix(label, "CMS");
 	}
 
 	return label;
+}
+
+private boolean _isCMS(ClassName className, Company company) {
+	ObjectDefinition objectDefinition = ObjectDefinitionLocalServiceUtil.fetchObjectDefinitionByClassName(company.getCompanyId(), className.getValue());
+
+	return (objectDefinition != null) && objectDefinition.isCMS();
 }
 %>

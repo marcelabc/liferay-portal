@@ -65,7 +65,8 @@ public class OAuth2WellKnownAuthorizationServerMetadataFilter
 		throws Exception {
 
 		httpServletResponse.setHeader(
-			"Access-Control-Allow-Headers", "Authorization, Content-Type");
+			"Access-Control-Allow-Headers",
+			"Authorization, Content-Type, MCP-Protocol-Version");
 		httpServletResponse.setHeader(
 			"Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
 		httpServletResponse.setHeader("Access-Control-Allow-Origin", "*");
@@ -134,9 +135,7 @@ public class OAuth2WellKnownAuthorizationServerMetadataFilter
 				fetchOAuthClientASLocalMetadata(companyId, true, null);
 		}
 
-		String issuer =
-			_portal.getPortalURL(httpServletRequest) +
-				_portal.getPathContext() + issuerPath;
+		String issuer = _portal.getPortalURL(httpServletRequest) + issuerPath;
 
 		return _oAuthClientASLocalMetadataLocalService.
 			fetchOAuthClientASLocalMetadata(companyId, issuer);

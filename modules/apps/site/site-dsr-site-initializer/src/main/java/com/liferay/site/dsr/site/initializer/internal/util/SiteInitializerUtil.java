@@ -5,8 +5,8 @@
 
 package com.liferay.site.dsr.site.initializer.internal.util;
 
+import com.liferay.batch.engine.unit.BatchEngineUnitThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
@@ -32,9 +32,7 @@ public class SiteInitializerUtil {
 			long companyId, Group group, SiteInitializer siteInitializer)
 		throws PortalException {
 
-		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-66359")) {
-			return;
-		}
+		String fileName = BatchEngineUnitThreadLocal.getFileName();
 
 		String name = PrincipalThreadLocal.getName();
 
@@ -54,6 +52,8 @@ public class SiteInitializerUtil {
 			siteInitializer.initialize(group.getGroupId());
 		}
 		finally {
+			BatchEngineUnitThreadLocal.setFileName(fileName);
+
 			PrincipalThreadLocal.setName(name);
 
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);

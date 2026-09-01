@@ -1,8 +1,8 @@
 dependencies {
 	compileInclude group: "net.authorize", name: "anet-java-sdk", version: "3.0.0"
-	compileInclude group: "org.apache.httpcomponents.client5", name: "httpclient5", version: "5.4.4"
-	compileInclude group: "org.apache.httpcomponents.core5", name: "httpcore5", version: "5.3.2"
-	compileInclude group: "org.apache.httpcomponents.core5", name: "httpcore5-h2", version: "5.3.4"
+	compileInclude group: "org.apache.httpcomponents.client5", name: "httpclient5", version: "5.6.3"
+	compileInclude group: "org.apache.httpcomponents.core5", name: "httpcore5", version: "5.4.3"
+	compileInclude group: "org.apache.httpcomponents.core5", name: "httpcore5-h2", version: "5.4.3"
 	compileOnly group: "com.google.code.gson", name: "gson", version: "2.9.0"
 	compileOnly group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
 	compileOnly group: "com.liferay.jakarta.portlet", name: "com.liferay.jakarta.portlet-api", version: "4.0.0"
@@ -12,6 +12,7 @@ dependencies {
 	compileOnly group: "jakarta.servlet", name: "jakarta.servlet-api", version: "6.0.0"
 	compileOnly group: "jakarta.xml.bind", name: "jakarta.xml.bind-api", version: "4.0.2"
 	compileOnly group: "org.osgi", name: "org.osgi.service.component.annotations", version: "1.4.0"
+	compileOnly project(":apps:account:account-api")
 	compileOnly project(":apps:commerce:commerce-api")
 	compileOnly project(":apps:commerce:commerce-currency-api")
 	compileOnly project(":apps:commerce:commerce-frontend-taglib")

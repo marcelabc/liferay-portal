@@ -15,12 +15,20 @@ _SCRIPTS_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 _ROOT_CLOUD_DIR=$(cd "${_SCRIPTS_DIR}/.." && pwd)
 
 function main {
-	if [ "${#}" -ne 2 ]
+	if [ ${#} -eq 0 ]
 	then
-		echo "Usage: ${0} <configuration-json-file> <versions-tfvars-file>" >&2
+		echo "Usage: ${0} <configuration-json-file>" >&2
+		echo "" >&2
+		echo "See cloud/scripts/config.json.example_gcp for a sample." >&2
 
 		exit 1
 	fi
+
+	_check_utils gcloud jq kubectl terraform
+
+	_check_terraform_version "1.10.0"
+
+	_validate_config_json "${1}"
 
 	_generate_tfvars "${1}" "${_SCRIPTS_DIR}/global_terraform.tfvars"
 
@@ -34,9 +42,12 @@ function main {
 	local bucket_name=""
 	local region=""
 
-	local terraform_args
+	local terraform_args=()
 
-	readarray -t terraform_args < <(_get_terraform_apply_args "${1}" "${2}")
+	while IFS= read -r terraform_arg
+	do
+		terraform_args+=("${terraform_arg}")
+	done < <(_get_terraform_apply_args "${1}")
 
 	if jq --exit-status '.variables.tfstate_bucket_name' "${1}" &> /dev/null
 	then
@@ -49,6 +60,38 @@ function main {
 	_set_up_gcp_gke "${bucket_name}" "${_GCP_DEPLOYMENT_NAME}" "${region}" "${terraform_args[@]}"
 
 	_set_up_gcp_gitops "${bucket_name}" "${_GCP_DEPLOYMENT_NAME}" "${region}" "${terraform_args[@]}"
+}
+
+function _check_terraform_version {
+	local found_version
+
+	found_version=$(terraform --version | awk '/^Terraform v/ {print $2; exit}')
+	found_version="${found_version#v}"
+
+	local required_version="${1}"
+
+	local lowest_version
+
+	lowest_version=$(printf "%s\n%s\n" "${required_version}" "${found_version}" | sort --version-sort | head -n 1)
+
+	if [[ ${lowest_version} != ${required_version} ]]
+	then
+		echo "The installed Terraform version ${found_version} is older than ${required_version}." >&2
+
+		exit 1
+	fi
+}
+
+function _check_utils {
+	for util in "${@}"
+	do
+		if (! command -v "${util}" &> /dev/null)
+		then
+			echo "The utility ${util} is not installed."
+
+			exit 1
+		fi
+	done
 }
 
 function _configure_gcs_bucket {
@@ -160,21 +203,6 @@ function _create_gcs_bucket {
 
 function _generate_tfvars {
 	local configuration_json_file="${1}"
-
-	if [ ! -f "${configuration_json_file}" ]
-	then
-		echo "Configuration JSON file ${configuration_json_file} does not exist." >&2
-
-		exit 1
-	fi
-
-	if ! jq --exit-status '.variables | objects' "${configuration_json_file}" > /dev/null
-	then
-		echo "The configuration JSON file must contain a root object named \"variables\"."
-
-		exit 1
-	fi
-
 	local tfvars_file="${2}"
 
 	echo "Generating ${tfvars_file} from ${configuration_json_file}."
@@ -194,7 +222,7 @@ function _generate_tfvars {
 		  	"\(.key) = \(.value)"
 		  end' "${configuration_json_file}")
 
-	if [ -z "${tfvars_content}" ]
+	if [[ -z ${tfvars_content} ]]
 	then
 		echo "The \"variables\" object in the configuration JSON file is empty. You will be prompted for all required variables."
 
@@ -216,24 +244,10 @@ function _get_terraform_apply_args {
 		auto_approve=$(jq --raw-output '.options.auto_approve' "${configuration_json_file}")
 	fi
 
-	local versions_tfvars_file="${2}"
-
-	if [ ! -f "${versions_tfvars_file}" ]
-	then
-		echo "${versions_tfvars_file} does not exist." >&2
-
-		exit 1
-	fi
-
-	local versions_tfvars_file_path
-
-	versions_tfvars_file_path=$(realpath "${versions_tfvars_file}")
-
 	local apply_args=(
-		"-var-file=${versions_tfvars_file_path}"
 		"-var-file=${_SCRIPTS_DIR}/global_terraform.tfvars")
 
-	if [[ "${auto_approve}" == "true" ]]
+	if [[ ${auto_approve} == true ]]
 	then
 		apply_args+=("-auto-approve")
 	fi
@@ -265,7 +279,7 @@ function _pushd {
 function _recover_kubectl_context {
 	local exit_code="${1}"
 
-	if [ -z "${_GCP_DEPLOYMENT_NAME:-}" ] || [ "${_GCP_DEPLOYMENT_NAME}" = "null" ] || [ -z "${_GCP_PROJECT_ID:-}" ] || [ "${_GCP_PROJECT_ID}" = "null" ]
+	if [[ -z ${_GCP_DEPLOYMENT_NAME:-} ]] || [[ ${_GCP_DEPLOYMENT_NAME} == null ]] || [[ -z ${_GCP_PROJECT_ID:-} ]] || [[ ${_GCP_PROJECT_ID} == null ]]
 	then
 		exit "${exit_code}"
 	fi
@@ -356,7 +370,7 @@ function _terraform_init_and_apply {
 
 	_pushd "${1}"
 
-	if [ -n "${bucket_name}" ]
+	if [[ -n ${bucket_name} ]]
 	then
 		terraform init \
 			-backend-config="bucket=${bucket_name}" \
@@ -374,6 +388,31 @@ EOF
 	terraform apply "${@:6}"
 
 	_popd
+}
+
+function _validate_config_json {
+	local configuration_json_file="${1}"
+
+	if [[ ! -f ${configuration_json_file} ]]
+	then
+		echo "Configuration JSON file ${configuration_json_file} does not exist." >&2
+
+		exit 1
+	fi
+
+	if ! jq empty "${configuration_json_file}" &> /dev/null
+	then
+		echo "Configuration JSON file ${configuration_json_file} is not valid JSON." >&2
+
+		exit 1
+	fi
+
+	if ! jq --exit-status '.variables | objects' "${configuration_json_file}" > /dev/null
+	then
+		echo "The configuration JSON file must contain a root object named \"variables\"." >&2
+
+		exit 1
+	fi
 }
 
 main "${@}"

@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.batch.engine.BatchEngineTaskExecuteStatus;
@@ -131,7 +130,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.test.rule.FeatureFlag;
-import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -156,8 +154,8 @@ import java.nio.file.Files;
 
 import java.security.Key;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -167,6 +165,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
 
@@ -187,11 +186,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Matija Petanjek
  */
-@FeatureFlags(
-	featureFlags = {
-		@FeatureFlag(value = "LPD-34594"), @FeatureFlag(value = "LPS-135430")
-	}
-)
+@FeatureFlag("LPS-135430")
 @RunWith(Arquillian.class)
 public class BatchEngineBrokerTest {
 
@@ -340,14 +335,19 @@ public class BatchEngineBrokerTest {
 			"TestObjectCSV", ObjectDefinitionConstants.SCOPE_COMPANY,
 			TestPropsValues.getUser());
 
+		_addObjectEntry(
+			TestPropsValues.getCompanyId(), dlFileEntry, _OBJECT_ENTRY_ERC_1,
+			TestPropsValues.getGroupId(), _objectDefinition1,
+			TestPropsValues.getUserId());
+
 		_addObjectEntryInDifferentCompany("TestObjectCSV");
 
 		try (FileInputStream fileInputStream = new FileInputStream(
 				_createCSVImportFile(
 					RandomTestUtil.nextDate(), dlFileEntry,
 					_objectDefinition1.getExternalReferenceCode(),
-					"object_entry.csv", null, RandomTestUtil.randomLong(),
-					RandomTestUtil.nextDate()))) {
+					_OBJECT_ENTRY_ERC_1, "object_entry.csv", null,
+					RandomTestUtil.randomLong(), RandomTestUtil.nextDate()))) {
 
 			_executeImportTask(
 				BatchPlannerPlanConstants.EXTERNAL_TYPE_CSV,
@@ -384,6 +384,13 @@ public class BatchEngineBrokerTest {
 		_objectDefinition1 = _publishObjectDefinition(
 			"TestObject", ObjectDefinitionConstants.SCOPE_COMPANY,
 			TestPropsValues.getUser());
+
+		_addObjectEntry(
+			TestPropsValues.getCompanyId(),
+			_addDLFileEntry(
+				TestPropsValues.getGroupId(), TestPropsValues.getUserId()),
+			_OBJECT_ENTRY_ERC_1, TestPropsValues.getGroupId(),
+			_objectDefinition1, TestPropsValues.getUserId());
 
 		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
 			_OBJECT_ENTRY_ERC_1, ObjectDefinitionConstants.GROUP_ID_DEFAULT,
@@ -434,7 +441,9 @@ public class BatchEngineBrokerTest {
 
 	@Test
 	public void testImportExportObjectDefinitionJSON() throws Exception {
-		File file = _createImportFile("json", "object_definition_import.json");
+		File file = _createImportFile(
+			"json", "object_definition_import.json",
+			"A" + RandomTestUtil.randomString());
 
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			_objectDefinition2 = _publishObjectDefinition(
@@ -748,12 +757,18 @@ public class BatchEngineBrokerTest {
 
 	private File _createCSVImportFile(
 			Date createDate, DLFileEntry dlFileEntry,
-			String objectDefinitionERC, String fileName, Long groupId, long id,
-			Date modifiedDate)
+			String objectDefinitionERC, String objectEntryERC, String fileName,
+			Long groupId, long id, Date modifiedDate)
 		throws Exception {
 
+		long objectEntryGroupId = ObjectDefinitionConstants.GROUP_ID_DEFAULT;
+
+		if (groupId != null) {
+			objectEntryGroupId = groupId;
+		}
+
 		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
-			_OBJECT_ENTRY_ERC_1, ObjectDefinitionConstants.GROUP_ID_DEFAULT,
+			objectEntryERC, objectEntryGroupId,
 			_objectDefinition1.getObjectDefinitionId());
 		ObjectField objectField = _objectFieldLocalService.getObjectField(
 			_OBJECT_FIELD_ERC, _objectDefinition1.getObjectDefinitionId());
@@ -769,12 +784,17 @@ public class BatchEngineBrokerTest {
 		return file;
 	}
 
-	private File _createImportFile(String extension, String fileName)
+	private File _createImportFile(
+			String extension, String fileName, String objectDefinitionName)
 		throws Exception {
 
 		File file = _file.createTempFile(extension);
 
-		Files.copy(_getInputStream(fileName), file.toPath());
+		_file.write(
+			file,
+			StringUtil.replace(
+				StreamUtil.toString(_getInputStream(fileName)),
+				"[$OBJECT_DEFINITION_NAME$]", objectDefinitionName));
 
 		return file;
 	}
@@ -961,17 +981,21 @@ public class BatchEngineBrokerTest {
 			scopeKey = group.getGroupKey();
 		}
 
+		Map<String, Serializable> values = _objectEntryLocalService.getValues(
+			objectEntry);
+
 		return StringUtil.replace(
 			StreamUtil.toString(_getInputStream(fileName)),
 			new String[] {
 				"[$ATTACHMENT_FIELD_ID$]", "[$ATTACHMENT_FIELD_LINK_HREF$]",
 				"[$ATTACHMENT_FIELD_LINK_LABEL$]", "[$ATTACHMENT_FIELD_NAME$]",
-				"[$DATE_CREATED$]", "[$DATE_MODIFIED$]",
+				"[$AUTO_INCREMENT$]", "[$DATE_CREATED$]", "[$DATE_MODIFIED$]",
 				"[$EXTERNAL_REFERENCE_CODE$]", "[$ID$]", "[$SCOPE_KEY$]"
 			},
 			new String[] {
 				String.valueOf(dlFileEntry.getFileEntryId()), link.getHref(),
 				link.getLabel(), dlFileEntry.getFileName(),
+				String.valueOf(values.get("testAutoIncrementField")),
 				_toDateString(createDate), _toDateString(modifiedDate),
 				objectEntry.getExternalReferenceCode(), String.valueOf(id),
 				scopeKey
@@ -1481,7 +1505,7 @@ public class BatchEngineBrokerTest {
 			"isEmailAddress(textObjectField)", false, Collections.emptyList());
 
 		_objectViewLocalService.addObjectView(
-			TestPropsValues.getUserId(),
+			null, TestPropsValues.getUserId(),
 			_objectDefinition1.getObjectDefinitionId(), true,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			Arrays.asList(_createObjectViewColumn("createDate")),
@@ -1533,15 +1557,19 @@ public class BatchEngineBrokerTest {
 		DLFileEntry dlFileEntry = _addDLFileEntry(
 			groupId, TestPropsValues.getUserId());
 
+		_addObjectEntry(
+			TestPropsValues.getCompanyId(), dlFileEntry, objectEntryERC,
+			groupId, _objectDefinition1, TestPropsValues.getUserId());
+
 		try (FileInputStream fileInputStream = new FileInputStream(
 				_createCSVImportFile(
 					RandomTestUtil.nextDate(), dlFileEntry, objectDefinitionERC,
-					"object_entry.csv", groupId, RandomTestUtil.randomLong(),
-					RandomTestUtil.nextDate()))) {
+					objectEntryERC, "object_entry.csv", groupId,
+					RandomTestUtil.randomLong(), RandomTestUtil.nextDate()))) {
 
 			_executeImportTask(
 				BatchPlannerPlanConstants.EXTERNAL_TYPE_CSV,
-				_objectEntryExportCSVFieldNames, groupId,
+				_objectEntryImportCSVFieldNames, groupId,
 				"com.liferay.object.rest.dto.v1_0.ObjectEntry",
 				"C_TestObjectCSV", _getURIString("csv", fileInputStream));
 		}
@@ -1572,6 +1600,12 @@ public class BatchEngineBrokerTest {
 	private void _testImportExportSiteScopeObjectEntryJSON(
 			long groupId, String objectEntryERC)
 		throws Exception {
+
+		_addObjectEntry(
+			TestPropsValues.getCompanyId(),
+			_addDLFileEntry(groupId, TestPropsValues.getUserId()),
+			objectEntryERC, groupId, _objectDefinition1,
+			TestPropsValues.getUserId());
 
 		ObjectEntry objectEntry = _objectEntryLocalService.getObjectEntry(
 			objectEntryERC, groupId,
@@ -1620,9 +1654,12 @@ public class BatchEngineBrokerTest {
 	}
 
 	private String _toDateString(Date date) {
-		Instant instant = date.toInstant();
+		DateFormat dateFormat = new SimpleDateFormat(
+			"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-		return String.valueOf(instant.truncatedTo(ChronoUnit.SECONDS));
+		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+		return dateFormat.format(date);
 	}
 
 	private List<String> _toList(CSVRecord csvRecord) {
@@ -1728,6 +1765,7 @@ public class BatchEngineBrokerTest {
 			"testLongTextField", "testMultiselectPicklistField",
 			"testPicklistField", "testPrecisionDecimalField",
 			"testRichTextField", "testTextField");
+
 	private static final ObjectMapper _objectMapper = new ObjectMapper() {
 		{
 			configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
@@ -1743,7 +1781,14 @@ public class BatchEngineBrokerTest {
 							new UnsafeSupplierJsonSerializer());
 					}
 				});
-			setDateFormat(new ISO8601DateFormat());
+
+			DateFormat dateFormat = new SimpleDateFormat(
+				"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+			dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+			setDateFormat(dateFormat);
+
 			setSerializationInclusion(JsonInclude.Include.NON_NULL);
 		}
 	};
